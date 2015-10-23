@@ -1,0 +1,20 @@
+{
+    "name": "freq",
+    "version": "0.1dev",
+    "homepage": "https://github.com/nens/freq",
+    "authors": [
+        "TODO <TODO@nelen-schuurmans.nl>"
+    ],
+    "license": "GPL",
+    "private": true,
+    "dependencies": {
+
+    },
+    "ignore": [
+        "**/.*",
+        "node_modules",
+        "bower_components",
+        "test",
+        "tests"
+    ]
+}
