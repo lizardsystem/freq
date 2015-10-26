@@ -11,7 +11,8 @@ long_description = '\n\n'.join([
 install_requires = [
     'Django',
     'django-extensions',
-    'django-nose'
+    'django-nose',
+    'lizard-auth-client'
     ],
 
 tests_require = [

@@ -45,11 +45,6 @@ LOGGING = {
             'propagate': False,
             'level': 'DEBUG',
         },
-        'south': {
-            'handlers': ['console',],
-            'propagate': False,
-            'level': 'INFO',  # Suppress the huge output in tests
-        },
         'django.request': {
             'handlers': ['console',],
             'propagate': False,
@@ -83,8 +78,6 @@ SITE_ID = 1
 SECRET_KEY = 'This is not secret but that is ok.'
 INSTALLED_APPS = [
     'freq',
-    'lizard_ui',
-    'south',
     'django_nose',
     'lizard_security',
     'django_extensions',
