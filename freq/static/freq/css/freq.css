@@ -1,0 +1,66 @@
+/* COLOURS:
+turquoise:     #1abc9c;
+green-sea:     #16a085;
+emerald:       #2ecc71;
+nephritis:     #27ae60;
+peter-river:   #3498db;
+belize-hole:   #2980b9;
+amethyst:      #9b59b6;
+wisteria:      #8e44ad;
+wet-asphalt:   #34495e;
+midnight-blue: #2c3e50;
+sun-flower:    #f1c40f;
+orange:        #f39c12;
+carrot:        #e67e22;
+pumpkin:       #d35400;
+alizarin:      #e74c3c;
+pomegranate:   #c0392b;
+clouds:        #ecf0f1;
+darkclouds:    #ced0d0;
+silver:        #bdc3c7;
+concrete:      #95a5a6;
+asbestos:      #7f8c8d;
+*/
+/** {*/
+  /*border-radius: 0 !important;*/
+/*}*/
+
+#page-title {
+  color: #fff;
+  font-size: 1.5em;
+  font-family: 'Open Sans';
+  width:570px;
+  margin:auto;
+  margin-top: 8px;
+  display:block;
+}
+#logo-row {
+  background-color:#1abc9c;
+  height:60px;
+  border-radius: 0;
+}
+#logo {
+  margin: 8px;
+    margin-top: -30px;
+}
+#measurement_point {
+  color: #1abc9c;
+}
+.well {
+    background-color: #e7ffe9;
+    border: 0;
+}
+strong {
+    color: #16a085;
+}
+.body-container {
+    display: table;
+}
+.side-container {
+  float: none;
+  display: table-cell;
+  height:0;
+}
+#map {
+    height: 100%;
+}

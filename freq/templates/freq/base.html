@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+  <title>{% block title %}
+    {% if view.title %}
+      {# Managed properly by the view #}
+      {{ view.title }}
+    {% else %}
+      {# By hand in the template #}
+      {% block subtitle %}{% endblock subtitle%}
+      {% block sitetitle %}FREQ{% endblock sitetitle%}
+    {% endif %}
+  {% endblock title %}</title>
+
+  {% block css %}
+    <link rel="stylesheet" href=
+            "{{ STATIC_URL }}fonts/open-sans/open-sans.css">
+    <link rel="stylesheet" href=
+            "{{ STATIC_URL }}fonts/font-awesome/4.3.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href=
+            "{{ STATIC_URL }}fonts/font-awesome/4.3.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href=
+            "{{ STATIC_URL }}bootstrap-3.3.5-dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ STATIC_URL }}freq/css/freq.css">
+    <link rel="stylesheet"
+        href="{{ STATIC_URL }}ajax/libs/leaflet/0.7.3/leaflet.css" />
+  {% endblock css %}
+
+  {% block extra_css %}
+  {% endblock extra_css %}
+</head>
+
+<body>
+    {% block header %}
+      <header>
+        <div id="logo-row" class="navbar">
+          <span id="page-title">{{ view.title }}</span>
+          <div id="logo">
+            {% block logo %}
+              {% spaceless %}
+                <a href="/" title='Back to homepage'>
+                    <img class="logo" src="{{ STATIC_URL }}freq/logo.png"
+                         alt="Lizard" />
+                </a>
+              {% endspaceless %}
+            {% endblock logo %}
+          </div>
+        </div>
+      </header>
+
+      {% block nav %}
+        <div class="container">
+          <ul class="nav nav-tabs nav-justified">
+            {% for menu_title, tooltip, menu_url, menu_activation in view.menu %}
+              <li role="presentation" class="{{ menu_activation }}"><a
+                      href={% if menu_activation == 'disabled' %}'#'
+                           {% else %} "{% url menu_url %}" {% endif %}
+                      title="{{ tooltip }}">{{ menu_title }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endblock nav %}
+
+    {% endblock header %}
+
+    {% block body %}
+        </br>
+        <div class="container body-container">
+          <div class="col-md-8 side-container">
+            <div class="row">
+              <h2 id="measurement_point">{{ view.measurement_point }}</h2>
+            </div><!-- /row -->
+            <div class="row">
+                <div class="well">
+                    {% block well %}{% endblock well %}
+                </div>
+            </div><!-- /row -->
+              {% block content %}
+              {% endblock content %}
+          </div><!-- /col-md-12 -->
+        <div class="col-md-4 side-container">
+            <div id="map"></div>
+        </div>
+        </div><!-- /container -->
+    {% endblock body %}
+
+  {% block javascript %}
+  <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+  <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+  <!--[if lt IE 9]>
+    <script src="{{ STATIC_URL }}html5shiv/3.7.2/html5shiv.min
+    .js"></script>
+    <script src="{{ STATIC_URL }}respond/1.4.2/respond.min.js"></script>
+  <![endif]-->
+    <script src="{{ STATIC_URL }}jquery/jquery-1.11.3.min.js"></script>
+    <script src="{{ STATIC_URL }}bootstrap-3.3.5-dist/js/bootstrap.min.js">
+    </script>
+    <script src="{{ STATIC_URL }}freq/js/freq.js"></script>
+    <script
+     src="{{ STATIC_URL }}ajax/libs/leaflet/0.7.3/leaflet.js">
+   </script>
+  {% endblock javascript %}
+
+  {% block extra_javascript %}
+  {% endblock extra_javascript %}
+
+
+</body>
+</html>

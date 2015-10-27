@@ -1,0 +1,29 @@
+{% extends "freq/base.html" %}
+{% block well %}
+  <p>
+  Time series analysis are applied for monitoring the impact of abstraction
+      and climate change on groundwater levels. This tool help to understand
+      temporal changes of groundwater levels. The time series analysis
+      consist of detection of trends; estimation of periodic component an
+      autoregressive model. Based on this information it also provides an
+      estimate on the monitoring sampling frequency, which is one of the key
+      components of good groundwater monitoring network design.
+  </p>
+  <p>
+    <strong title="The tool decomposes groundwater level time series into trends, periodic fluctuations (harmonic analysis) and stochastic (stationary) components">
+      <span class="glyphicon glyphicon-info-sign"></span>
+        More information
+    </strong>
+  </p>
+{% endblock well %}
+{% block content %}
+        <div class="row">
+      <div class="input-group">
+        <span class="input-group-btn">
+          <button class="btn btn-default" type="button">Search</button>
+        </span>
+        <input type="text" class="form-control"
+               placeholder="Please enter time series code...">
+      </div><!-- /input-group -->
+    </div><!-- /row -->
+{% endblock content %}
