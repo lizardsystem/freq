@@ -29,22 +29,23 @@ asbestos:      #7f8c8d;
   color: #fff;
   font-size: 1.5em;
   font-family: 'Open Sans';
-  width:570px;
-  margin:auto;
-  margin-top: 8px;
-  display:block;
 }
 #logo-row {
   background-color:#1abc9c;
-  height:60px;
   border-radius: 0;
 }
 #logo {
-  margin: 8px;
-    margin-top: -30px;
+  margin: -8px 20px 0 0;
+}
+.navbar-nav > li > a {
+    color:#fff ;
+}
+.navbar-nav > li > a:hover {
+  background-color: #16a085;
 }
 #measurement_point {
   color: #1abc9c;
+  margin-top:10px;
 }
 .well {
     background-color: #e7ffe9;
@@ -62,5 +63,5 @@ strong {
   height:0;
 }
 #map {
-    height: 100%;
+    height: 92%;
 }

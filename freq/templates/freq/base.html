@@ -38,16 +38,25 @@
     {% block header %}
       <header>
         <div id="logo-row" class="navbar">
-          <span id="page-title">{{ view.title }}</span>
-          <div id="logo">
-            {% block logo %}
-              {% spaceless %}
-                <a href="/" title='Back to homepage'>
-                    <img class="logo" src="{{ STATIC_URL }}freq/logo.png"
-                         alt="Lizard" />
-                </a>
-              {% endspaceless %}
-            {% endblock logo %}
+          <div class="container">
+              <div class="navbar-brand" id="logo">
+                {% block logo %}
+                  {% spaceless %}
+                    <a href="/" title='Back to homepage'>
+                        <img class="logo" src="{{ STATIC_URL }}freq/logo.png"
+                             alt="Lizard" />
+                    </a>
+                  {% endspaceless %}
+                {% endblock logo %}
+              </div>
+              <div class="navbar-header">
+
+          <div class="navbar-brand" id="page-title">{{ view.title }}</div>
+                      </div>
+          <ul class="pull-right navbar-nav nav">
+              <li><a href="https://ggmn.un-igrac.org/" target="_blank">IGRAC</a></li>
+              <li><a href="#">Log out</a></li>
+          </ul>
           </div>
         </div>
       </header>
@@ -70,6 +79,7 @@
     {% block body %}
         </br>
         <div class="container body-container">
+        <div class="row">
           <div class="col-md-8 side-container">
             <div class="row">
               <h2 id="measurement_point">{{ view.measurement_point }}</h2>
@@ -79,12 +89,17 @@
                     {% block well %}{% endblock well %}
                 </div>
             </div><!-- /row -->
-              {% block content %}
-              {% endblock content %}
-          </div><!-- /col-md-12 -->
-        <div class="col-md-4 side-container">
+          </div><!-- /col -->
+          <div class="col-md-4 side-container">
             <div id="map"></div>
-        </div>
+          </div><!-- /col -->
+        </div><!-- /row -->
+          <div class="row">
+              <div class="col-md-12">
+                {% block content %}
+                {% endblock content %}
+              </div>
+          </div><!-- /row -->
         </div><!-- /container -->
     {% endblock body %}
 

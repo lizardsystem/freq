@@ -23,11 +23,14 @@ class BaseView(TemplateView):
 class StartPageView(BaseView):
     template_name = 'freq/startpage.html'
 
+
 class TrendDetectionView(BaseView):
     template_name = 'freq/trend_detection.html'
 
+
 class PeriodicFluctuationsView(BaseView):
     template_name = 'freq/periodic_fluctuations.html'
+
 
 class AutoRegressiveView(BaseView):
     template_name = 'freq/autoregressive.html'
