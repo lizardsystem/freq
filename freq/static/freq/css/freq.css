@@ -37,11 +37,25 @@ asbestos:      #7f8c8d;
 #logo {
   margin: -8px 20px 0 0;
 }
-.navbar-nav > li > a {
+ul.navbar-nav > li > a {
     color:#fff ;
 }
-.navbar-nav > li > a:hover {
+ul.navbar-nav > li > a:hover {
   background-color: #16a085;
+}
+ul.nav-tabs > li > a {
+    color: #1abc9c;
+}
+ul.nav-tabs > li > a:hover {
+    background-color: #e7ffe9;
+    border: 0;
+    border-bottom: 2px solid #1abc9c;
+}
+ul.nav-tabs > li.disabled > a {
+    color: #bdc3c7;
+}
+ul.nav-tabs > li.disabled > a:hover {
+        border-bottom: 2px solid #bdc3c7;
 }
 #measurement_point {
   color: #1abc9c;
@@ -62,6 +76,14 @@ strong {
   display: table-cell;
   height:0;
 }
+
 #map {
     height: 92%;
+
+}
+.full-page-map {
+    height: 90%;
+}
+html, body {
+    height: 100%;
 }

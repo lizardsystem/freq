@@ -55,7 +55,7 @@
                       </div>
           <ul class="pull-right navbar-nav nav">
               <li><a href="https://ggmn.un-igrac.org/" target="_blank">IGRAC</a></li>
-              <li><a href="#">Log out</a></li>
+              <li><a href="/accounts/logout/">Log out</a></li>
           </ul>
           </div>
         </div>
@@ -63,14 +63,21 @@
 
       {% block nav %}
         <div class="container">
-          <ul class="nav nav-tabs nav-justified">
+          <ul class="nav nav-tabs nav-justified" role="tablist">
             {% for menu_title, tooltip, menu_url, menu_activation in view.menu %}
-              <li role="presentation" class="{{ menu_activation }}"><a
-                      href={% if menu_activation == 'disabled' %}'#'
-                           {% else %} "{% url menu_url %}" {% endif %}
-                      title="{{ tooltip }}">{{ menu_title }}</a></li>
+              <li role="presentation" class="{{ menu_activation }}" aria-controls="{{ menu_url }}">
+                  <a href={% if menu_activation == 'disabled' %}'#'{% else %}
+                      "{% url menu_url %}"{% endif %} title="{{ tooltip }}">
+                  {{ menu_title }}</a></li>
             {% endfor %}
           </ul>
+          <!-- Tab panes -->
+          <div class="tab-content">
+            {% for menu_title, tooltip, menu_url, menu_activation in view.menu %}
+                <div role="tabpanel" class="tab-pane {{ menu_activation }}"
+                     id="{{ menu_url }}"></div>
+            {% endfor %}
+          </div>
         </div>
       {% endblock nav %}
 
@@ -104,6 +111,10 @@
     {% endblock body %}
 
   {% block javascript %}
+  <div style="visibility: hidden">
+  {# Ajax calls need a CSRF token cookie, and this line sends one as a side effect #}
+  <!-- {{ csrf_token }} -->
+
   <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
   <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
   <!--[if lt IE 9]>
@@ -114,10 +125,9 @@
     <script src="{{ STATIC_URL }}jquery/jquery-1.11.3.min.js"></script>
     <script src="{{ STATIC_URL }}bootstrap-3.3.5-dist/js/bootstrap.min.js">
     </script>
+    <script src="{{ STATIC_URL }}ajax/libs/leaflet/0.7.3/leaflet.js"></script>
     <script src="{{ STATIC_URL }}freq/js/freq.js"></script>
-    <script
-     src="{{ STATIC_URL }}ajax/libs/leaflet/0.7.3/leaflet.js">
-   </script>
+  </div>
   {% endblock javascript %}
 
   {% block extra_javascript %}

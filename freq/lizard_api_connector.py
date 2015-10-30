@@ -21,7 +21,7 @@ class Base(object):
     extra_queries = {}
     max_results = 1000
 
-    def __init__(self, base="demo.lizard.net"):
+    def __init__(self, base="nxt.staging.lizard.net"):
         self.results = []
         if base.startswith('http'):
             self.base = base
@@ -30,11 +30,13 @@ class Base(object):
         self.base_url = join_urls(self.base, 'api/v2', self.data_type)
 
     def get(self, **queries):
-        queries.update(self.extra_query)
+        queries.update(self.extra_queries)
         query = '?' + '&'.join(key + '=' + value for key, value in
                                queries.items())
         url = join_urls(self.base_url, query)
-        return self.request(url)
+        self.request(url)
+        self.parse()
+        return self.results
 
     def request(self, url):
         if self.use_header:
@@ -59,9 +61,13 @@ class Base(object):
                                    'are accepted'.format(
                         self.json['count'], self.max_results))
                 self.results += self.json['results']
+                next_url = self.json.get('next')
+                if next_url:
+                    self.request(next_url)
+                else:
+                    break
             except IndexError:
                 break
-            self.request(self.json['next'])
 
     def parse_elements(self, element):
         self.parse()
@@ -87,6 +93,10 @@ class Organisations(Base):
 class Locations(Base):
     data_type = 'locations'
 
+    def __init__(self):
+        self.uuids = []
+        super().__init__()
+
     def in_bbox(self, x1, y1, x2, y2):
         coords = self.coord_string(x1, y1, x2, y2)
         self.get(in_bbox=coords)
@@ -98,8 +108,14 @@ class Locations(Base):
     def coord_string(self, *args):
         return ','.join(str(x) for x in args)
 
-    def coord_uuid(self):
-        return [(x['geometry']['coordinates'], x['uuid']) for x in self.results]
+    def coord_uuid_name(self):
+        result = []
+        for x in self.results:
+            if x['uuid'] not in self.uuids:
+                print(x['uuid'])
+                result.append((x['geometry']['coordinates'], x['uuid'], x['name']))
+                self.uuids.append(x['uuid'])
+        return result
 
 
 class TimeSeries(Base):

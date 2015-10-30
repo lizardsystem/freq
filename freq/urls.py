@@ -13,13 +13,21 @@ admin.autodiscover()
 
 urlpatterns = patterns(
     '',
-    url(r'^admin/', include(admin.site.urls)),
     url(r'^', include('lizard_auth_client.urls')),
-    url(r'^$', views.StartPageView.as_view(), name='startpage'),
+    url(r'^admin/', include(admin.site.urls)),
     url(r'^trend_detection$', views.TrendDetectionView.as_view(), name='trend_detection'),
     url(r'^periodic_fluctuations$', views.PeriodicFluctuationsView.as_view(),
         name='periodic_fluctuations'),
     url(r'^auto_regressive$', views.AutoRegressiveView.as_view(), name='auto_regressive'),
+    url(r'^sampling$', views.SamplingFrequencyView.as_view(),
+        name='sampling'),
+    url(r'^locations/$', views.LocationsDataView.as_view(), name='map_data'),
+    url(r'^timeseries/(?P<uuid>\w+)/data$', views.TimeSeriesDataView.as_view(),
+        name='timeseries_data'),
+    url(r'^timeseries/(?P<uuid>[\w-]+)$', views.TimeSeriesView.as_view(),
+        name='timeseries_data'),
+    url(r'^map$', views.MapView.as_view(), name='map_'),
+    url(r'^$', views.StartPageView.as_view(), name='startpage')
     # url(r'^something/',
     #     views.some_method,
     #     name="name_it"),

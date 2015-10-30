@@ -140,7 +140,7 @@ TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 # SSO *can* be disabled for development with local accounts.
 SSO_ENABLED = True
 
-from freq.sso_secret_keys import SSO_KEY, SSO_SECRET, SECRET_KEY
+from freq.secrets import SSO_KEY, SSO_SECRET, SECRET_KEY
 
 # URL used to redirect the user to the SSO server.
 # Note: needs a trailing slash
@@ -179,7 +179,7 @@ MIDDLEWARE_CLASSES = (
     )
 
 # Add your production name here. Django 1.6+
-ALLOWED_HOSTS = ['freq.lizard.net']
+ALLOWED_HOSTS = ['freq.lizard.net', 'localhost:8078']
 
 
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'

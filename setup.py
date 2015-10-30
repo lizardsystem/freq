@@ -12,7 +12,9 @@ install_requires = [
     'Django',
     'django-extensions',
     'django-nose',
-    'lizard-auth-client'
+    'djangorestframework',
+    'lizard-auth-client',
+    'pytz'
     ],
 
 tests_require = [
