@@ -1,0 +1,25 @@
+{% extends "freq/base.html" %}
+{% block well %}
+  <p>
+    Design of sampling frequency required the temporal characteristics of
+    groundwater level time series to be analyzed in the first place. The time
+    series consist of three main components: trend, periodicity and stationary
+    component. Therefore, the objectives for design of sampling frequency can be
+    defined as detection of trend, periodic fluctuations and mean value of
+    stationary component. The time interval of two years is pre-specified as a
+    period over which the objectives for network frequency design should be
+    achieved.
+  </p>
+  <p>
+    In order to observe the significant periodic fluctuations in the time
+    series, the sampling frequency should be more than twice the highest
+    frequency of significant periodic fluctuations. For example if the harmonic
+    analysis showed that monthly fluctuations are the most frequency significant
+    periodic fluctuation, the sampling frequency for monitor these fluctuations
+    should be more than twice per month. A higher sampling frequency is needed
+    to monitor a high frequency periodic component.
+  </p>
+{% endblock well %}
+{% block content %}
+    
+{% endblock content %}

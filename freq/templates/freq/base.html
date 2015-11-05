@@ -63,8 +63,8 @@
 
       {% block nav %}
         <div class="container">
-          <ul class="nav nav-tabs nav-justified" role="tablist">
-            {% for menu_title, tooltip, menu_url, menu_activation in view.menu %}
+          <ul class="nav nav-tabs" role="tablist">
+            {% for menu_title, tooltip, menu_url, menu_activation in menu %}
               <li role="presentation" class="{{ menu_activation }}" aria-controls="{{ menu_url }}">
                   <a href={% if menu_activation == 'disabled' %}'#'{% else %}
                       "{% url menu_url %}"{% endif %} title="{{ tooltip }}">
@@ -89,7 +89,11 @@
         <div class="row">
           <div class="col-md-8 side-container">
             <div class="row">
-              <h2 id="measurement_point">{{ view.measurement_point }}</h2>
+              <h2 id="measurement_point">{{ measurement_point }}<a
+                    class="glyphicon glyphicon-trash pull-right"
+                    href="{% url 'command' 'restart' %}"></a><a
+                    class="glyphicon glyphicon-share-alt icon-flipped
+                    pull-right"></a></h2>
             </div><!-- /row -->
             <div class="row">
                 <div class="well">
@@ -99,6 +103,27 @@
           </div><!-- /col -->
           <div class="col-md-4 side-container">
             <div id="map"></div>
+            <div id="error-well" class="well well-sm {{ show_error }}">
+                {{ error_message }}
+            </div>
+              {% if multiple_timeseries %}
+                <div class="dropdown" style="width:100%;">
+                  <button class="btn btn-default dropdown-toggle"
+                          type="button" id="dropdownMenu1"
+                          data-toggle="dropdown" aria-haspopup="true"
+                          aria-expanded="true" style="width:100%;
+                          text-align:left;">
+                    Select timeseries...
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                    {% for option_name, option_uuid in timeseries %}
+                      <li><a href="
+                      {% url 'timeseries' option_uuid %}">{{ option_name }}</a></li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              {% endif %}
           </div><!-- /col -->
         </div><!-- /row -->
           <div class="row">

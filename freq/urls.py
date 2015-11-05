@@ -24,9 +24,11 @@ urlpatterns = patterns(
     url(r'^locations/$', views.LocationsDataView.as_view(), name='map_data'),
     url(r'^timeseries/(?P<uuid>\w+)/data$', views.TimeSeriesDataView.as_view(),
         name='timeseries_data'),
-    url(r'^timeseries/(?P<uuid>[\w-]+)$', views.TimeSeriesView.as_view(),
-        name='timeseries_data'),
+    url(r'^timeseries/(?P<uuid>[\w-]+)$', views.StartPageView.as_view(),
+        name='timeseries'),
     url(r'^map$', views.MapView.as_view(), name='map_'),
+    url(r'^(?P<command>[\w-]+)$', views.StartPageView.as_view(),
+        name='command'),
     url(r'^$', views.StartPageView.as_view(), name='startpage')
     # url(r'^something/',
     #     views.some_method,

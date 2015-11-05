@@ -3,7 +3,7 @@ __author__ = 'roel.vandenberg@nelen-schuurmans.nl'
 import datetime
 import json
 import requests
-
+from freq.secrets import USR, PWD
 
 def join_urls(*args):
     return '/'.join(args)
@@ -15,11 +15,11 @@ class ApiError(Exception):
 
 class Base(object):
     data_type = None
-    username = 'dummy'
-    password = 'dummy'
-    use_header = False
+    username = USR
+    password = PWD
+    use_header = True
     extra_queries = {}
-    max_results = 1000
+    max_results = 100
 
     def __init__(self, base="nxt.staging.lizard.net"):
         self.results = []
@@ -112,7 +112,6 @@ class Locations(Base):
         result = []
         for x in self.results:
             if x['uuid'] not in self.uuids:
-                print(x['uuid'])
                 result.append((x['geometry']['coordinates'], x['uuid'], x['name']))
                 self.uuids.append(x['uuid'])
         return result
@@ -124,10 +123,16 @@ class TimeSeries(Base):
     def location_name(self, name):
         self.get(location__name=name)
 
-    def location_uuid(self, uuid):
+    def location_uuid(self, uuid, start='0001-01-01T00:00:00Z', end=None):
         self.get(location__uuid=uuid)
+        timeseries_uuids = [x['uuid'] for x in self.results]
+        self.results = []
+        for uuid in timeseries_uuids:
+            ts = TimeSeries(self.base)
+            ts.uuid(uuid, start, end)
+            self.results += ts.results
 
-    def uuid(self, uuid, start='0001-01-01T00:00:00', end=None):
+    def uuid(self, uuid, start='0001-01-01T00:00:00Z', end=None):
         if not end:
             self.get(uuid=uuid, start=start)
         else:

@@ -2,7 +2,12 @@
 
 {% block body %}
     </br>
+
     <div class="container full-page-map">
+        <div id="error-well" class="well well-sm hidden">
+            {{ error_message }}
+        </div>
         <div id="map" class="full-page-map"></div>
     </div>
+
 {% endblock body %}

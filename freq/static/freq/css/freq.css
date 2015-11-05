@@ -1,25 +1,26 @@
-/* COLOURS:
-turquoise:     #1abc9c;
-green-sea:     #16a085;
-emerald:       #2ecc71;
-nephritis:     #27ae60;
-peter-river:   #3498db;
-belize-hole:   #2980b9;
-amethyst:      #9b59b6;
-wisteria:      #8e44ad;
-wet-asphalt:   #34495e;
-midnight-blue: #2c3e50;
-sun-flower:    #f1c40f;
-orange:        #f39c12;
-carrot:        #e67e22;
-pumpkin:       #d35400;
-alizarin:      #e74c3c;
-pomegranate:   #c0392b;
-clouds:        #ecf0f1;
-darkclouds:    #ced0d0;
-silver:        #bdc3c7;
-concrete:      #95a5a6;
-asbestos:      #7f8c8d;
+/* colors {
+    turquoise: #1abc9c;
+    green-sea: #16a085;
+    emerald: #2ecc71;
+    nephritis: #27ae60;
+    peter-river: #3498db;
+    belize-hole: #2980b9;
+    amethyst: #9b59b6;
+    wisteria: #8e44ad;
+    wet-asphalt: #34495e;
+    midnight-blue: #2c3e50;
+    sun-flower: #f1c40f;
+    orange: #f39c12;
+    carrot: #e67e22;
+    pumpkin: #d35400;
+    alizarin: #e74c3c;
+    pomegranate: #c0392b;
+    clouds: #ecf0f1;
+    darkclouds: #ced0d0;
+    silver: #bdc3c7;
+    concrete: #95a5a6;
+    asbestos: #7f8c8d;
+}
 */
 /** {*/
   /*border-radius: 0 !important;*/
@@ -65,6 +66,10 @@ ul.nav-tabs > li.disabled > a:hover {
     background-color: #e7ffe9;
     border: 0;
 }
+#error-well {
+   background-color: #fff8af;
+   color: #d35400;
+}
 strong {
     color: #16a085;
 }
@@ -86,4 +91,19 @@ strong {
 }
 html, body {
     height: 100%;
+}
+.icon-flipped {
+transform: scaleX(-1);
+-moz-transform: scaleX(-1);
+-webkit-transform: scaleX(-1);
+-ms-transform: scaleX(-1);
+}
+h2 > a.glyphicon {
+    color: #bdc3c7;
+    margin-left: 5px;
+    font-size: 0.8em;
+}
+h2 > a.glyphicon:hover {
+    color: #1abc9c;
+    text-decoration: none;
 }

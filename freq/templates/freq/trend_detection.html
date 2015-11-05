@@ -1,4 +1,19 @@
 {% extends "freq/base.html" %}
+{% block well %}
+  <p>
+    Trend shows a long term change in the mean level. Both linear and step trend
+    are commonly observed in groundwater time series.  Linear trends should be
+    applied when there is a gradual increase or decrease of groundwater levels
+    where a step trends should be applied when there is a sudden increase or
+    decrease in groundwater level.
+  </p>
+  <p>
+    <strong>
+      <span class="glyphicon glyphicon-info-sign"></span>
+        The trend is removed from the time series in order to continue with determination of periodic fluctuations and autoregressive model.
+    </strong>
+  </p>
+{% endblock well %}
 {% block content %}
-    
+
 {% endblock content %}

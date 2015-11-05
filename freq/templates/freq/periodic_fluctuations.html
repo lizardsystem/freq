@@ -1,4 +1,29 @@
 {% extends "freq/base.html" %}
+{% block well %}
+  <p>
+    Groundwater levels often exhibit certain periodicity in fluctuations due to
+    seasonally varying inputs (recharge/abstractions) into the groundwater
+    system. A periodic component of groundwater time series can be estimated by
+    harmonic analysis. The annual periodic fluctuation is often the most
+    dominant one, but other fluctuation can also be present by varying
+    abstraction rates or other seasonal fluctuations.
+  </p>
+  <p>
+    Number of significant periods of a time series can be estimated from a
+    cumulative periodogram.
+  </p>
+  <p>
+    Select the number of periods, which will be fitted with the groundwater
+    level time series.
+  </p>
+  <p>
+    <strong>
+      <span class="glyphicon glyphicon-info-sign"></span>
+        The periodic fluctuations are subtracted from the time series to
+        continue with the autoregressive model.
+    </strong>
+  </p>
+{% endblock well %}
 {% block content %}
     
 {% endblock content %}

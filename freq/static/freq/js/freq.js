@@ -63,18 +63,24 @@ demandChart:false, console:false*/
         };
     }
 
-    function drawLocationsBoundingBox(map){
+    function drawLocationsBoundingBox(map, locationsLayer){
         return function(data, textStatus, jqXHR){
-            var locs = data['locations']
-            for(var i=0; i<locs.length; i++){
-                var coordinates = [locs[i][0][1], locs[i][0][0]];
-                var marker = L.marker(
-                    coordinates,
-                    {
-                        title: locs[i][2]
-                    });
-                marker.on('click', visitUrl('/timeseries/' + locs[i][1]));
-                marker.addTo(map);
+            var locationError = data['error'];
+            if(locationError !=="" ){
+                $('#error-well').removeClass('hidden')
+            } else {
+                var locs = data['locations'];
+                locationsLayer.clearLayers();
+                for(var i=0; i<locs.length; i++){
+                    var coordinates = [locs[i][0][1], locs[i][0][0]];
+                    var marker = L.marker(
+                        coordinates,
+                        {
+                            title: locs[i][2]
+                        });
+                    marker.on('click', visitUrl('/timeseries/' + locs[i][1]));
+                    locationsLayer.addLayer(marker);
+                }
             }
         };
     }
@@ -103,7 +109,7 @@ demandChart:false, console:false*/
                 NElat: bounds._northEast.lat,
                 NElng: bounds._northEast.lng
             };
-            loadData('/locations/', drawLocationsBoundingBox(map), bbox);
+            loadData('/locations/', drawLocationsBoundingBox(map, locationsLayer), bbox);
         }
 
         var map = L.map('map').setView([45, 0], 3);
@@ -111,6 +117,12 @@ demandChart:false, console:false*/
             maxZoom: 18,
             tooltip: true
         }).addTo(map);
+
+        var locationsLayer = L.layerGroup();
+        locationsLayer.addTo(map);
+
+        console.log(locationsLayer);
+
         drawLocations ();
         console.log('loaded_map');
 
