@@ -28,10 +28,16 @@
     <link rel="stylesheet" href="{{ STATIC_URL }}freq/css/freq.css">
     <link rel="stylesheet"
         href="{{ STATIC_URL }}ajax/libs/leaflet/0.7.3/leaflet.css" />
+
+    {% block chart_css %}
+      <link rel="stylesheet" href="{{ STATIC_URL }}nvd3/nv.d3.min.css">
+    {% endblock chart_css %}
+
+    {% block extra_css %}
+    {% endblock extra_css %}
+
   {% endblock css %}
 
-  {% block extra_css %}
-  {% endblock extra_css %}
 </head>
 
 <body>
@@ -66,9 +72,7 @@
           <ul class="nav nav-tabs" role="tablist">
             {% for menu_title, tooltip, menu_url, menu_activation in menu %}
               <li role="presentation" class="{{ menu_activation }}" aria-controls="{{ menu_url }}">
-                  <a href={% if menu_activation == 'disabled' %}'#'{% else %}
-                      "{% url menu_url %}"{% endif %} title="{{ tooltip }}">
-                  {{ menu_title }}</a></li>
+                  <a href={% if menu_activation == 'disabled' %}'#'{% else %}"{% url menu_url %}"{% endif %} title="{{ tooltip }}">{{ menu_title }}</a></li>
             {% endfor %}
           </ul>
           <!-- Tab panes -->
@@ -84,16 +88,23 @@
     {% endblock header %}
 
     {% block body %}
-        </br>
-        <div class="container body-container">
+      </br>
+      <div class="container body-container">
         <div class="row">
           <div class="col-md-8 side-container">
             <div class="row">
-              <h2 id="measurement_point">{{ measurement_point }}<a
+              <h2 id="measurement_point">{{ measurement_point }}
+                  <a
                     class="glyphicon glyphicon-trash pull-right"
-                    href="{% url 'command' 'restart' %}"></a><a
+                    href="{% url 'restart' %}"></a>
+                  <a
+                    href="{% url view.active %}?redo=1"
+                    class="glyphicon glyphicon-share-alt pull-right"></a>
+                  <a
+                    href="{% url view.active %}?undo=1"
                     class="glyphicon glyphicon-share-alt icon-flipped
-                    pull-right"></a></h2>
+                    pull-right"></a>
+              </h2>
             </div><!-- /row -->
             <div class="row">
                 <div class="well">
@@ -102,10 +113,6 @@
             </div><!-- /row -->
           </div><!-- /col -->
           <div class="col-md-4 side-container">
-            <div id="map"></div>
-            <div id="error-well" class="well well-sm {{ show_error }}">
-                {{ error_message }}
-            </div>
               {% if multiple_timeseries %}
                 <div class="dropdown" style="width:100%;">
                   <button class="btn btn-default dropdown-toggle"
@@ -117,47 +124,72 @@
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-                    {% for option_name, option_uuid in timeseries %}
-                      <li><a href="
-                      {% url 'timeseries' option_uuid %}">{{ option_name }}</a></li>
+                    {% for option_name, option_uuid, option_start, option_end in timeseries %}
+                      <li>
+                        <a href="{% url 'timeseries_start_end' uuid=option_uuid start=option_start end=option_end %}">
+                          {{ option_name }}
+                        </a>
+                      </li>
                     {% endfor %}
                   </ul>
                 </div>
               {% endif %}
+            <div id="map"></div>
+            <div id="error-well" class="well well-sm {{ show_error }}">
+                {{ error_message }}
+            </div>
           </div><!-- /col -->
         </div><!-- /row -->
-          <div class="row">
-              <div class="col-md-12">
-                {% block content %}
-                {% endblock content %}
-              </div>
-          </div><!-- /row -->
-        </div><!-- /container -->
+        <div class="row graph-height">
+          <div class="col-md-12 graph-height">
+            {% block content %}
+              {% block chart %}
+                <div id="chart" class="{{ chart }} graph-height">
+                  <svg class="graph-height"></svg>
+                </div>
+              {% endblock chart %}
+            {% endblock content %}
+          </div>
+        </div><!-- /row -->
+      </div><!-- /container -->
     {% endblock body %}
 
   {% block javascript %}
-  <div style="visibility: hidden">
-  {# Ajax calls need a CSRF token cookie, and this line sends one as a side effect #}
-  <!-- {{ csrf_token }} -->
+    <div style="visibility: hidden">
+      {# Ajax calls need a CSRF token cookie, and this line sends one as a side effect #}
+      <!-- {{ csrf_token }} -->
 
-  <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-  <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-  <!--[if lt IE 9]>
-    <script src="{{ STATIC_URL }}html5shiv/3.7.2/html5shiv.min
-    .js"></script>
-    <script src="{{ STATIC_URL }}respond/1.4.2/respond.min.js"></script>
-  <![endif]-->
-    <script src="{{ STATIC_URL }}jquery/jquery-1.11.3.min.js"></script>
-    <script src="{{ STATIC_URL }}bootstrap-3.3.5-dist/js/bootstrap.min.js">
-    </script>
-    <script src="{{ STATIC_URL }}ajax/libs/leaflet/0.7.3/leaflet.js"></script>
-    <script src="{{ STATIC_URL }}freq/js/freq.js"></script>
-  </div>
+      <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media
+      queries -->
+      <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+      <!--[if lt IE 9]>
+      <script src="{{ STATIC_URL }}html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="{{ STATIC_URL }}respond/1.4.2/respond.min.js"></script>
+      <![endif]-->
+      <script type="text/javascript">
+        window['startpage'] = {};
+        window.startpage.leafletImagesUrl=
+                "{{ STATIC_URL }}ajax/libs/leaflet/0.7.3/images/";
+        window.startpage.active="{{ view.active }}";
+        window.startpage.coordsSelected="{{ selected_coords }}";
+      </script>
+      <script src="{{ STATIC_URL }}jquery/jquery-1.11.3.min.js"></script>
+      <script src="{{ STATIC_URL }}bootstrap-3.3.5-dist/js/bootstrap.min.js">
+      </script>
+      <script src="{{ STATIC_URL }}ajax/libs/leaflet/0.7.3/leaflet.js"></script>
+
+      {% block charts_javascript %}
+        <script src="{{ STATIC_URL }}d3/d3.min.js"></script>
+        <script src="{{ STATIC_URL }}nvd3/nv.d3.min.js"></script>
+      {% endblock charts_javascript %}
+
+      <script src="{{ STATIC_URL }}freq/js/freq.js"></script>
+
+      {% block extra_javascript %}
+      {% endblock extra_javascript %}
+
+    </div>
   {% endblock javascript %}
-
-  {% block extra_javascript %}
-  {% endblock extra_javascript %}
-
 
 </body>
 </html>

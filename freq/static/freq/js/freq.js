@@ -64,6 +64,30 @@ demandChart:false, console:false*/
     }
 
     function drawLocationsBoundingBox(map, locationsLayer){
+        var imagesUrl = window.startpage.leafletImagesUrl;
+        var greenIcon = L.icon({
+            iconUrl: imagesUrl + 'marker-icon.png',
+            shadowUrl: imagesUrl + 'marker-shadow-new.png',
+
+            iconSize:     [16, 16], // size of the icon
+            shadowSize:   [40, 40], // size of the shadow
+            iconAnchor:   [8, 8], // point of the icon which will
+            // correspond to marker's location
+            shadowAnchor: [16, 16],  // the same for the shadow
+            popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+        });
+        var selectedIcon = L.icon({
+            iconUrl: imagesUrl + 'marker-selected.png',
+            shadowUrl: imagesUrl + 'marker-shadow.png',
+
+            iconSize:     [16, 16], // size of the icon
+            shadowSize:   [40, 40], // size of the shadow
+            iconAnchor:   [8, 8], // point of the icon which will
+            // correspond to marker's location
+            shadowAnchor: [11, 20],  // the same for the shadow
+            popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+        });
+
         return function(data, textStatus, jqXHR){
             var locationError = data['error'];
             if(locationError !=="" ){
@@ -76,22 +100,33 @@ demandChart:false, console:false*/
                     var marker = L.marker(
                         coordinates,
                         {
-                            title: locs[i][2]
+                            icon: greenIcon,
+                            title: locs[i][2],
+                            opacity: 0.6
                         });
-                    marker.on('click', visitUrl('/timeseries/' + locs[i][1]));
+                    marker.on('click', visitUrl('/timeseries/location_uuid/' + locs[i][1] + '&' +  locs[i][0][1] + '&' + locs[i][0][0]));
+                    locationsLayer.addLayer(marker);
+                }
+                coordinates = JSON.parse(window.startpage.coordsSelected);
+                if(coordinates.length > 0){
+                    var marker = L.marker(
+                        coordinates,
+                        {
+                            icon: selectedIcon
+                        }
+                    );
                     locationsLayer.addLayer(marker);
                 }
             }
         };
     }
 
-    function loadData(queryUrl, successFunction, data, requestType) {
+    function loadData(queryUrl, successFunction, requestType, data) {
         var ajaxCall = {
             url: queryUrl,
             success: successFunction,
-            type: requestType == undefined ? 'POST' : 'GET',
-            error: loadDataError,
-            data: data
+            type: requestType == undefined ? 'GET' : 'POST',
+            error: loadDataError
         };
         if(data !== undefined){
             ajaxCall['data'] = data
@@ -99,6 +134,40 @@ demandChart:false, console:false*/
         return $.ajax(ajaxCall);
     }
 
+    function drawGraph(data, textStatus, jqXHR){
+        console.log(data, textStatus, jqXHR);
+        if(data['data'].length > 0) {
+            nv.addGraph(function () {
+                var chart = nv.models.lineChart()
+                    .x(function(d){return d['x'];})
+                    .y(function(d){return d['y'];})
+                    .useInteractiveGuideline(true)
+
+                chart.xAxis
+                    .axisLabel('Date')
+                    .tickFormat(function(d) {
+                      return d3.time.format('%x')(new Date(d))
+                });
+
+                chart.yAxis
+                    .axisLabel('Waterlevel (m)')
+                    .tickFormat(d3.format('.02f'));
+
+                chart.lines.dispatch.on('elementClick', function(e){
+                    console.log(e[0].point);
+                });
+
+                d3.select('#chart svg')
+                    .datum(data.data)
+                    //.transition().duration(500)
+                    .call(chart);
+
+                nv.utils.windowResize(chart.update);
+
+                return chart;
+            });
+        }
+    }
 
     function loadMap() {
         function drawLocations () {
@@ -109,10 +178,16 @@ demandChart:false, console:false*/
                 NElat: bounds._northEast.lat,
                 NElng: bounds._northEast.lng
             };
-            loadData('/locations/', drawLocationsBoundingBox(map, locationsLayer), bbox);
+            loadData('/locations/', drawLocationsBoundingBox(map, locationsLayer), 'POST', bbox);
+        }
+        var coordinates = JSON.parse(window.startpage.coordsSelected);
+        var zoom = 10;
+        if(coordinates.length == 0){
+            coordinates = [45, 0];
+            zoom = 3;
         }
 
-        var map = L.map('map').setView([45, 0], 3);
+        var map = L.map('map').setView(coordinates, zoom);
         L.tileLayer('http://{s}.tiles.mapbox.com/v3/nelenschuurmans.iaa98k8k/{z}/{x}/{y}.png ', {
             maxZoom: 18,
             tooltip: true
@@ -121,16 +196,18 @@ demandChart:false, console:false*/
         var locationsLayer = L.layerGroup();
         locationsLayer.addTo(map);
 
-        console.log(locationsLayer);
-
         drawLocations ();
-        console.log('loaded_map');
 
         map.on('moveend', drawLocations);
+    }
+
+    function logData(data, textStatus, jqXHR){
+        console.log(data, textStatus, jqXHR);
     }
 
     $(document).ready(
         function() {
             loadMap();
+            loadData('/timeseries/data', drawGraph);
         });
 })(jQuery);

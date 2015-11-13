@@ -17,6 +17,7 @@ from freq.lizard_api_connector import GroundwaterLocations
 from freq.lizard_api_connector import TimeSeries
 from freq.lizard_api_connector import ApiError
 
+
 class BaseView(TemplateView):
     """Base view."""
     template_name = 'freq/base.html'
@@ -35,6 +36,22 @@ class BaseView(TemplateView):
             'sampling'),
     ]
     active = ''
+    tab_order = ['startpage', 'trend_detection', 'periodic_fluctuation',
+                 'autoregressive', 'sampling']
+
+    @property
+    def default(self):
+        return {
+            'startpage': {
+                'measurement_point': 'No Time Series Selected',
+                'chart': 'hidden',
+                'data': []
+            },
+            'trend_detection': {},
+            'periodic_fluctuation': {},
+            'autoregressive': {},
+            'sampling': {},
+        }
 
     def disabled(self, request):
         try:
@@ -50,12 +67,46 @@ class BaseView(TemplateView):
             }
             return request.session['disabled']
 
+    def last(self, request):
+        request.session['redo'] = request.session.get(
+            'redo',
+            {key: request.session.get(key, value) for key, value in
+             self.default.items()}
+        )
+        for i, status in enumerate(self.tab_order):
+            if request.session['disabled'][status] == 'disabled':
+                break
+        return i
+
+    def undo(self, request):
+        remove = self.tab_order[self.last(request) - 1]
+        request.session['redo'][remove] = request.session[remove]
+        if remove != 'startpage':
+            request.session['disabled'][remove] = 'disabled'
+        request.session[remove] = {}
+
+    def redo(self, request):
+        redo = self.tab_order[self.last(request)]
+        new_redo = request.session['redo'][redo]
+        if new_redo:
+            request.session['disabled'][redo] = ''
+            request.session[redo] = new_redo
+
+    def flush(self, request):
+        request.session.update(self.default)
+        del(request.session['disabled'])
+        request.session['disabled'] = self.disabled(request)
+
     def get(self, request, *args, **kwargs):
+        if request.GET.get('undo', False):
+            self.undo(request)
+        elif request.GET.get('redo', False):
+            self.redo(request)
         disabled = self.disabled(request)
         context = self.get_context_data(**kwargs)
         context['show_error'] = ''
-        context['measurement_point'] = request.session.get('measurement_point',
-                                                        'No Time Series Selected')
+        context['measurement_point'] = request.session['startpage'].get(
+            'measurement_point', 'No Time Series Selected')
         context['menu'] = [
             (title, description, link, disabled[link] if link != self.active
             else 'active') for title, description,
@@ -64,7 +115,14 @@ class BaseView(TemplateView):
         if not 'error_message' in kwargs:
             context['error_message'] = ''
             context['show_error']='hidden'
+        context['selected_coords'] = json.dumps([float(x) for x
+                                                 in request.session[
+                                                     'startpage'].get(
+            'selected_coords', [])])
         return self.render_to_response(context)
+
+    def set_session(self, request):
+        request.session[self.active] = request.session.get(self.active, {})
 
 
 class MapView(BaseView):
@@ -77,30 +135,80 @@ class StartPageView(BaseView):
     template_name = 'freq/startpage.html'
 
     def get(self, request, *args, **kwargs):
+        self.set_session(request)
+        return super().get(request, *args, **kwargs)
+
+
+class ReStartPageView(StartPageView):
+
+    def get(self, request, *args, **kwargs):
+        self.flush(request)
+        self.set_session(request)
+        return super().get(request, *args, **kwargs)
+
+
+class TimeSeriesQueryView(StartPageView):
+
+    def get(self, request, x_coord, y_coord, *args, **kwargs):
         kwargs['multiple_timeseries'] = False
-        if 'command' in kwargs and kwargs['command'] == 'restart':
-            request.session.flush()
-        if 'uuid' in kwargs:
-            ts = TimeSeries()
-            print(kwargs['uuid'])
-            ts.location_uuid(kwargs['uuid'])
-            print(len(ts.results))
-            if len(ts.results) == 0:
-                kwargs['error_message'] = 'No time series found for this ' \
-                                          'location, please select another.'
-            elif len(ts.results) == 1:
-                request.session['measurement_point'] = "Meetpunt: " + \
-                                                       ts.results[0]['name']
-                request.session['disabled']['trend_detection'] = ''
-            else:
-                kwargs['error_message'] = 'Multiple time series found for ' \
-                                          'this location, please select one ' \
-                                          'below.'
-                kwargs['multiple_timeseries'] = True
-                kwargs['timeseries'] = [(x['location']['name'],
-                                         x['location']['uuid'])
-                                        for x in
-                                        ts.results]
+        ts = TimeSeries()
+        ts.location_uuid(kwargs['uuid'])
+        request.session['startpage']['selected_coords'] = [x_coord, y_coord]
+        if len(ts.results) == 0:
+            kwargs['error_message'] = 'No time series found for this ' \
+                                      'location, please select another.'
+        elif len(ts.results) == 1:
+            request.session['startpage']['measurement_point'] = \
+                "Meetpunt: " + ts.results[0]['name']
+            request.session['disabled']['trend_detection'] = ''
+            request.session['trend_detection'] = {'active':True}
+        else:
+            kwargs['error_message'] = 'Multiple time series found for ' \
+                                      'this location, please select one ' \
+                                      'below.'
+            kwargs['multiple_timeseries'] = True
+            kwargs['timeseries'] = [
+                (
+                    x['location']['name'] + ' - ' + x['name'],
+                    x['uuid'],
+                    x['first_value_timestamp'],
+                    x['last_value_timestamp']
+                )
+                for x in ts.results]
+        return super().get(request, *args, **kwargs)
+
+
+class TimeSeriesStartPageView(StartPageView):
+
+    def get(self, request, uuid, start, end, *args, **kwargs):
+        ts = TimeSeries()
+        ts.uuid(uuid, start, end)
+
+        if len(ts.results) == 0:
+            kwargs['error_message'] = 'No time series found for this ' \
+                                      'location, please select another.'
+        else:
+            data = [{'y': x['max'], 'x': x['timestamp']}
+                             for x in ts.results[0]['events']]
+            data = [{
+                'values': data,
+                'key': 'Groundwaterlevels (m)',
+                'color': '#1abc9c'
+            }]
+            request.session['startpage']['measurement_point'] = \
+                "Meetpunt: " + ts.results[0]['location']['name']
+            request.session['disabled']['trend_detection'] = ''
+            request.session['trend_detection'] = {'active':True}
+            request.session['startpage'].update(
+                {
+                    'start': start,
+                    'end': end,
+                    'uuid': uuid,
+                    'data': data
+                }
+            )
+            kwargs['data'] = data
+            kwargs['chart'] = ''
         return super().get(request, *args, **kwargs)
 
 
@@ -150,9 +258,17 @@ class LocationsDataView(APIView):
 
 class TimeSeriesDataView(APIView):
 
-    def get(self, request, uuid, *args, **kwargs):
-        print(uuid)
-        return super().get(request, *args, **kwargs)
+    def get(self, request, *args, **kwargs):
+        startpage = request.session['startpage']
+        response_dict = {
+            'data': startpage.get('data', []),
+            'start': startpage.get('start', 0),
+            'end': startpage.get('end', 0),
+            'uuid': startpage.get('end', ''),
+            'name': startpage.get('measurement_point', '')
+        }
+        print(response_dict)
+        return RestResponse(response_dict)
 
     # JS_EPOCH = datetime.datetime(1970, 1, 1, tzinfo=pytz.utc)
     #
