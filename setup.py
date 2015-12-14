@@ -14,7 +14,11 @@ install_requires = [
     'django-nose',
     'djangorestframework',
     'lizard-auth-client',
-    'pytz'
+    'numpy',
+    'pandas',
+    'pytz',
+    'scipy',
+    'statsmodels',
     ],
 
 tests_require = [

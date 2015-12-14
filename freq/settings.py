@@ -140,7 +140,7 @@ TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 # SSO *can* be disabled for development with local accounts.
 SSO_ENABLED = True
 
-from freq.secrets import SSO_KEY, SSO_SECRET, SECRET_KEY
+from freq.secretsettings import SSO_KEY, SSO_SECRET, SECRET_KEY
 
 # URL used to redirect the user to the SSO server.
 # Note: needs a trailing slash
@@ -166,7 +166,6 @@ INSTALLED_APPS = [
     'lizard_auth_client',
     ]
 
-ROOT_URLCONF = 'freq.urls'
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
@@ -181,8 +180,6 @@ MIDDLEWARE_CLASSES = (
 # Add your production name here. Django 1.6+
 ALLOWED_HOSTS = ['freq.lizard.net', 'localhost:8078']
 
-
-TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 
 # Used for django-staticfiles (and for media files
 STATIC_URL = '/static_media/'

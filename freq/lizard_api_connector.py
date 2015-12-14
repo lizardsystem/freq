@@ -4,12 +4,12 @@ import datetime
 import json
 import requests
 try:
-    from freq.secrets import USR, PWD
+    from freq.secretsettings import USR, PWD
 except ImportError:
-    print('WARNING: no secrets.py is found. USR and PWD should have been set '
+    print('WARNING: no secretsettings.py is found. USR and PWD should have been set '
           'beforehand')
 
-# When you use this script stand alone, please set your login information here:
+## When you use this script stand alone, please set your login information here:
 # USR = ******  # Replace the stars with your user name.
 # PWD = ******  # Replace the stars with your password.
 
@@ -68,12 +68,11 @@ class Base(object):
                                if isinstance(value, list) else str(value))
                                for key, value in queries.items())
         url = join_urls(self.base_url, query)
-        print('get url: ', url)
-        self.request(url)
+        self.fetch(url)
         self.parse()
         return self.results
 
-    def request(self, url):
+    def fetch(self, url):
         """
         GETs parameters from the api based on an url in a JSON format.
         Stores the JSON response in the json attribute.
@@ -116,7 +115,7 @@ class Base(object):
                 self.results += self.json['results']
                 next_url = self.json.get('next')
                 if next_url:
-                    self.request(next_url)
+                    self.fetch(next_url)
                 else:
                     break
             except IndexError:
@@ -250,6 +249,7 @@ class TimeSeries(Base):
         self.get(location__uuid=uuid)
         timeseries_uuids = [x['uuid'] for x in self.results]
         self.results = []
+        print('timeseries_uuids', timeseries_uuids, start, end)
         for uuid in timeseries_uuids:
             ts = TimeSeries(self.base)
             ts.uuid(uuid, start, end)
@@ -286,9 +286,16 @@ class TimeSeries(Base):
         """
         if not end:
             end = self.now
-        geom_within='{type:Polygon,coordinates:[[[' + str(min_lon) + ',' + min_lat + \
-            '],[' + min_lon + ',' + max_lat + '],[' + max_lon + ',' + max_lat + '],[' + \
-            max_lon + ',' + min_lat + '],[' + min_lon + ',' + min_lat + ']]]}'
+
+        polygon_coordinates = [
+            [min_lon, min_lat],
+            [min_lon, max_lat],
+            [max_lon, max_lat],
+            [max_lon, min_lat],
+            [min_lon, min_lat],
+        ]
+        points = [' '.join([str(x), str(y)]) for x, y in polygon_coordinates]
+        geom_within = 'POLYGON ((' + ', '.join(points) + '))'
         self.get(start=start, end=end, min_points=1, fields=[
             'count', 'sum', 'min', 'max'], location__geom_within=geom_within)
 

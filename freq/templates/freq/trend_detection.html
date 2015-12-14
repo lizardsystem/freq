@@ -10,7 +10,29 @@
   <p>
     <strong>
       <span class="glyphicon glyphicon-info-sign"></span>
-        The trend is removed from the time series in order to continue with determination of periodic fluctuations and autoregressive model.
+        The trend is removed from the time series in order to continue with
+        determination of periodic fluctuations and autoregressive model.
     </strong>
   </p>
 {% endblock well %}
+{% block chart_controls %}
+<div class="row">
+  <div class="col-sm-5">
+    <div class="input-daterange input-group" id="datepicker">
+      <input type="text" class="input-sm form-control" name="start" />
+      <span class="input-group-addon">to</span>
+      <input type="text" class="input-sm form-control" name="end" />
+    </div> <!-- /input-daterange -->
+  </div> <!-- /col-sm-6 -->
+  <div class="col-sm-3">
+    <div class="input-group">
+      <input type="text"
+             class="form-control"
+             placeholder="alpha ()"
+             aria-describedby="basic-addon2">
+      <span class="input-group-addon" id="basic-addon2">..</span>
+    </div>
+  </div> <!-- /col-sm-6 -->
+
+</div> <!-- /row -->
+{% endblock chart_controls %}
