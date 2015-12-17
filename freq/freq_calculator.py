@@ -239,7 +239,7 @@ def correlogram(data, n_lags):
         raise NameError('n_lags has to be a positive integer')
         
     z = np.zeros((len(data)-n_lags+1, n_lags))
-    for i in xrange(n_lags):
+    for i in range(n_lags):
         z[:,i] = data[i:len(data) - n_lags + 1 + i]
     
     corr_vec = np.corrcoef(z, rowvar=0)[0, :]
@@ -301,7 +301,7 @@ def harmonic(data, n_harmonics):
     a_param = []
     b_param = []
     sigma_param = []
-    for i in xrange(n_harmonics):
+    for i in range(n_harmonics):
         NewPeriod = af[i_indx[i]]*np.cos(2*np.pi*(i_indx[i])*x_values/len(data))\
                     + bf[i_indx[i]]*np.sin(2*np.pi*i_indx[i]*x_values/len(data))
         trend = trend + NewPeriod
@@ -325,7 +325,7 @@ def autoregressive(data, per):
     Parameters
     ----------
     data : array_like
-        Time serries for which the step trend is to be removed
+        Time series for which the step trend is to be removed
     per : int
         Number of periods used in the training of the autoregressive model
     

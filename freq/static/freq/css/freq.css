@@ -76,21 +76,13 @@ ul.nav-tabs > li.disabled > a:hover {
 strong {
     color: #16a085;
 }
-.body-container {
-    display: table;
-    height: 75%;
-}
-.side-container {
-  float: none;
-  display: table-cell;
-  height:0;
-}
+
 .map-row {
     margin: 0 15px 0 25px;
 }
 #map {
     height: 92%;
-    min-height: 230px;
+    min-height: 200px;
 }
 .full-width {
     width:100%;
@@ -172,4 +164,12 @@ h2 > a.glyphicon:hover {
 
 #tab-number-disabled {
     color: #e7e7e7;
+}
+
+h5 {
+    color: #16a085;
+}
+
+.glyphicon-sm {
+    font-size: 0.8em;
 }

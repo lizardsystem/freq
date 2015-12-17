@@ -39,9 +39,9 @@ class Base(object):
     password = PWD
     use_header = True
     extra_queries = {}
-    max_results = 100
+    max_results = 500
 
-    def __init__(self, base="nxt.staging.lizard.net"):
+    def __init__(self, base="http://ggmn.un-igrac.org"):
         """
         :param base: the site one wishes to connect to. Defaults to the
                      Lizard staging site.
@@ -69,6 +69,8 @@ class Base(object):
                                for key, value in queries.items())
         url = join_urls(self.base_url, query)
         self.fetch(url)
+        print('aantal gevonden', self.data_type, ':', self.json.get('count', 0),
+              'met url:', url)
         self.parse()
         return self.results
 
@@ -305,4 +307,17 @@ class GroundwaterLocations(Locations):
     Makes a connection to the locations endpoint of the lizard api.
     Only selects GroundwaterStations.
     """
-    extra_queries = {"object_type\__model": "GroundwaterStation"}
+    extra_queries = {
+        "object_type\__model": "GroundwaterStation",
+        "organisation__unique_id":"f757d2eb6f4841b1a92d57d7e72f450c"
+    }
+
+
+class GroundwaterTimeSeries(TimeSeries):
+    """
+    Makes a connection to the timeseries endpoint of the lizard api.
+    Only selects GroundwaterStations.
+    """
+    extra_queries = {
+        "object_type\__model": "GroundwaterStation",
+    }

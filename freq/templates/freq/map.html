@@ -1,23 +1,20 @@
 {% extends "freq/base.html" %}
 
 {% block body %}
-  </br>
-
+  <br>
   <div class="container full-page-map">
     <div class="row">
       <div class="col-sm-2">
-        <div class="btn-group btn-group full-width" role="group">
-          <button type="button" class="btn btn-default
-          eighty-width" id="current-statistic">
-            {{ view.active_statistic }}</button>
+        <h5>Statistic</h5>
+        <div class="btn-group full-width">
           <button type="button"
-                  class="btn btn-default dropdown-toggle twenty-width"
+                  class="btn btn-default dropdown-toggle full-width"
                   data-toggle="dropdown"
                   aria-haspopup="true"
-                  aria-expanded="false">
-            <span class="caret"></span>
+                  aria-expanded="false"
+                  id="current-statistic">
+            {{ view.active_statistic }} <span class="caret"></span>
           </button>
-
           <ul class="dropdown-menu full-width">
             {% for statistic in view.statistics %}
               <li><a href="#" id="dropdown-{{ statistic }}"
@@ -25,23 +22,23 @@
             {% endfor %}
           </ul>
         </div>
-      </div>
+      </div> <!-- /col-sm-4 -->
 
       <div class="col-sm-4">
+        <h5>Daterange</h5>
         <div class="input-daterange input-group" id="datepicker">
           <input type="text"
-                 class="input-sm form-control"
-                 name="start"
-                 value="{{ view.startdate }}"/>
+                 class="input form-control"
+                 name="start" />
           <span class="input-group-addon">to</span>
           <input type="text"
-                 class="input-sm form-control"
-                 name="end"
-                 value="{{ view.enddate }}"/>
-        </div>
-      </div>
+                 class="input form-control"
+                 name="end" />
+        </div> <!-- /input-daterange -->
+      </div> <!-- /col-sm-4 -->
 
       <div class="col-sm-6">
+        <h5>Legend</h5>
         <div id="legend" onselectstart="return false"></div>
       </div>
     </div>

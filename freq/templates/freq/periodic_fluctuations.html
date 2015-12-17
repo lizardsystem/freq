@@ -24,6 +24,39 @@
     </strong>
   </p>
 {% endblock well %}
-{% block content %}
-    
-{% endblock content %}
+{% block chart_controls %}
+    <div class="col-sm-2">
+    <h5>Number of harmonics</h5>
+    <div class="input-group">
+      <span class="input-group-btn">
+        <button type="button"
+                class="btn btn-default"
+                data-value="decrease"
+                data-target="#spinner"
+                data-toggle="spinner">
+          <span class="glyphicon glyphicon-minus"></span>
+        </button>
+      </span>
+      <input type="text"
+             title="Number of harmonics to be removed from the series"
+             data-ride="spinner"
+             id="spinner"
+             class="form-control input-number"
+             value="0"
+             data-min="0"
+             data-max="{{ view.max_harmonics }}"
+             data-step="1"
+             data-precision="0">
+      <span class="input-group-btn">
+        <button type="button"
+                class="btn btn-default"
+                data-value="increase"
+                data-target="#spinner"
+                data-toggle="spinner">
+          <span class="glyphicon glyphicon-plus"></span>
+        </button>
+      </span>
+    </div> <!-- /input-group -->
+  </div> <!-- /col-sm-2 -->
+</div> <!-- /row -->
+{% endblock chart_controls %}

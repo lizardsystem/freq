@@ -17,22 +17,8 @@
 {% endblock well %}
 {% block chart_controls %}
 <div class="row">
-  <div class="col-sm-5">
-    <div class="input-daterange input-group" id="datepicker">
-      <input type="text" class="input-sm form-control" name="start" />
-      <span class="input-group-addon">to</span>
-      <input type="text" class="input-sm form-control" name="end" />
-    </div> <!-- /input-daterange -->
-  </div> <!-- /col-sm-6 -->
-  <div class="col-sm-3">
-    <div class="input-group">
-      <input type="text"
-             class="form-control"
-             placeholder="alpha ()"
-             aria-describedby="basic-addon2">
-      <span class="input-group-addon" id="basic-addon2">..</span>
-    </div>
-  </div> <!-- /col-sm-6 -->
-
+  {% include 'freq/include/dropdown.html' %}
+  {% include 'freq/include/spinner.html' %}
+  {% include 'freq/include/datepicker.html' %}
 </div> <!-- /row -->
 {% endblock chart_controls %}

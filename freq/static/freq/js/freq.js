@@ -1,61 +1,8 @@
 /*global $:false, jQuery:false, moment:false, ko:false, fillChart:false,
 demandChart:false, console:false*/
-/**
-* Configure jQuery to send cookies with XmlHttpRequests. Necessary to access
-* the Lizard API.
-*
-* For this to work, the API server must explicitly respond with:
-* Access-Control-Allow-Credentials: true
-* Access-Control-Allow-Origin: [origin_sent_in_request]
-*
-* Note: this must be executed before any Ajax calls!
-*/
 
-var api = 'demo.lizard.net';
-$.ajaxSetup({
-    // Be friends with django, add csrf token. cp-ed from
-    // http://stackoverflow.com/questions/5100539/django-csrf-check-failing-with-an-ajax-post-request
-    beforeSend: function(xhr, settings) {
-      function getCookie(name) {
-        var cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-          var cookies = document.cookie.split(';');
-            for (var i = 0; i < cookies.length; i++) {
-              var cookie = $.trim(cookies[i]);
-              // Does this cookie string begin with the name we want?
-              if (cookie.substring(0, name.length + 1) === (name + '=')) {
-              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-              break;
-            }
-          }
-        }
-        return cookieValue;
-      }
-      if (!(/^http:.*/.test(api) || /^https:.*/.test(api))) {
-        // Only send the token to relative URLs i.e. locally.
-        xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
-        }
-     },
-    timeout: 60 * 1000,
-    // The docs say: default: false for same-domain requests, true for
-    // cross-domain requests. So the default is good enough for us.
-    // crossDomain: true,
-    xhrFields: {
-        // withCredentials:
-        // The docs say withCredentials has no effect when same origin is used:
-        // https://dvcs.w3.org/hg/xhr/raw-file/tip/Overview.html#dom-xmlhttprequest-withcredentials
-        // "True when user credentials are to be included in a cross-origin request.
-        // False when they are to be excluded in a cross-origin request
-        // and when cookies are to be ignored in its response. Initially false."
-        // So, explicitly set this to true for our purposes.
-        withCredentials: true
-    }
-});
+var charts = [];
 
-function loadDataError(jqXHR, textStatus, errorThrown) {
-    var $error = $('<p>Fout bij het laden van de grafiekdata: ' +
-        errorThrown + '</p>')
-}
 
 function visitUrl(url){
     return function(){
@@ -112,8 +59,9 @@ function drawLocationsBoundingBox(map, locationsLayer){
                         icon: icon(pxSize, color)
                     }
                 );
-                marker.on('click', visitUrl('/timeseries/location_uuid/'
-                    + locs[i][1] + '&' +  locs[i][0][1] + '&' + locs[i][0][0]));
+                marker.on('click', visitUrl('/timeseries/location_uuid/?uuid='
+                    + locs[i][1] + '&x_coord=' +  locs[i][0][1] + '&y_coord='
+                    + locs[i][0][0]));
                 locationsLayer.addLayer(marker);
             }
         }
@@ -130,61 +78,71 @@ function drawLocationsBoundingBox(map, locationsLayer){
     };
 }
 
-function loadData(queryUrl, successFunction, requestType, data) {
-    var ajaxCall = {
-        url: queryUrl,
-        success: successFunction,
-        type: requestType == undefined ? 'GET' : requestType,
-        error: loadDataError
-    };
-    if(data !== undefined){
-        ajaxCall['data'] = data;
-    }
-    return $.ajax(ajaxCall);
-}
 
 function drawGraph(data, textStatus, jqXHR){
-    if(data.data.length > 0) {
-        console.log('data timeseries graph', data);
-        nv.addGraph(function () {
-            var chart = nv.models.lineChart()
-                .x(function(d){return d['x'];})
-                .y(function(d){return d['y'];})
-                 .useInteractiveGuideline(true);
+    //if(data.data.length > 0) {
+        console.log(data.data);
+        nv.addGraph(function() {
+          var chart = nv.models.lineChart()
+            .useInteractiveGuideline(true)
+            ;
 
-            chart.lines.dispatch.on('elementClick', function(e){
-                console.log(e[0].point);
-            });
+          chart.xAxis
+            .axisLabel('Time (ms)')
+            .tickFormat(d3.format(',r'))
+            ;
 
-            chart.xAxis
-                .tickFormat(function(d) {
-                  return d3.time.format('%x')(new Date(d))
-            });
+          chart.yAxis
+            .axisLabel('Voltage (v)')
+            .tickFormat(d3.format('.02f'))
+            ;
 
-            //chart.x2Axis
-            //    .tickFormat(function(d) {
-            //      return d3.time.format('%x')(new Date(d))
-            //});
+          d3.select('#chart svg')
+            .datum(data.data)
+            .transition().duration(500)
+            .call(chart)
+            ;
 
-            chart.yAxis
-                .tickFormat(d3.format('.02f'));
+          nv.utils.windowResize(chart.update);
 
-            d3.select('#chart svg')
-                .datum(data.data)
-                //.transition().duration(500)
-                .call(chart);
-
-            d3.select('#chart > svg > g > g > .nv-focus > .nv-linesWrap' +
-                ' > .nv-line')
-                .on('elementClick', function(e){
-                console.log(e[0].point);
-            });
-
-            nv.utils.windowResize(chart.update);
-
-            return chart;
+          return chart;
         });
-    }
+
+        //for(var i=0; i < data.data.length; i++){
+        //    console.log(i, data.data[0])
+        //    nv.addGraph(function () {
+        //        var chart = nv.models.lineChart()
+        //            .x(function(d){return d['x'];})
+        //            .y(function(d){return d['y'];})
+        //             .useInteractiveGuideline(true);
+        //
+        //        chart.lines.dispatch.on('elementClick', clickGraphPoint);
+        //
+        //        chart.xAxis
+        //            .tickFormat(function(d) {
+        //              return d3.time.format('%x')(new Date(d))
+        //        });
+        //
+        //        chart.yAxis
+        //            .tickFormat(d3.format('.02f'));
+        //
+        //        d3.select('#chart_' + i + ' > svg')
+        //            .datum(data.data[i])
+        //            //.transition().duration(500)
+        //            .call(chart);
+        //
+        //        //d3.select('#chart > svg > g > g > .nv-focus > .nv-linesWrap' +
+        //        //    ' > .nv-line')
+        //        //    .on('elementClick', clickGraphPoint); // TODO: check of dit klopt
+        //
+        //        nv.utils.windowResize(chart.update);
+        //
+        //        //charts.push(chart);
+        //
+        //        return chart;
+        //    });
+        //}
+    //}
 }
 
 function loadMap() {
@@ -201,12 +159,6 @@ function loadMap() {
         loadData('/bbox/?datatypes=locations', drawLocationsBoundingBox(map, locationsLayer),
             'GET', bbox);
     }
-
-    //var coordinates = window.map_.center;
-    //if(coordinates.length == 0){
-    //    coordinates = [45, 0];
-    //    zoom = 3;
-    //}
 
     var map = L.map('map').setView(window.map_.center, window.map_.zoom);
     L.tileLayer('http://{s}.tiles.mapbox.com/v3/nelenschuurmans.iaa98k8k/{z}/{x}/{y}.png ', {
@@ -226,16 +178,10 @@ function logData(data, textStatus, jqXHR){
     console.log(data, textStatus, jqXHR);
 }
 
-function loadDatePicker(){
-    $('.input-daterange').datepicker({
-        format: 'dd-mm-yyyy',
-        endDate: 'd'
-    });
-}
 
 $(document).ready(
-function() {
-    loadMap();
-    loadData('/timeseries/data', drawGraph);
-    loadDatePicker();
-});
+    function() {
+        loadMap();
+        loadData('/timeseries/data', drawGraph);
+    }
+);

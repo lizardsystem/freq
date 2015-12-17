@@ -1,0 +1,23 @@
+<div class="col-sm-2">
+  <h5>{{ view.dropdown_heading }}</h5>
+  <div class="btn-group full-width">
+    <button type="button"
+            class="btn btn-default dropdown-toggle full-width"
+            data-toggle="dropdown"
+            aria-haspopup="true"
+            aria-expanded="false">
+      <span id="dropdown-selected">{{ view.dropdown_selected }}</span> <span
+        class="caret"></span>
+    </button>
+    <ul class="dropdown-menu">
+      {% for option, link in view.dropdown_options  %}
+        <li>
+          <a onclick="clickDropDown({{ forloop.counter0 }});"
+             id="dropdown-option-{{ forloop.counter0 }}">
+            {{ option }}
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
