@@ -23,6 +23,10 @@ from freq.lizard_api_connector import GroundwaterTimeSeries
 from freq.lizard_api_connector import ApiError
 
 
+def today():
+    return dt.datetime.now().strftime('%d-%m-%Y')
+
+
 class BaseViewMixin(object):
     """Base view."""
     template_name = 'freq/base.html'
@@ -42,28 +46,52 @@ class BaseViewMixin(object):
     active = ''
     tab_order = ['startpage', 'trend_detection', 'periodic_fluctuations',
                  'autoregressive']
-    default_state = {
-        'map_': {
-            'center': [45.0, 0.0],
-            'zoom': 3
-        },
-        'startpage': {
-            'measurement_point': 'No Time Series Selected',
-            'chart': 'hidden',
-            'data': []
-        },
-        'trend_detection': {},
-        'periodic_fluctuations': {},
-        'autoregressive': {},
-        'disabled': {
-                'map_': '',
-                'startpage': '',
-                'trend_detection': 'disabled',
-                'periodic_fluctuations': 'disabled',
-                'autoregressive': 'disabled',
-        }
-    }
 
+    def __init__(self, *args, **kwargs):
+        self.default_state = {
+            'map_': {
+                'center': [45.0, 0.0],
+                'zoom': 3
+            },
+            'startpage': {
+                'measurement_point': 'No Time Series Selected',
+                'chart': 'hidden',
+                'data': [],
+                'datepicker': {'start': '1-1-1900', 'end': today()},
+                'graph': {},
+                'uuid': '',
+                'start_js': 0,
+                'end_js': 1000000000000,
+            },
+            'trend_detection': {
+                'spinner': {'value': 0.95},
+                'dropdown': {'value': 'Linear Trend'},
+                'graph': {}
+            },
+            'periodic_fluctuations': {
+                'spinner': {'value': 0},
+                'graph': {}
+            },
+            'autoregressive': {
+                'spinner': {'value': 0},
+                'graph': {}
+            },
+            'disabled': {
+                    'map_': '',
+                    'startpage': '',
+                    'trend_detection': 'disabled',
+                    'periodic_fluctuations': 'disabled',
+                    'autoregressive': 'disabled',
+            },
+        }
+        return super().__init__(*args, **kwargs)
+
+    def dispatch(self, *args, **kwargs):
+        self.set_session()
+        return super().dispatch(*args, **kwargs)
+
+    # ------------------------------------------------------------------------ #
+    ### Session handling
     def set_session(self):
         for key in self.default_state.keys():
             self.session[key] = self.session.get(key, self.default_state[key])
@@ -83,7 +111,16 @@ class BaseViewMixin(object):
             self.session[redo] = new_redo
 
     def flush(self):
-        self.session.update(self.default_state)
+        self.request.session.flush()
+        for key, value in self.default_state.items():
+            self.request.session[key] = value
+
+    def state(self, state):
+        return getattr(self, state + '_state')
+
+    @cached_property
+    def session(self):
+        return self.request.session
 
     @cached_property
     def map_state(self):
@@ -118,6 +155,10 @@ class BaseViewMixin(object):
         return self.session['redo']
 
     @cached_property
+    def active_state(self):
+        return self.state(self.active)
+
+    @cached_property
     def last(self):
         self.session['redo'] = self.session.get(
             'redo',
@@ -129,6 +170,8 @@ class BaseViewMixin(object):
                 break
         return i
 
+    # ------------------------------------------------------------------------ #
+    ### Page properties
     @cached_property
     def menu(self):
         return [
@@ -139,7 +182,6 @@ class BaseViewMixin(object):
 
     @cached_property
     def show_error(self):
-        print('show error????')
         if not 'error_message' in self.kwargs:
             self.error_message = ''
             return 'hidden'
@@ -150,41 +192,15 @@ class BaseViewMixin(object):
         return self.startpage_state.get(
             'measurement_point', 'No Time Series Selected')
 
+    # ------------------------------------------------------------------------ #
+    ### Map properties
     @cached_property
     def selected_coords(self):
         return json.dumps([float(x) for x in self.startpage_state.get(
             'selected_coords', [])])
 
-    @cached_property
-    def session(self):
-        return self.request.session
-
-    @cached_property
-    def today(self):
-        return dt.datetime.now().strftime('%d-%m-%Y')
-
-    @cached_property
-    def current(self):
-        return self.active if self.active else 'map_'
-
-    @property
-    def start(self):
-        start_old = self.session[self.current].get('start', self.today)
-        return self.request.GET.get('start', start_old)
-
-    @property
-    def end(self):
-        start_old = self.session[self.current].get('end', self.today)
-        return self.request.GET.get('end', start_old)
-
-    @property
-    def time_window(self):
-        return {'start': self.start + "T00:00:00Z",
-                'end': self.end + "T00:00:00Z"}
-
     @property
     def center(self):
-        print(self.map_state)
         try:
             return [float(x) for x in self.map_state.get('center', [45, 0])]
         except KeyError:
@@ -211,33 +227,119 @@ class BaseViewMixin(object):
         else:
             return ""
 
+    # ------------------------------------------------------------------------ #
+    ### Data handling
+
     @cached_property
     def timeseries(self):
         ts = GroundwaterTimeSeries()
-        ts.uuid(self.startpage_state['uuid'], self.startpage_state['start'],
-                self.startpage_state['end'])
-
-        if len(ts.results) == 0:
-            self.error_message = 'No time series found for this location, ' \
-                                 'please select another.'
-        else:
+        ts.uuid(self.startpage_state['uuid'], **self.time_window)
+        if len(ts.results) != 0:
             data = [{'y': x['max'], 'x': x['timestamp']}
                              for x in ts.results[0]['events']]
-            self.data = {
-                'values': data,
-                'key': 'Groundwaterlevels (m)',
-                'color': '#1abc9c'
-            }
+        else:
+            data = []
+
+        self.data = {
+            'values': data,
+            'key': 'Groundwaterlevels (m)',
+            'color': '#1abc9c'
+        }
 
         return self.data
 
+    @cached_property
+    def error_message(self):
+        if len(self.timeseries['values']) == 0:
+            return 'No time series found for this location, please select ' \
+                   'another.'
+        return ''
+
+    # ------------------------------------------------------------------------ #
+    ### Date handling
+    JS_EPOCH = dt.datetime(1970, 1, 1, tzinfo=pytz.utc)
+
+    def datetime_to_js(self, date_time):
+        if date_time is not None:
+            return (date_time - self.JS_EPOCH).total_seconds() * 1000
+
+    def js_to_datetime(self, date_time):
+        if date_time is not None:
+            return self.JS_EPOCH + dt.timedelta(seconds=date_time/1000)
+
+    @cached_property
+    def today(self):
+        return today()
+
+    @cached_property
+    def current(self):
+        return self.active if self.active else 'map_'
+
+    @cached_property
+    def start(self):
+        start_old = self.session[self.current].get('start', self.today)
+        return self.request.GET.get('start', start_old)
+
+    @cached_property
+    def end(self):
+        start_old = self.session[self.current].get('end', self.today)
+        return self.request.GET.get('end', start_old)
+
+    @property
+    def time_window(self):
+        return {
+            'start': self.startpage_state['start_js'],
+            'end': self.startpage_state['end_js']
+        }
+
+    # ------------------------------------------------------------------------ #
+    ### Button handling:
+
+    def default_value(self, button, state_name=None):
+        if not state_name:
+            state_name = self.active
+        return self.default_state[state_name][button]
+
+    def button_value(self, button, state_name=None):
+        if not state_name:
+            state = self.active_state
+        else:
+            state = self.state(state_name)
+        return state.get(
+            button, self.default_value(button, state_name))['value']
+
+    @cached_property
+    def spinner_value(self):
+        return self.button_value('spinner')
+
+    @cached_property
+    def dropdown_selected(self):
+        return self.button_value('dropdown')
+
+    @cached_property
+    def dropdown_unselected(self):
+        return [x for x in self.dropdown_options if x != self.dropdown_selected]
+
+    @cached_property
+    def datepicker_state(self):
+    # TODO: UGLY HACK > EITHER FIND EXPLANATION FOR BEHAVIOUR (
+    # TODO:     self.startpage_state['datepicker'] is sometimes a dictionary and
+    # TODO:     sometimes a string)
+        try:
+            return json.loads(self.startpage_state['datepicker'])
+        except (ValueError, TypeError):
+            return self.startpage_state['datepicker']
+
+    @cached_property
+    def datepicker_start(self):
+        return [int(x) for x in self.datepicker_state['start'].split('-')]
+
+    @cached_property
+    def datepicker_end(self):
+        return [int(x) for x in self.datepicker_state['end'].split('-')]
 
 
 class FreqTemplateView(TemplateView):
-
-    def dispatch(self, *args, **kwargs):
-        self.set_session()
-        return super().dispatch(*args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         if request.GET.get('undo', False):
@@ -277,6 +379,8 @@ class ReStartPageView(StartPageView):
 
     def get(self, request, *args, **kwargs):
         self.flush()
+        from time import sleep   # TODO: VERY UGLY HACK
+        sleep(1)                 # TODO: VERY UGLY HACK
         return super().get(request, *args, **kwargs)
 
 
@@ -323,8 +427,8 @@ class TimeSeriesByLocationUUIDView(StartPageView):
             self.trend_detection_state.update({'active': True})
             self.startpage_state.update(
                 {
-                    'start': result['first_value_timestamp'],
-                    'end': result['last_value_timestamp'],
+                    'start_js': result['first_value_timestamp'],
+                    'end_js': result['last_value_timestamp'],
                     'uuid': result['uuid']
                 }
             )
@@ -346,12 +450,28 @@ class TimeSeriesByLocationUUIDView(StartPageView):
 
 class TimeSeriesByUUIDView(StartPageView):
 
+    def to_date(self, date_extreme):
+        return self.js_to_datetime(int(self.request.GET[date_extreme])
+                                   ).strftime('%d-%m-%Y')
+
+    @property
+    def startdate(self):
+        return self.to_date('start')
+
+    @property
+    def enddate(self):
+        return self.to_date('end')
+
     def get(self, request, uuid, *args, **kwargs):
         self.startpage_state.update(
             {
                 'measurement_point': "Meetpunt: " + self.request.GET['name'],
-                'start': self.request.GET['start'],
-                'end': self.request.GET['end'],
+                'datepicker': {
+                    'start': self.startdate,
+                    'end': self.enddate
+                },
+                'start_js': request.GET['start'],
+                'end_js': request.GET['end'],
                 'uuid': uuid
             }
         )
@@ -374,14 +494,10 @@ class TrendDetectionView(BaseView):
     spinner_precision = 2
 
     dropdown_heading = "Trend type"
-    dropdown_selected = "Step trend"
     dropdown_options = [
-        ("Linear trend", "#")
+        "Linear trend",
+        "Step trend"
     ]
-
-    @property
-    def spinner_value(self):
-        return self.trend_detection_state.get('spinner_value', "0.95")
 
 
 class PeriodicFluctuationsView(BaseView):
@@ -404,7 +520,8 @@ class PeriodicFluctuationsView(BaseView):
 
     @property
     def spinner_value(self):
-        return self.trend_detection_state.get('spinner_value', "0")
+        return self.periodic_fluctuations_state.get(
+            'spinner', {'value': '0'})['value']
 
 
 class AutoRegressiveView(BaseView):
@@ -426,16 +543,24 @@ class AutoRegressiveView(BaseView):
         return 20  # TODO
 
 
-class SamplingFrequencyView(BaseView):
-    freq_active = 'active'
-    active = 'sampling'
-    template_name = 'freq/sampling_frequency.html'
-
-
 class BaseApiView(BaseViewMixin, APIView):
-    JS_EPOCH = dt.datetime(1970, 1, 1, tzinfo=pytz.utc)
 
-    def pd_timeseries_from_json(json_data, name=''):
+
+    def get(self, request, *args, **kwargs):
+        if self.button == 'datepicker':
+            self.startpage_state.update(
+                {
+                    self.button: self.request.GET.get(
+                        'value', self.default_value('datepicker', "startpage")
+                    )
+                }
+            )
+        elif self.button:
+            self.active_state.update({self.button: self.value})
+
+        return RestResponse({})
+
+    def pd_timeseries_from_json(self, json_data, name=''):
         data_from_json = json.load(json_data)
         # store results in a dataframe
         dataframe = pd.DataFrame(data_from_json)
@@ -450,19 +575,15 @@ class BaseApiView(BaseViewMixin, APIView):
 
     @property
     def value(self):
-        return self.request.GET.get('value', '')
+        value = self.request.GET.get('value', self.default_value(self.button))
+        try:
+            return json.loads(value)
+        except (ValueError, TypeError):
+            return value
 
     @property
     def pd_timeseries(self):
         return self.pd_timeseries_from_json(self.timeseries)
-
-    def datetime_to_js(self, date_time):
-        if date_time is not None:
-            return (date_time - self.JS_EPOCH).total_seconds() * 1000
-
-    def js_to_datetime(self, date_time):
-        if date_time is not None:
-            return self.JS_EPOCH + dt.timedelta(seconds=date_time/1000)
 
 
 class BoundingBoxDataView(BaseApiView):
@@ -542,51 +663,30 @@ class BoundingBoxDataView(BaseApiView):
 class TimeSeriesDataView(BaseApiView):
 
     def get(self, request, *args, **kwargs):
-        print(self.timeseries)
         response_dict = {
             'data': self.timeseries,
-            'start': self.startpage_state.get('start', 0),
-            'end': self.startpage_state.get('end', 0),
-            'uuid': self.startpage_state.get('uuid', ''),
-            'name': self.startpage_state.get('measurement_point', '')
+            'start': self.startpage_state['start_js'],
+            'end': self.startpage_state['end_js'],
+            'uuid': self.startpage_state['uuid'],
+            'name': self.startpage_state['measurement_point']
         }
         return RestResponse(response_dict)
-
-
 
 
 class StartpageDataView(BaseApiView):
     active = 'startpage'
 
-    def get(self, request, *args, **kwargs):
-        print(self.button)
-        print(json.loads(self.value))
-        return RestResponse({})
-
 
 class TrendDataView(BaseApiView):
-
-    def get(self, request, *args, **kwargs):
-        print(self.button)
-        print(json.loads(self.value))
-        return RestResponse({})
+    active = 'trend_detection'
 
 
 class FluctuationsDataView(BaseApiView):
-
-    def get(self, request, *args, **kwargs):
-        print(self.button)
-        print(json.loads(self.value))
-        return RestResponse({})
+    active = 'periodic_fluctuations'
 
 
 class RegressiveDataView(BaseApiView):
-
-    def get(self, request, *args, **kwargs):
-        print(self.button)
-        print(json.loads(self.value))
-        return RestResponse({})
-
+    active = 'autoregressive'
 
 
     # JS_EPOCH = datetime.datetime(1970, 1, 1, tzinfo=pytz.utc)

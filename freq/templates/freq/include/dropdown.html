@@ -10,7 +10,7 @@
         class="caret"></span>
     </button>
     <ul class="dropdown-menu">
-      {% for option, link in view.dropdown_options  %}
+      {% for option in view.dropdown_unselected  %}
         <li>
           <a onclick="clickDropDown({{ forloop.counter0 }});"
              id="dropdown-option-{{ forloop.counter0 }}">

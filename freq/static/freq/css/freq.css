@@ -100,8 +100,9 @@ html, body {
     height: 100%;
 }
 .graph-height {
-    height: 80%;
+    height: 250px;
 }
+
 .icon-flipped {
 transform: scaleX(-1);
 -moz-transform: scaleX(-1);

@@ -20,6 +20,7 @@ function changeGraphs(buttonType, altValue){
     // only change graphs when clicked?
     return function(value){
         if (altValue !==undefined) { value = altValue(); }
+        console.log(window.active, buttonType, value);
         console.log(value);
         var queryUrl = '/' + window.active + '_data/?button=' + buttonType +
             '&value=' + JSON.stringify(value);
@@ -36,11 +37,20 @@ function updateGraphs(graphs){
 }
 
 
+function setDate(startDate, endDate){
+    $('#date_picker_start').datepicker('setDate', startDate);
+    $('#date_picker_end').datepicker('setDate', endDate);
+}
+
+
 function loadDatePicker(){
     $('.input-daterange').datepicker({
         format: 'dd-mm-yyyy',
-        endDate: 'd'
+        endDate: 'd',
+        viewMode: 'years'
     }).change(changeGraphs('datepicker', datePickerValue));
+    console.log('updating datepicker');
+    setDate(window.startpage.startDate, window.startpage.endDate);
 }
 
 
@@ -78,8 +88,8 @@ function clickDropDown(dropdown_id){
 }
 
 
-function clickGraphPoint(e){
-    console.log(e[0].point);
+function clickGraphPoint(event){
+    changeGraphs('graph')(event[0].point);
 }
 
 

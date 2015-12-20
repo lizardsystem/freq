@@ -38,15 +38,15 @@ function drawLocationsBoundingBox(map, locationsLayer){
         data.values = {'min_total':0.5, 'max_total':2.5};
         var minValue = data.values['min_total'];
         var maxValue = data.values['max_total'];
-        var legendLabels = JSON.parse(localStorage.getItem("legendLabels"));
-        var colors = [];
-        for(var i=0;i<legendLabels.length;i++){
-            colors.push(legendLabels[i].color)
-        }
+        //var legendLabels = JSON.parse(localStorage.getItem("legendLabels"));
+        //var colors = [];
+        //for(var i=0;i<legendLabels.length;i++){
+        //    colors.push(legendLabels[i].color)
+        //}
         locationsLayer.clearLayers();
-        var colorScale = d3.scale.linear()
-            .range(colors)
-            .domain([minValue, maxValue]);
+        //var colorScale = d3.scale.linear()
+        //    .range(colors)
+        //    .domain([minValue, maxValue]);
         var pxSize = 7;
         var color = '#1abc9c';
         for(var i=0; i<locs.length; i++) {
@@ -80,70 +80,29 @@ function drawLocationsBoundingBox(map, locationsLayer){
 
 
 function drawGraph(data, textStatus, jqXHR){
-    //if(data.data.length > 0) {
-        console.log(data.data);
-        nv.addGraph(function() {
-          var chart = nv.models.lineChart()
-            .useInteractiveGuideline(true)
-            ;
+    nv.addGraph(function() {
+        var chart = nv.models.lineChart()
+            .useInteractiveGuideline(true);
+        chart.xAxis
+            .tickFormat(function(d) {
+                return d3.time.format('%x')(new Date(d))
+            });
+        chart.yAxis
+            .tickFormat(d3.format('.02f'));
 
-          chart.xAxis
-            .axisLabel('Time (ms)')
-            .tickFormat(d3.format(',r'))
-            ;
-
-          chart.yAxis
-            .axisLabel('Voltage (v)')
-            .tickFormat(d3.format('.02f'))
-            ;
-
-          d3.select('#chart svg')
-            .datum(data.data)
+        d3.select('#chart svg')
+            .datum([ data.data ])
             .transition().duration(500)
-            .call(chart)
-            ;
+            .call(chart);
 
-          nv.utils.windowResize(chart.update);
+        chart.lines.dispatch.on('elementClick', clickGraphPoint);
 
-          return chart;
-        });
+        nv.utils.windowResize(chart.update);
 
-        //for(var i=0; i < data.data.length; i++){
-        //    console.log(i, data.data[0])
-        //    nv.addGraph(function () {
-        //        var chart = nv.models.lineChart()
-        //            .x(function(d){return d['x'];})
-        //            .y(function(d){return d['y'];})
-        //             .useInteractiveGuideline(true);
-        //
-        //        chart.lines.dispatch.on('elementClick', clickGraphPoint);
-        //
-        //        chart.xAxis
-        //            .tickFormat(function(d) {
-        //              return d3.time.format('%x')(new Date(d))
-        //        });
-        //
-        //        chart.yAxis
-        //            .tickFormat(d3.format('.02f'));
-        //
-        //        d3.select('#chart_' + i + ' > svg')
-        //            .datum(data.data[i])
-        //            //.transition().duration(500)
-        //            .call(chart);
-        //
-        //        //d3.select('#chart > svg > g > g > .nv-focus > .nv-linesWrap' +
-        //        //    ' > .nv-line')
-        //        //    .on('elementClick', clickGraphPoint); // TODO: check of dit klopt
-        //
-        //        nv.utils.windowResize(chart.update);
-        //
-        //        //charts.push(chart);
-        //
-        //        return chart;
-        //    });
-        //}
-    //}
+        return chart;
+    });
 }
+
 
 function loadMap() {
     function drawLocations () {

@@ -267,6 +267,7 @@ class TimeSeries(Base):
         :return: a dictionary of with nested location, aquo quantities and
                  events.
         """
+        print('in timeseries uuid', uuid, start, end)
         if not end:
             end = self.now
         self.get(uuid=uuid, start=start, end=end)
