@@ -69,8 +69,8 @@ class Base(object):
                                for key, value in queries.items())
         url = join_urls(self.base_url, query)
         self.fetch(url)
-        print('aantal gevonden', self.data_type, ':', self.json.get('count', 0),
-              'met url:', url)
+        print('Number found {} : {} with URL: {}'.format(
+            self.data_type, self.json.get('count', 0), url))
         self.parse()
         return self.results
 
@@ -251,7 +251,6 @@ class TimeSeries(Base):
         self.get(location__uuid=uuid)
         timeseries_uuids = [x['uuid'] for x in self.results]
         self.results = []
-        print('timeseries_uuids', timeseries_uuids, start, end)
         for uuid in timeseries_uuids:
             ts = TimeSeries(self.base)
             ts.uuid(uuid, start, end)
@@ -267,7 +266,6 @@ class TimeSeries(Base):
         :return: a dictionary of with nested location, aquo quantities and
                  events.
         """
-        print('in timeseries uuid', uuid, start, end)
         if not end:
             end = self.now
         self.get(uuid=uuid, start=start, end=end)
