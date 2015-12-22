@@ -19,12 +19,13 @@ import pytz
 from rest_framework.response import Response as RestResponse
 from rest_framework.views import APIView
 import pandas as pd
+import numpy as np
 
 from freq import models
 from freq.lizard_api_connector import GroundwaterLocations
 from freq.lizard_api_connector import GroundwaterTimeSeries
 from freq.lizard_api_connector import ApiError
-
+import freq.freq_calculator as calculator
 
 def today():
     return dt.datetime.now().strftime('%d-%m-%Y')
@@ -49,7 +50,7 @@ DEFAULT_STATE = {
         'datepicker': {'start': '1-1-1900', 'end': today()},
         'dropdown': {'value': 'Linear Trend'},
         'graph': {'x': 0, 'y': 0, 'series': 0},
-        'spinner': {'value': 0.95},
+        'spinner': {'value': 0.05},
     },
     'periodic_fluctuations': {
         'spinner': {'value': 0},
@@ -521,6 +522,10 @@ class AutoRegressiveView(BaseView):
 
 class BaseApiView(BaseViewMixin, APIView):
 
+    def js_to_datestring(self, js_date_int):
+        date_time = self.js_to_datetime(js_date_int)
+        return date_time.strftime('%Y-%m-%d')
+
     def get(self, request, *args, **kwargs):
         if self.button == 'datepicker':
             self.set_session_value(
@@ -534,12 +539,13 @@ class BaseApiView(BaseViewMixin, APIView):
         return RestResponse(self.base_response)
 
     def pd_timeseries_from_json(self, json_data, name=''):
-        data_from_json = json.load(json_data)
-        # store results in a dataframe
-        dataframe = pd.DataFrame(data_from_json)
-        index = pd.DatetimeIndex(dataframe[0], freq='infer', tz=pytz.utc)
+        # store results in a numpy array
+        dates = np.array([self.js_to_datestring(x['x']) for x in json_data],
+                         dtype='datetime64')
+        values = np.array([y['y'] for y in json_data])
+        index = pd.DatetimeIndex(dates, freq='infer')
         # build a timeseries object so we can compare it with other timeseries
-        timeseries = pd.Series(dataframe[1].values, index=index, name=name)
+        timeseries = pd.Series(values, index=index, name=name)
         return timeseries
 
     @property
@@ -565,15 +571,14 @@ class BaseApiView(BaseViewMixin, APIView):
     @property
     def base_response(self):
         response = {
-            'name': 'chart',
-            'data': self.timeseries
+            'name': '#chart svg',
+            'data': [self.timeseries] + self.additional_response
         }
-        response.update(self.additional_response)
         return [response]
 
     @property
     def additional_response(self):
-        return {}
+        return []
 
 
 class BoundingBoxDataView(BaseApiView):
@@ -672,15 +677,50 @@ class StartpageDataView(BaseApiView):
 
     @property
     def additional_response(self):
-        return {}
+        return []
 
 
 class TrendDataView(BaseApiView):
     active = 'trend_detection'
 
+    def series_to_js(self, npseries, index, key, color='#2980b9'):
+        print(npseries)
+        # bfill because sometimes first element is a NaN
+        values = [{'x': self.datetime_to_js(index[i]), 'y': float(value)}
+                for i, value in enumerate(npseries)]
+        return {
+            'values': values,
+            'key': key,
+            'color': color
+        }
+
     @property
     def additional_response(self):
-        return {}
+        timeseries_raw = self.pd_timeseries_from_json(self.timeseries['values'],
+                                                      self.timeseries['key'])
+        timeseries = calculator.load(timeseries_raw)
+        try:
+            breakpoint = self.js_to_datetime(
+                int(self.request.session['trend_detection']['graph']['x'])
+            )
+            step_t = calculator.step(
+                data=timeseries[1],
+                bp=int(timeseries[0].index.searchsorted(breakpoint)),
+                alpha=float(self.request.session[
+                                'trend_detection']['spinner']['value']),
+                detrend_anyway=True
+            )
+            response_dict = [
+                self.series_to_js(step_t[0], timeseries[0].index,
+                                 'Detrended groundwaterlevels (m)'),
+                self.series_to_js(step_t[1], timeseries[0].index,
+                                 'Removed trend', color='#f39c12'),
+
+                ]
+            print(step_t[3])
+        except KeyError:
+            response_dict = []
+        return response_dict
 
 
 class FluctuationsDataView(BaseApiView):
@@ -688,7 +728,7 @@ class FluctuationsDataView(BaseApiView):
 
     @property
     def additional_response(self):
-        return {}
+        return []
 
 
 class RegressiveDataView(BaseApiView):
@@ -696,17 +736,5 @@ class RegressiveDataView(BaseApiView):
 
     @property
     def additional_response(self):
-        return {}
+        return []
 
-
-    # JS_EPOCH = datetime.datetime(1970, 1, 1, tzinfo=pytz.utc)
-    #
-    # def datetime_to_js(self, dt):
-    #     if dt is not None:
-    #         return (dt - self.JS_EPOCH).total_seconds() * 1000
-    #
-    # def series_to_js(self, pdseries):
-    #     # bfill because sometimes first element is a NaN
-    #     pdseries = pdseries.fillna(method='bfill')
-    #     return [(self.datetime_to_js(dt), float_or_none(value))
-    #             for dt, value in pdseries.iterkv()]

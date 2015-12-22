@@ -89,7 +89,6 @@ function drawGraph(data, textStatus, jqXHR){
             });
         chart.yAxis
             .tickFormat(d3.format('.02f'));
-
         d3.select('#chart svg')
             .datum([ data.data ])
             .transition().duration(500)
@@ -98,6 +97,8 @@ function drawGraph(data, textStatus, jqXHR){
         chart.lines.dispatch.on('elementClick', clickGraphPoint);
 
         nv.utils.windowResize(chart.update);
+
+        charts.push(chart);
 
         return chart;
     });

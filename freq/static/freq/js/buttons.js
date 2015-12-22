@@ -17,7 +17,6 @@ function spinnerValue() {
 
 
 function changeGraphs(buttonType, altValue){
-    // only change graphs when clicked?
     return function(value){
         if (altValue !==undefined) { value = altValue(); }
         console.log(window.active, buttonType, value);
@@ -28,9 +27,10 @@ function changeGraphs(buttonType, altValue){
     };
 }
 
+var charts = [];
 
 function updateGraphs(graphs){
-    for(var i; i < graphs.length; i++ ){
+    for(var i=0; i < graphs.length; i++ ){
         var graph = graphs[i];
         d3.select(graph.name).datum(graph.data).call(charts[i])
     }
@@ -44,13 +44,16 @@ function setDate(startDate, endDate){
 
 
 function loadDatePicker(){
-    $('.input-daterange').datepicker({
+    var daterange = $('.input-daterange');
+    daterange.datepicker({
         format: 'dd-mm-yyyy',
         endDate: 'd',
         viewMode: 'years'
-    }).change(changeGraphs('datepicker', datePickerValue));
+    });
     console.log('updating datepicker');
     setDate(window.startpage.startDate, window.startpage.endDate);
+    daterange.change(changeGraphs('datepicker', datePickerValue));
+    console.log('updated datepicker');
 }
 
 
@@ -101,9 +104,5 @@ $(document).ready(
         try {loadSpinner();} catch(e) {
             console.log("No spinner available, spinner not loaded", e);
         }
-        //try {loadDropDownSelector();} catch(e) {
-        //    console.log("No selector available, selector not loaded", e);
-        //}
-
     }
 );

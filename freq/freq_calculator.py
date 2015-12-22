@@ -60,7 +60,7 @@ def load(data=None, data_path=None, init_date=None, end_date=None,
     
     if data is None:
         if data_path is None:
-            data = pd.read_csv('./testing_data/001.csv',
+            data = pd.read_csv('../../FREQ_code/freq-nov-30/testing_data/001.csv',
                                parse_dates=['timestamp'], 
                                index_col='timestamp', sep=delimiter)
         else:
@@ -367,19 +367,19 @@ def autoregressive(data, per):
 
 
 def test():
-    samp_files = ['./testing_data/001.csv',
-                  './testing_data/002.csv',
-                  './testing_data/003.csv',
-                  './testing_data/004.csv',
-                  './testing_data/005.csv',
-                  './testing_data/006.csv',
-                  './testing_data/007.csv',
-                  './testing_data/008.csv',
-                  './testing_data/009.csv',
-                  './testing_data/010.csv',
-                  './testing_data/011.csv',
-                  './testing_data/012.csv',
-                  './testing_data/013.csv',]
+    samp_files = ['../../FREQ_code/freq-nov-30/testing_data/001.csv',
+                  '../../FREQ_code/freq-nov-30/testing_data/002.csv',
+                  '../../FREQ_code/freq-nov-30/testing_data/003.csv',
+                  '../../FREQ_code/freq-nov-30/testing_data/004.csv',
+                  '../../FREQ_code/freq-nov-30/testing_data/005.csv',
+                  '../../FREQ_code/freq-nov-30/testing_data/006.csv',
+                  '../../FREQ_code/freq-nov-30/testing_data/007.csv',
+                  '../../FREQ_code/freq-nov-30/testing_data/008.csv',
+                  '../../FREQ_code/freq-nov-30/testing_data/009.csv',
+                  '../../FREQ_code/freq-nov-30/testing_data/010.csv',
+                  '../../FREQ_code/freq-nov-30/testing_data/011.csv',
+                  '../../FREQ_code/freq-nov-30/testing_data/012.csv',
+                  '../../FREQ_code/freq-nov-30/testing_data/013.csv',]
     
     for samp_file in samp_files:
         try:
