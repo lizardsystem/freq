@@ -9,30 +9,56 @@ function datePickerValue() {
 }
 
 
-function spinnerValue() {
-    return {
-        value: $('#spinner').val()
+function spinnerValue(i) {
+    return function(){
+        return {
+            value: $('#spinner_' + i).val()
+        };
     };
 }
 
 
-function changeGraphs(buttonType, altValue){
+function changeGraphs(buttonType, altValue, changeTabs){
     return function(value){
+        if (changeTabs) {
+            var nextTab = {
+                trend_detection: 'periodic_fluctuations',
+                periodic_fluctuations: 'autoregressive'
+            }[window.active];
+            if(nextTab != undefined){
+                $('[aria-controls="' + nextTab + '"]').removeClass('disabled')
+            }
+        }
         if (altValue !==undefined) { value = altValue(); }
-        console.log(window.active, buttonType, value);
-        console.log(value);
         var queryUrl = '/' + window.active + '_data/?button=' + buttonType +
             '&value=' + JSON.stringify(value);
         loadData(queryUrl, updateGraphs)
     };
 }
 
-var charts = [];
+
+window.charts = [];
+
 
 function updateGraphs(graphs){
+    console.log(graphs, graphs.length, window.charts.length);
+    var chart = $('#chart_1');
+    var chart0 = $('#chart_0');
+    if(graphs.length == 2){
+        var height = chart0.height();
+        var width = chart0.width();
+        console.log(height, width);
+        $('#chart_1 > svg > g').css('height', height).css('width', width);
+        chart.removeClass('hidden').addClass('show');
+    } else {
+        chart.removeClass('show').addClass('hidden');
+    }
+    if(window.active == 'periodic_fluctuations'){
+        window.charts[0].xAxis.tickFormat(function(d) {return d});
+    };
     for(var i=0; i < graphs.length; i++ ){
         var graph = graphs[i];
-        d3.select(graph.name).datum(graph.data).call(charts[i])
+        d3.select(graph.name).datum(graph.data).call(window.charts[i]);
     }
 }
 
@@ -57,23 +83,26 @@ function loadDatePicker(){
 }
 
 
-function loadSpinner(){
-    $('#spinner').spinner().change(changeGraphs('spinner', spinnerValue));
+function loadSpinner(range){
+    for(var i=0; i < range; i++){
+        console.log('spinner instantiating: ', i);
+        $('#spinner_' + i).spinner().change(changeGraphs('spinner_' + i, spinnerValue(i), true));
+    }
         // hier setTimeout(function() gebruiken! en even checken of
         // het direct werkt. Anders boolean zetten die daarbuiten
         // ook gezet wordt.
 }
 
 
-function clickDropDown(dropdown_id){
+function clickDropDown(dropdown_id, option_id){
     var options = true;
     var i = 0;
-    var oldSelected = $('#dropdown-selected');
+    var oldSelected = $('#dropdown_selected_' + dropdown_id);
     var dropdowns = [oldSelected.text()];
-    var newText = $('#dropdown-option-' + dropdown_id).text();
+    var newText = $('#dropdown_' + dropdown_id + '-option-' + option_id).text();
     oldSelected.text(newText);
     while(options) {
-        var dropdown = $('#dropdown-option-' + i);
+        var dropdown = $('#dropdown_' + dropdown_id + '-option-' + i);
         if(dropdown.length) {
             dropdowns.push(dropdown.text());
         } else {
@@ -81,13 +110,13 @@ function clickDropDown(dropdown_id){
         }
         i++;
     }
-    dropdowns = dropdowns.slice(0, dropdown_id + 1).concat(
-        dropdowns.slice(dropdown_id + 2, dropdowns.length));
+    dropdowns = dropdowns.slice(0, option_id + 1).concat(
+        dropdowns.slice(option_id + 2, dropdowns.length));
     dropdowns.sort();
     for(var i=0; i < dropdowns.length; i++){
-        $('#dropdown-option-' + i).text(dropdowns[i])
+        $('#dropdown_' + dropdown_id + '-option-' + i).text(dropdowns[i])
     }
-    changeGraphs('dropdown')({ value: $.trim(newText) });
+    changeGraphs('dropdown_' + dropdown_id)({ value: $.trim(newText) }, undefined, true);
 }
 
 
@@ -101,7 +130,7 @@ $(document).ready(
         try {loadDatePicker();} catch(e) {
             console.log("No date picker available, date picker not loaded", e);
         }
-        try {loadSpinner();} catch(e) {
+        try {loadSpinner(window.spinnersLength);} catch(e) {
             console.log("No spinner available, spinner not loaded", e);
         }
     }

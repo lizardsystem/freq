@@ -111,7 +111,7 @@
                    {% else %}
                      href="{% url menu_url %}"
                    {% endif %}>
-                <span id="tab-number-{{ menu_activation }}">{{ i }}</span>
+                <span id="tab-number-">{{ i }}</span>
                   {{ menu_title }}
                 </a>
               </li>
@@ -192,7 +192,10 @@
               {% block chart_controls %}
               {% endblock chart_controls %}
               {% block chart %}
-                <div id="chart" class="{{ view.chart }} graph-height">
+                <div id="chart_0" class="{{ view.chart }} graph-height">
+                  <svg class="graph-height"></svg>
+                </div>
+                <div id="chart_1" class="{{ view.chart }} graph-height">
                   <svg class="graph-height"></svg>
                 </div>
               {% endblock chart %}
@@ -235,6 +238,7 @@
           window.map_.center = {{ view.center }};
           window.startpage.coordsSelected = {{ view.selected_coords }};
           window.map_.zoom = {{ view.zoom }};
+          window.spinnersLength = {{ view.spinners | length }};
           var startDate = {{ view.datepicker_start }};
           var endDate = {{ view.datepicker_end }};
           window.startpage.startDate = new Date(startDate[2], startDate[1]-1,

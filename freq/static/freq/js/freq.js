@@ -1,8 +1,6 @@
 /*global $:false, jQuery:false, moment:false, ko:false, fillChart:false,
 demandChart:false, console:false*/
 
-var charts = [];
-
 
 function visitUrl(url){
     return function(){
@@ -79,29 +77,37 @@ function drawLocationsBoundingBox(map, locationsLayer){
 }
 
 
-function drawGraph(data, textStatus, jqXHR){
-    nv.addGraph(function() {
-        var chart = nv.models.lineChart()
-            .useInteractiveGuideline(true);
-        chart.xAxis
-            .tickFormat(function(d) {
-                return d3.time.format('%x')(new Date(d))
-            });
-        chart.yAxis
-            .tickFormat(d3.format('.02f'));
-        d3.select('#chart svg')
-            .datum([ data.data ])
-            .transition().duration(500)
-            .call(chart);
+function drawGraph(){
 
-        chart.lines.dispatch.on('elementClick', clickGraphPoint);
+    for(var i=0; i < 2; i++){
+        nv.addGraph(function() {
+            var chart = nv.models.lineChart()
+                .useInteractiveGuideline(true);
+            chart.xAxis
+                .tickFormat(function(d) {
+                    return d3.time.format('%x')(new Date(d))
+                });
 
-        nv.utils.windowResize(chart.update);
+            chart.yAxis
+                .tickFormat(d3.format('.02f'));
 
-        charts.push(chart);
+            d3.select('#chart_' + i + ' svg')
+                .datum([{
+                    'values': [{'y': 0, 'x': 0}, {'y': 1, 'x': 1}],
+                    'key': 'empty',
+                    'color': '#ffffff'
+                }])
+                .transition().duration(500)
+                .call(chart);
 
-        return chart;
-    });
+            chart.lines.dispatch.on('elementClick', clickGraphPoint);
+            nv.utils.windowResize(chart.update);
+
+            window.charts.push(chart);
+
+            return chart;
+        });
+    }
 }
 
 
@@ -142,6 +148,8 @@ function logData(data, textStatus, jqXHR){
 $(document).ready(
     function() {
         loadMap();
-        loadData('/timeseries/data', drawGraph);
+        drawGraph();
+        changeGraphs()();
+        //loadData('/timeseries/data', drawGraph);
     }
 );

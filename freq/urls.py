@@ -25,7 +25,7 @@ urlpatterns = patterns(
         name='trend_detection_data'),
     url(r'^periodic_fluctuations_data/$', views.FluctuationsDataView.as_view(),
         name='fluctuations_data'),
-    url(r'^auto_regressive_data/$', views.RegressiveDataView.as_view(),
+    url(r'^autoregressive_data/$', views.RegressiveDataView.as_view(),
         name='regressive_data'),
     url(r'^bbox', views.BoundingBoxDataView.as_view(), name='map_data'),
     url(r'^timeseries/data$', views.TimeSeriesDataView.as_view(),
@@ -40,10 +40,4 @@ urlpatterns = patterns(
     url(r'^restart$', views.ReStartPageView.as_view(),
         name='restart'),
     url(r'^$', views.StartPageView.as_view(), name='startpage')
-    # url(r'^something/',
-    #     views.some_method,
-    #     name="name_it"),
-    # url(r'^something_else/$',
-    #     views.SomeClassBasedView.as_view(),
-    #     name='name_it_too'),
     ) + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

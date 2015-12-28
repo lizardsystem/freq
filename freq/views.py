@@ -1,34 +1,30 @@
 # (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.rst.
 # -*- coding: utf-8 -*-
 import copy
-import datetime
-import json
 import datetime as dt
-from pprint import pprint
+import json
+from pprint import pprint  # left here for debugging purposes
 from statistics import mean
-from time import sleep   # TODO: VERY UGLY HACK
 
-from django.utils.encoding import uri_to_iri
-from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 from django.views.generic.base import TemplateView
 
-import pytz
+import numpy as np
+import pandas as pd
 from rest_framework.response import Response as RestResponse
 from rest_framework.views import APIView
-import pandas as pd
-import numpy as np
 
-from freq import models
+from freq.buttons import *
+import freq.freq_calculator as calculator
+from freq.lizard_api_connector import ApiError
 from freq.lizard_api_connector import GroundwaterLocations
 from freq.lizard_api_connector import GroundwaterTimeSeries
-from freq.lizard_api_connector import ApiError
-import freq.freq_calculator as calculator
+
 
 def today():
     return dt.datetime.now().strftime('%d-%m-%Y')
+
 
 DEFAULT_STATE = {
     'map_': {
@@ -43,21 +39,23 @@ DEFAULT_STATE = {
         'measurement_point': 'No Time Series Selected',
         'selected_coords': [],
         'start_js': 0,
+        'timeseries_length': -9999,
         'uuid': 'EMPTY',
     },
     'trend_detection': {
         'active': False,
         'datepicker': {'start': '1-1-1900', 'end': today()},
-        'dropdown': {'value': 'Linear Trend'},
+        'dropdown_0': {'value': '... (choose type)'},
         'graph': {'x': 0, 'y': 0, 'series': 0},
-        'spinner': {'value': 0.05},
+        'spinner_0': {'value': 0.05},
     },
     'periodic_fluctuations': {
-        'spinner': {'value': 0},
+        'spinner_0': {'value': 10},
+        'spinner_1': {'value': 0},
         'graph': {'x': 0, 'y': 0, 'series': 0},
     },
     'autoregressive': {
-        'spinner': {'value': 0},
+        'spinner_0': {'value': 1},
         'graph': {'x': 0, 'y': 0, 'series': 0},
     },
     'disabled': {
@@ -67,6 +65,7 @@ DEFAULT_STATE = {
             'autoregressive': 'disabled',
     },
 }
+
 
 class BaseViewMixin(object):
     """Base view."""
@@ -87,26 +86,24 @@ class BaseViewMixin(object):
     active = ''
     tab_order = ['startpage', 'trend_detection', 'periodic_fluctuations',
                  'autoregressive']
+    spinners = []
 
     # ------------------------------------------------------------------------ #
     ### Session handling
 
+    ## Use for debugging:
     # def dispatch(self, *args, **kwargs):
     #     print('\n\n\nIN {}'.format(type(self).__name__))
     #     pprint(dict(self.request.session))
     #     return super().dispatch(*args, **kwargs)
 
     def instantiate_session(self):
-        print('INSTANTIATING!')
         self.request.session['session_is_set'] = True
         default = copy.deepcopy(DEFAULT_STATE)
         self.request.session.update(default)
-        print('INSTANTIATING FINISHED')
 
     def set_session_value(self, state, key, value):
-        print("SETTING VALUE:", state, key, value)
         if self.is_default_type(state, key, value):
-            print('self.is_default_type', state, key, value)
             old_value = self.request.session[state].get(key)
             if old_value != value:
                 self.request.session[state][key] = value
@@ -114,7 +111,6 @@ class BaseViewMixin(object):
                 print('\nupdated {} with old value {} with new value {'
                       '}'.format(
                     key, old_value, value))
-                # pprint(dict(self.request.session))
         else:
             print('NOT MY TYPE!:', state, key, value)
             print('default:', type(DEFAULT_STATE[state][key]).__name__)
@@ -185,18 +181,14 @@ class BaseViewMixin(object):
 
     @property
     def center(self):
-        try:
-            return [float(x) for x in self.request.session['map_'].get('center',
+        return [float(x) for x in self.request.session['map_'].get('center',
                                                                        [45, 0])]
-        except KeyError:
-            return [45.0, 0.0]
 
     @property
     def zoom(self):
-        try:
-            return self.request.session['map_'].get('zoom', 3)
-        except KeyError:
-            return 3
+        if self.request.session['startpage']['selected_coords']:
+            return 10
+        return self.request.session['map_'].get('zoom', 3)
 
     @property
     def freq_icon_size(self):
@@ -231,7 +223,11 @@ class BaseViewMixin(object):
             'color': '#1abc9c'
         }
 
+        self.request.session['startpage']['timeseries_length'] = len(data)
+        self.request.session.modified = True
+
         return self.data
+
 
     @cached_property
     def error_message(self):
@@ -256,6 +252,7 @@ class BaseViewMixin(object):
     def today(self):
         return today()
 
+    # TODO: 'old' code once written for the map part, probably obsolete.
     # @cached_property
     # def current(self):
     #     return self.active if self.active else 'map_'
@@ -287,12 +284,19 @@ class BaseViewMixin(object):
     ### Button handling:
 
     @cached_property
+    def length(self):
+        length = self.request.session['startpage']['timeseries_length']
+        if length < 0:
+            return len(self.timeseries['values'])
+        return length
+
+    @cached_property
     def spinner_value(self):
-        return self.request.session[self.active]['spinner']['value']
+        return self.request.session[self.active]['spinner_0']['value']
 
     @cached_property
     def dropdown_selected(self):
-        return self.request.session[self.active]['dropdown']['value']
+        return self.request.session[self.active]['dropdown_0']['value']
 
     @cached_property
     def dropdown_unselected(self):
@@ -401,9 +405,10 @@ class TimeSeriesByLocationUUIDView(StartPageBaseView):
             result = self.timeseries[0]
             self.set_session_value('startpage', 'measurement_point',
                 "Meetpunt: " + result['name'])
-            self.request.session['disabled']['trend_detection'] = ''
+            self.set_session_value('disabled', 'trend_detection', 'enabled')
             self.request.session.modified = True
             self.set_session_value('trend_detection', 'active', True)
+            self.set_session_value('periodic_fluctuations', 'active', True)
             self.set_session_value('startpage', 'start_js', result['first_value_timestamp'])
             self.set_session_value('startpage', 'end_js', result['last_value_timestamp'])
             self.set_session_value('startpage', 'uuid', result['uuid'])
@@ -439,7 +444,6 @@ class TimeSeriesByUUIDView(StartPageBaseView):
         return self.to_date('end')
 
     def get(self, request, uuid, *args, **kwargs):
-        print('oughta be setting a lot of session values right now:')
         self.set_session_value('startpage', 'measurement_point',
                                "Meetpunt: " + self.request.GET['name'])
         self.set_session_value('startpage', 'datepicker',
@@ -454,7 +458,6 @@ class TimeSeriesByUUIDView(StartPageBaseView):
         self.request.session.modified = True
         self.set_session_value('trend_detection', 'active', True)
         self.chart = ''
-        print('Finished setting a lot of session values')
         return super().get(request, *args, **kwargs)
 
 
@@ -462,16 +465,21 @@ class TrendDetectionView(BaseView):
     freq_active = 'active'
     active = 'trend_detection'
     template_name = 'freq/trend_detection.html'
-    spinner_heading = 'Alpha (significance)'
-    spinner_title = "alpha (significance of the t-test for changes in the " \
-                    "mean (0-1))"
-    spinner_min = 0.01
-    spinner_max = 0.99
-    spinner_step = 0.01
-    spinner_precision = 2
+    spinners = Spinner(
+        heading='Alpha (significance)',
+        title="alpha (significance of the t-test for changes in the " \
+                    "mean (0-1))",
+        min_=0.01,
+        step=0.01,
+        precision=2
+    )
 
-    dropdown_heading = "Trend type"
-    dropdown_options = [
+    dropdowns = DropDown(
+        heading= "Trend type",
+    )
+    spinner_max = 0.99
+    dropdown_options= [
+        "Both trends",
         "Linear trend",
         "Step trend"
     ]
@@ -481,43 +489,43 @@ class PeriodicFluctuationsView(BaseView):
     freq_active = 'active'
     active = 'periodic_fluctuations'
     template_name = 'freq/periodic_fluctuations.html'
-    spinner_heading = 'Number of harmonics'
-    spinner_title = "Number of harmonics to be removed from the series"
-    spinner_min = 0
-    spinner_step = 1
-    spinner_precision = 0
+    spinners = [
+        Spinner(
+            heading='Correlation lags',
+            title="Number of lags used for the correlogram computation",
+            number=0
+        ),
+        Spinner(
+            heading='Number of harmonics',
+            title="Number of harmonics to be removed from the series",
+            number=1
+        )
+    ]
 
     @property
     def spinner_max(self):
         return int(self.length / 2)
 
     @property
-    def length(self):
-        return 20  # TODO
-
-    @property
-    def spinner_value(self):
+    def spinner_1_value(self):
         return self.request.session['periodic_fluctuations'].get(
-            'spinner', {'value': '0'})['value']
+            'spinner_1', {'value': '0'})['value']
 
 
 class AutoRegressiveView(BaseView):
     freq_active = 'active'
     active = 'autoregressive'
     template_name = 'freq/autoregressive.html'
-    spinner_heading = 'Number of periods'
-    spinner_title = "Number of periods used in the training of the autoregressive model"
-    spinner_min = 0
-    spinner_step = 1
-    spinner_precision = 0
+    spinners = Spinner(
+        heading='Number of periods',
+        title="Number of periods used in the training of the autoregressive " \
+               "model",
+        min_=1
+    )
 
     @property
     def spinner_max(self):
         return int(0.3 * self.length)
-
-    @property
-    def length(self):
-        return 20  # TODO
 
 
 class BaseApiView(BaseViewMixin, APIView):
@@ -533,9 +541,14 @@ class BaseApiView(BaseViewMixin, APIView):
                 json.loads(self.request.GET.get('value', self.request.session[
                     'startpage']['datepicker']))
             )
-        elif self.button:
+        elif self.button and self.button != 'undefined':
+            next_tab = {
+                'trend_detection': 'periodic_fluctuations',
+                'periodic_fluctuations': 'autoregressive'
+            }.get(self.active, False)
+            if next_tab:
+                self.set_session_value('disabled', next_tab, 'enabled')
             self.set_session_value(self.active, self.button, self.value)
-        print('BASE RESPONSE', self.base_response)
         return RestResponse(self.base_response)
 
     def pd_timeseries_from_json(self, json_data, name=''):
@@ -547,6 +560,104 @@ class BaseApiView(BaseViewMixin, APIView):
         # build a timeseries object so we can compare it with other timeseries
         timeseries = pd.Series(values, index=index, name=name)
         return timeseries
+
+    def load_timeseries(self, timeseries_values, name):
+        timeseries_raw = self.pd_timeseries_from_json(timeseries_values, name)
+        return calculator.load(timeseries_raw)
+
+    def series_to_js(self, npseries, index, key, color='#2980b9', dates=True):
+        values = [{'x': self.datetime_to_js(index[i]) if dates else i,
+                   'y': float(value)}
+                for i, value in enumerate(npseries)]
+        return {
+            'values': values,
+            'key': key,
+            'color': color
+        }
+
+    def linear_trend(self, timeseries=None, name=None):
+        if timeseries is None:
+            timeseries = self.timeseries['values']
+            if not name:
+                name = self.timeseries['key']
+            timeseries = self.load_timeseries(timeseries, name)[1]
+
+        return [calculator.linear(
+            data=timeseries,
+            alpha=float(self.request.session[
+                                'trend_detection']['spinner_0']['value']),
+            detrend_anyway=True
+        )]
+
+    def step_trend(self):
+        timeseries = self.load_timeseries(self.timeseries['values'],
+                                          self.timeseries['key'])
+        try:
+            split = int(self.request.session['trend_detection']['graph']['x'])
+            if split == 0:
+                return
+            breakpoint = self.js_to_datetime(split)
+            return [calculator.step(
+                data=timeseries[1],
+                bp=int(timeseries[0].index.searchsorted(breakpoint)),
+                alpha=float(self.request.session[
+                                'trend_detection']['spinner_0']['value']),
+                detrend_anyway=True
+            )]
+        except KeyError:
+            return
+
+    def both_trends(self):
+        try:
+            step = self.step_trend()[0]
+            return [step, self.linear_trend(step[0])[0]]
+        except TypeError:
+            return
+
+    @cached_property
+    def pandas_timeseries(self):
+        return self.load_timeseries(self.timeseries['values'],
+                                          self.timeseries['key'])
+
+    @cached_property
+    def selected_trend(self):
+        selected_trend_type = self.request.session['trend_detection'][
+            'dropdown_0']['value']
+        if '...' in selected_trend_type:
+            return
+        self.set_session_value('disabled', 'periodic_fluctuations', 'enabled')
+        self.set_session_value('periodic_fluctuations', 'active', True)
+        if 'Linear' in selected_trend_type:
+            return self.linear_trend()
+        elif 'Step' in selected_trend_type:
+            return self.step_trend()
+        elif 'Both' in selected_trend_type:
+            return self.both_trends()
+        raise ValueError('Trend type unknown: ' + str(selected_trend_type))
+
+    @cached_property
+    def correllogram(self):
+        return calculator.correlogram(
+            data=self.selected_trend[-1][0],
+            n_lags=int(self.request.session['periodic_fluctuations'][
+                'spinner_0']['value'])
+        )
+
+    @cached_property
+    def harmonic(self):
+        return calculator.harmonic(
+            data=self.selected_trend[-1][0],
+            n_harmonics=int(self.request.session['periodic_fluctuations'][
+                'spinner_1']['value'])
+        )
+
+    @cached_property
+    def autoregressive(self):
+        return calculator.autoregressive(
+            data=self.harmonic[0],
+            per=int(self.request.session['autoregressive'][
+                'spinner_0']['value'])
+        )
 
     @property
     def button(self):
@@ -568,17 +679,20 @@ class BaseApiView(BaseViewMixin, APIView):
     def pd_timeseries(self):
         return self.pd_timeseries_from_json(self.timeseries)
 
-    @property
-    def base_response(self):
-        response = {
-            'name': '#chart svg',
-            'data': [self.timeseries] + self.additional_response
-        }
-        return [response]
+    @cached_property
+    def additional_response(self):
+        """Overwrite this property"""
+        return [[self.timeseries]]
 
     @property
-    def additional_response(self):
-        return []
+    def base_response(self):
+        response = []
+        for i in range(len(self.additional_response)):
+            response.append({
+                'name': '#chart_' + str(i) + ' svg',
+                'data': self.additional_response[i]
+            })
+        return response
 
 
 class BoundingBoxDataView(BaseApiView):
@@ -675,66 +789,80 @@ class TimeSeriesDataView(BaseApiView):
 class StartpageDataView(BaseApiView):
     active = 'startpage'
 
-    @property
-    def additional_response(self):
-        return []
-
 
 class TrendDataView(BaseApiView):
     active = 'trend_detection'
 
-    def series_to_js(self, npseries, index, key, color='#2980b9'):
-        print(npseries)
-        # bfill because sometimes first element is a NaN
-        values = [{'x': self.datetime_to_js(index[i]), 'y': float(value)}
-                for i, value in enumerate(npseries)]
-        return {
-            'values': values,
-            'key': key,
-            'color': color
-        }
-
-    @property
+    @cached_property
     def additional_response(self):
-        timeseries_raw = self.pd_timeseries_from_json(self.timeseries['values'],
-                                                      self.timeseries['key'])
-        timeseries = calculator.load(timeseries_raw)
-        try:
-            breakpoint = self.js_to_datetime(
-                int(self.request.session['trend_detection']['graph']['x'])
-            )
-            step_t = calculator.step(
-                data=timeseries[1],
-                bp=int(timeseries[0].index.searchsorted(breakpoint)),
-                alpha=float(self.request.session[
-                                'trend_detection']['spinner']['value']),
-                detrend_anyway=True
-            )
-            response_dict = [
-                self.series_to_js(step_t[0], timeseries[0].index,
-                                 'Detrended groundwaterlevels (m)'),
-                self.series_to_js(step_t[1], timeseries[0].index,
-                                 'Removed trend', color='#f39c12'),
-
-                ]
-            print(step_t[3])
-        except KeyError:
-            response_dict = []
-        return response_dict
+        result = []
+        if self.selected_trend is None:
+            return [[self.timeseries]]
+        for trend in self.selected_trend:
+            if trend is None:
+                result.append([self.timeseries])
+            else:
+                result.append([
+                    self.timeseries,
+                    self.series_to_js(
+                        npseries=trend[0],
+                        index=self.pandas_timeseries[0].index,
+                        key='Detrended groundwaterlevels (m)'
+                    ),
+                    self.series_to_js(
+                        npseries=trend[1],
+                        index=self.pandas_timeseries[0].index,
+                        key='Removed trend',
+                        color='#f39c12'
+                    ),
+                ])
+        return result
 
 
 class FluctuationsDataView(BaseApiView):
     active = 'periodic_fluctuations'
 
-    @property
+    @cached_property
     def additional_response(self):
-        return []
+        return [[
+            self.series_to_js(
+                npseries=self.correllogram,
+                index=[],
+                key='Cumulative Periodogram (Cp)',
+                dates=False
+            )
+        ], [
+            self.timeseries,
+            self.series_to_js(
+                npseries=self.harmonic[0],
+                index=self.pandas_timeseries[0].index,
+                key='Detrended groundwaterlevels (m)'
+            ),
+            self.series_to_js(
+                npseries=self.harmonic[1],
+                index=self.pandas_timeseries[0].index,
+                key='Removed trend',
+                color='#f39c12'
+            ),
+        ]]
 
 
 class RegressiveDataView(BaseApiView):
     active = 'autoregressive'
 
-    @property
+    @cached_property
     def additional_response(self):
-        return []
-
+        return [[
+            self.timeseries,
+            self.series_to_js(
+                npseries=self.autoregressive[0],
+                index=self.pandas_timeseries[0].index,
+                key='Detrended groundwaterlevels (m)'
+            ),
+            self.series_to_js(
+                npseries=self.autoregressive[1],
+                index=self.pandas_timeseries[0].index,
+                key='Removed trend',
+                color='#f39c12'
+            ),
+        ]]

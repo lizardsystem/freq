@@ -164,6 +164,7 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'django.contrib.staticfiles',
     'lizard_auth_client',
+    'rest_framework',
     ]
 
 

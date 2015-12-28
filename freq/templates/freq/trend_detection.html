@@ -17,8 +17,8 @@
 {% endblock well %}
 {% block chart_controls %}
 <div class="row">
-  {% include 'freq/include/dropdown.html' %}
-  {% include 'freq/include/spinner.html' %}
+  {% include 'freq/include/dropdown.html' with dropdown=view.dropdowns %}
+  {% include 'freq/include/spinner.html' with spinner=view.spinners spinner_value=view.spinner_value %}
   {% include 'freq/include/datepicker.html' %}
 </div> <!-- /row -->
 {% endblock chart_controls %}

@@ -1,30 +1,30 @@
 <div class="col-sm-2">
-  <h5>{{ view.spinner_heading }}</h5>
+  <h5>{{ spinner.heading }}</h5>
   <div class="input-group">
     <span class="input-group-btn">
       <button type="button"
               class="btn btn-default"
               data-value="decrease"
-              data-target="#spinner"
+              data-target="#{{ spinner.id }}"
               data-toggle="spinner">
         <span class="glyphicon glyphicon-minus"></span>
       </button>
     </span>
     <input type="text"
-           title={{ view.spinner_title }}
+           title={{ spinner.title }}
            data-ride="spinner"
-           id="spinner"
+           id="{{ spinner.id }}"
            class="form-control input-number"
-           value={{ view.spinner_value }}
-           data-min={{ view.spinner_min }}
+           value={{ spinner_value }}
+           data-min={{ spinner.min }}
            data-max={{ view.spinner_max }}
-           data-step={{ view.spinner_step }}
-           data-precision={{ view.spinner_precision }}>
+           data-step={{ spinner.step }}
+           data-precision={{ spinner.precision }}>
     <span class="input-group-btn">
       <button type="button"
               class="btn btn-default"
               data-value="increase"
-              data-target="#spinner"
+              data-target="#{{ spinner.id }}"
               data-toggle="spinner">
         <span class="glyphicon glyphicon-plus"></span>
       </button>

@@ -12,8 +12,6 @@ Contains the modules for monitoring of groundwater networks
 V 0.0 - Implementation in single file of complete FREQ library.
 
 """
-from __future__ import division, print_function
-
 import numpy as np
 import pandas as pd
 import scipy.stats as st
@@ -222,7 +220,7 @@ def correlogram(data, n_lags):
     Parameters
     ----------
     data : array_like
-        Time serries for which the step trend is to be removed
+        Time series for which the step trend is to be removed
     n_lags : int
         Number of lags used for the correlogram computation
     
@@ -233,8 +231,8 @@ def correlogram(data, n_lags):
     '''
     # Input validation
     if len(data) < MIN_SAMPLES:
-        raise NameError('Too little data, dataset has to be larger than {0}'\
-                        .format(MIN_SAMPLES))
+        raise NameError('Too little data ({0}), dataset has to be larger than '
+                        '{1}'.format(len(data), MIN_SAMPLES))
     if not isinstance(n_lags, int) or n_lags < 0:
         raise NameError('n_lags has to be a positive integer')
         
@@ -271,8 +269,8 @@ def harmonic(data, n_harmonics):
     '''
     # Input validation
     if len(data) < MIN_SAMPLES:
-        raise NameError('Too little data, dataset has to be larger than {0}'\
-                        .format(MIN_SAMPLES))
+        raise NameError('Too little data ({0}), dataset has to be larger than '
+                        '{1}'.format(len(data), MIN_SAMPLES))
                         
     if not isinstance(n_harmonics, int) or n_harmonics < 0:
         raise NameError('n_harmonics has to be a positive integer')    
@@ -340,8 +338,8 @@ def autoregressive(data, per):
     '''    
     # Input validation
     if len(data) < MIN_SAMPLES:
-        raise NameError('Too little data, dataset has to be larger than {0}'\
-                        .format(MIN_SAMPLES))
+        raise NameError('Too little data ({0}), dataset has to be larger than '
+                        '{1}'.format(len(data), MIN_SAMPLES))
                         
     if not isinstance(per, int) or per < 0:
         raise NameError('n_harmonics has to be a positive integer')    
