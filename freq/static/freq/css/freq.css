@@ -99,6 +99,9 @@ strong {
 html, body {
     height: 100%;
 }
+.stat {
+    margin: 0 5px 0 0;
+}
 .graph-height {
     height: 250px;
     margin-left: -15px;

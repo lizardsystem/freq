@@ -127,8 +127,9 @@ class BaseViewMixin(object):
         remove = self.tab_order[self.last - 1]
         self.request.session['redo'][remove] = self.request.session[remove]
         if remove != 'startpage':
-            self.disabled_state[remove] = 'disabled'
-        self.request.session[remove] = {}
+            self.request.session['disabled'][remove] = 'disabled'
+        default = copy.deepcopy(DEFAULT_STATE)
+        self.request.session[remove] = default[remove]
         self.request.session.modified = True
 
     def redo(self):
@@ -530,6 +531,7 @@ class AutoRegressiveView(BaseView):
 
 
 class BaseApiView(BaseViewMixin, APIView):
+    text_output = []
 
     def js_to_datestring(self, js_date_int):
         date_time = self.js_to_datetime(js_date_int)
@@ -701,7 +703,11 @@ class BaseApiView(BaseViewMixin, APIView):
                 'name': '#chart_' + str(i) + ' svg',
                 'data': self.additional_response[i]
             })
-        return response
+
+        return {
+            'graphs': response,
+            'statistics': self.text_output
+        }
 
 
 class BoundingBoxDataView(BaseApiView):
@@ -821,6 +827,7 @@ class TrendDataView(BaseApiView):
                 color='#f39c12'
             ),
         ])
+        self.text_output = [self.selected_trend[0][3]]
         try:
             result.append([
                 self.series_to_js(
@@ -841,6 +848,7 @@ class TrendDataView(BaseApiView):
                     color='#f39c12'
                 ),
             ])
+            self.text_output.append(self.selected_trend[0][3])
         except IndexError:
             pass
         return result

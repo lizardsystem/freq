@@ -151,7 +151,7 @@
               </h2>
             </div><!-- /row -->
             <div class="row">
-              <div class="well">
+              <div class="well explainer">
                 {% block well %}{% endblock well %}
               </div><!-- /well -->
             </div><!-- /row -->
@@ -194,9 +194,19 @@
                 <div id="chart_0" class="{{ view.chart }} graph-height">
                   <svg class="graph-height"></svg>
                 </div>
+                <div class="stat statistics_0 row hidden">
+                  <div class="well well-sm">
+                    <p class="statistics-well_0"></p>
+                  </div><!-- /well -->
+                </div><!-- /row -->
                 <div id="chart_1" class="{{ view.chart }} graph-height">
                   <svg class="graph-height graph-margin"></svg>
                 </div>
+                <div class="stat statistics_1 row hidden">
+                  <div class="well well-sm">
+                    <p class="statistics-well_1"></p>
+                  </div><!-- /well -->
+                </div><!-- /row -->
               {% endblock chart %}
             {% endblock content %}
         </div><!-- /row -->

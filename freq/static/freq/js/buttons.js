@@ -42,7 +42,16 @@ function changeGraphs(buttonType, altValue, changeTabs){
 window.charts = [];
 
 
-function updateGraphs(graphs){
+function updateGraphs(data){
+    var graphs = data.graphs;
+    var info = data.statistics;
+    if(info) {
+        $(".statistics_1").addClass('hidden');
+        for(var i=0; i < info.length; i++){
+            $(".statistics_" + i).removeClass('hidden');
+            $(".statistics-well_" + i).text(info[i]);
+        }
+    }
     console.log(graphs, graphs.length, window.charts.length);
     var chart = $('#chart_1');
     var chart0 = $('#chart_0');
