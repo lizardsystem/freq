@@ -152,8 +152,8 @@ def step(data, bp, alpha, detrend_anyway=True):
     param = mean_a, mean_b, pval, t_test_val        
     
     return det_serie, trend, param, text_output
-    
-    
+
+
 def linear(data, alpha, detrend_anyway=True):
     '''
     Calculates and remove step trend

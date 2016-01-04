@@ -26,6 +26,7 @@ def today():
     return dt.datetime.now().strftime('%d-%m-%Y')
 
 
+TIMESERIES_MEASUREMENT_FREQUENCY = 'M'
 DEFAULT_STATE = {
     'map_': {
         'center': [45.0, 0.0],
@@ -563,7 +564,15 @@ class BaseApiView(BaseViewMixin, APIView):
 
     def load_timeseries(self, timeseries_values, name):
         timeseries_raw = self.pd_timeseries_from_json(timeseries_values, name)
-        return calculator.load(timeseries_raw)
+        return calculator.load(
+            data=timeseries_raw,
+            data_path=None,
+            init_date=None,
+            end_date=None,
+            frequency=TIMESERIES_MEASUREMENT_FREQUENCY,
+            interpolation_method='linear',
+            delimiter=';'
+        )
 
     def series_to_js(self, npseries, index, key, color='#2980b9', dates=True):
         values = [{'x': self.datetime_to_js(index[i]) if dates else i,
@@ -581,13 +590,13 @@ class BaseApiView(BaseViewMixin, APIView):
             if not name:
                 name = self.timeseries['key']
             timeseries = self.load_timeseries(timeseries, name)[1]
-
-        return [calculator.linear(
+        result = calculator.linear(
             data=timeseries,
             alpha=float(self.request.session[
                                 'trend_detection']['spinner_0']['value']),
             detrend_anyway=True
-        )]
+        )
+        return [result]
 
     def step_trend(self):
         timeseries = self.load_timeseries(self.timeseries['values'],
@@ -798,24 +807,42 @@ class TrendDataView(BaseApiView):
         result = []
         if self.selected_trend is None:
             return [[self.timeseries]]
-        for trend in self.selected_trend:
-            if trend is None:
-                result.append([self.timeseries])
-            else:
-                result.append([
-                    self.timeseries,
-                    self.series_to_js(
-                        npseries=trend[0],
-                        index=self.pandas_timeseries[0].index,
-                        key='Detrended groundwaterlevels (m)'
-                    ),
-                    self.series_to_js(
-                        npseries=trend[1],
-                        index=self.pandas_timeseries[0].index,
-                        key='Removed trend',
-                        color='#f39c12'
-                    ),
-                ])
+        result.append([
+            self.timeseries,
+            self.series_to_js(
+                npseries=self.selected_trend[0][0],
+                index=self.pandas_timeseries[0].index,
+                key='Detrended groundwaterlevels (m)'
+            ),
+            self.series_to_js(
+                npseries=self.selected_trend[0][1],
+                index=self.pandas_timeseries[0].index,
+                key='Removed trend (m)',
+                color='#f39c12'
+            ),
+        ])
+        try:
+            result.append([
+                self.series_to_js(
+                    npseries=self.selected_trend[0][0],
+                    index=self.pandas_timeseries[0].index,
+                    key='Detrended groundwaterlevels [step trend] (m)',
+                    color='#1abc9c'
+                ),
+                self.series_to_js(
+                    npseries=self.selected_trend[1][0],
+                    index=self.pandas_timeseries[0].index,
+                    key='Detrended groundwaterlevels [linear trend] (m)'
+                ),
+                self.series_to_js(
+                    npseries=self.selected_trend[1][1],
+                    index=self.pandas_timeseries[0].index,
+                    key='Removed trend (m)',
+                    color='#f39c12'
+                ),
+            ])
+        except IndexError:
+            pass
         return result
 
 
@@ -832,16 +859,21 @@ class FluctuationsDataView(BaseApiView):
                 dates=False
             )
         ], [
-            self.timeseries,
+            self.series_to_js(
+                npseries=self.selected_trend[-1][0],
+                index=self.pandas_timeseries[0].index,
+                key='Detrended groundwaterlevels (m)',
+                color='#1abc9c'
+            ),
             self.series_to_js(
                 npseries=self.harmonic[0],
                 index=self.pandas_timeseries[0].index,
-                key='Detrended groundwaterlevels (m)'
+                key='Groundwaterlevels with periodic fluctuations removed (m)'
             ),
             self.series_to_js(
                 npseries=self.harmonic[1],
                 index=self.pandas_timeseries[0].index,
-                key='Removed trend',
+                key='Removed periodic fluctuations (m)',
                 color='#f39c12'
             ),
         ]]
@@ -853,11 +885,16 @@ class RegressiveDataView(BaseApiView):
     @cached_property
     def additional_response(self):
         return [[
-            self.timeseries,
+            self.series_to_js(
+                npseries=self.harmonic[0],
+                index=self.pandas_timeseries[0].index,
+                key='Groundwaterlevels with periodic fluctuations removed (m)',
+                color='#1abc9c'
+            ),
             self.series_to_js(
                 npseries=self.autoregressive[0],
                 index=self.pandas_timeseries[0].index,
-                key='Detrended groundwaterlevels (m)'
+                key='Autoregressive model result (m)'
             ),
             self.series_to_js(
                 npseries=self.autoregressive[1],

@@ -187,7 +187,6 @@
           </div><!-- /col -->
         </div><!-- /row -->
         <div class="row graph-height">
-          <div class="col-md-12 graph-height">
             {% block content %}
               {% block chart_controls %}
               {% endblock chart_controls %}
@@ -196,11 +195,10 @@
                   <svg class="graph-height"></svg>
                 </div>
                 <div id="chart_1" class="{{ view.chart }} graph-height">
-                  <svg class="graph-height"></svg>
+                  <svg class="graph-height graph-margin"></svg>
                 </div>
               {% endblock chart %}
             {% endblock content %}
-          </div>
         </div><!-- /row -->
       </div><!-- /container -->
     {% endblock body %}

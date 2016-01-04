@@ -26,7 +26,9 @@ function changeGraphs(buttonType, altValue, changeTabs){
                 periodic_fluctuations: 'autoregressive'
             }[window.active];
             if(nextTab != undefined){
+                console.log(nextTab);
                 $('[aria-controls="' + nextTab + '"]').removeClass('disabled')
+                $('[aria-controls="' + nextTab + '"] > a').attr('href', '/' + nextTab);
             }
         }
         if (altValue !==undefined) { value = altValue(); }
@@ -48,7 +50,8 @@ function updateGraphs(graphs){
         var height = chart0.height();
         var width = chart0.width();
         console.log(height, width);
-        $('#chart_1 > svg > g').css('height', height).css('width', width);
+        $('#chart_1 > svg > g').css('height', height).css('width', width)
+            .css('margin-top', '-50px');
         chart.removeClass('hidden').addClass('show');
     } else {
         chart.removeClass('show').addClass('hidden');
