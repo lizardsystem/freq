@@ -1,8 +1,10 @@
 __author__ = 'roel.vandenberg@nelen-schuurmans.nl'
 
-import datetime
 import json
 import requests
+
+import freq.jsdatetime as jsdt
+
 try:
     from freq.secretsettings import USR, PWD
 except ImportError:
@@ -12,7 +14,6 @@ except ImportError:
 ## When you use this script stand alone, please set your login information here:
 # USR = ******  # Replace the stars with your user name.
 # PWD = ******  # Replace the stars with your password.
-
 
 def join_urls(*args):
     return '/'.join(args)
@@ -38,8 +39,15 @@ class Base(object):
     username = USR
     password = PWD
     use_header = True
-    extra_queries = {}
-    max_results = 500
+    max_results = 1000
+
+    @property
+    def extra_queries(self):
+        """
+        Overwrite class to add queries
+        :return: dictionary with extra queries
+        """
+        return {}
 
     def __init__(self, base="http://ggmn.un-igrac.org"):
         """
@@ -63,6 +71,7 @@ class Base(object):
         :return: a dictionary of the api-response.
         """
         queries.update(self.extra_queries)
+        queries.update(getattr(self, "queries", {}))
         query = '?' + '&'.join(str(key) + '=' +
                                (('&' + str(key) + '=').join(value)
                                if isinstance(value, list) else str(value))
@@ -142,13 +151,6 @@ class Base(object):
             "password": self.password
         }
 
-    @property
-    def now(self):
-        """
-        The date-timestamp of the moment now is called in ISO 8601 format.
-        """
-        return datetime.datetime.now().isoformat().split('.')[0] + 'Z'
-
 
 class Organisations(Base):
     """
@@ -176,22 +178,22 @@ class Locations(Base):
         self.uuids = []
         super().__init__()
 
-    def in_bbox(self, min_lon, min_lat, max_lon, max_lat):
+    def in_bbox(self, south_west, north_east):
         """
         Find all locations within a certain bounding box.
         returns records within bounding box using Bounding Box format (min Lon,
         min Lat, max Lon, max Lat). Also returns features with overlapping
         geometry.
-        :param min_lon: longtitude of the upper left point
-        :param min_lat: latitude of the upper left point
-        :param max_lon: longtitude of the lower right point
-        :param max_lat: latitude of the lower right point
+        :param south_west: lattitude and longtitude of the south-western point
+        :param north_east: lattitude and longtitude of the north-eastern point
         :return: a dictionary of the api-response.
         """
+        min_lat, min_lon = south_west
+        max_lat, max_lon = north_east
         coords = self.commaify(min_lon, min_lat, max_lon, max_lat)
         self.get(in_bbox=coords)
 
-    def distance_to_point(self, distance, lon, lat):
+    def distance_to_point(self, distance, lat, lon):
         """
         Returns records with distance meters from point. Distance in meters
         is converted to WGS84 degrees and thus an approximation.
@@ -215,11 +217,15 @@ class Locations(Base):
         Use after a query is made.
         :return: a dictionary with coordinates, UUIDs and names
         """
-        result = []
+        result = {}
         for x in self.results:
             if x['uuid'] not in self.uuids:
-                result.append(
-                    (x['geometry']['coordinates'], x['uuid'], x['name']))
+                result.update({
+                    x['uuid']: {
+                        'coordinates': x['geometry']['coordinates'],
+                        'name': x['name']
+                    }
+                })
                 self.uuids.append(x['uuid'])
         return result
 
@@ -229,6 +235,10 @@ class TimeSeries(Base):
     Makes a connection to the timeseries endpoint of the lizard api.
     """
     data_type = 'timeseries'
+
+    def __init__(self):
+        self.uuids = []
+        super().__init__()
 
     def location_name(self, name):
         """
@@ -267,26 +277,27 @@ class TimeSeries(Base):
                  events.
         """
         if not end:
-            end = self.now
+            end = jsdt.now_iso()
         self.get(uuid=uuid, start=start, end=end)
 
-    def from_bbox(self, min_lon, min_lat, max_lon, max_lat,
+    def from_bbox(self, south_west, north_east,
                   start='0001-01-01T00:00:00Z', end=None):
         """
         Find all timeseries within a certain bounding box.
         Returns records within bounding box using Bounding Box format (min Lon,
         min Lat, max Lon, max Lat). Also returns features with overlapping
         geometry.
-        :param min_lon: longtitude of the upper left point
-        :param min_lat: latitude of the upper left point
-        :param max_lon: longtitude of the lower right point
-        :param max_lat: latitude of the lower right point
+        :param south_west: lattitude and longtitude of the south-western point
+        :param north_east: lattitude and longtitude of the north-eastern point
         :param start: start timestamp in ISO 8601 format
         :param end: end timestamp in ISO 8601 format
         :return: a dictionary of the api-response.
         """
         if not end:
-            end = self.now
+            end = jsdt.now_iso()
+
+        min_lat, min_lon = south_west
+        max_lat, max_lon = north_east
 
         polygon_coordinates = [
             [min_lon, min_lat],
@@ -300,16 +311,63 @@ class TimeSeries(Base):
         self.get(start=start, end=end, min_points=1, fields=[
             'count', 'sum', 'min', 'max'], location__geom_within=geom_within)
 
+    def minmax(self, extreme, results):
+        args = {
+            'mean': ('events', 0),
+            'first': ('first_value_timestamp', ),
+            'last': ('last_value_timestamp', )
+        }.get(extreme, ('events', 0, extreme))
+        def lambda_func(x):
+            for arg in args:
+                x = x[arg]
+            return x
+        lmbd = {
+            'mean': lambda x: lambda_func(x)['sum']/ lambda_func(x)['count']
+        }.get(extreme, lambda_func)
+        return {
+            'min': lmbd(min(results, key=lmbd)),
+            'max': lmbd(max(results, key=lmbd))
+        }
+
+    def min_max_mean(self, extreme, start_date, end_date):
+        values = {}
+        for x in self.results:
+            val = x['events'][0].get(
+                extreme, x['events'][0]['sum'] / x['events'][0]['count']
+            )
+            if x['uuid'] not in self.uuids:
+                values.update({
+                    x['location']['uuid']: val
+                })
+                self.uuids.append(x['uuid'])
+        first = max(int(self.minmax('first', self.results)['min']),
+                    jsdt.datestring_to_js(date_string=start_date, iso=False))
+        last = min(int(self.minmax('last', self.results)['max']),
+                    jsdt.datestring_to_js(date_string=end_date, iso=False))
+        start_date = jsdt.js_to_datestring(js_date=first, iso=False)
+        end_date = jsdt.js_to_datestring(js_date=last, iso=False)
+        return {
+                "extremes": self.minmax(extreme, self.results),
+                "dates": {
+                    "start": start_date,
+                    "end": end_date
+                },
+                "values": values
+            }
+
 
 class GroundwaterLocations(Locations):
     """
     Makes a connection to the locations endpoint of the lizard api.
     Only selects GroundwaterStations.
     """
-    extra_queries = {
-        "object_type\__model": "GroundwaterStation",
-        "organisation__unique_id":"f757d2eb6f4841b1a92d57d7e72f450c"
-    }
+
+    @property
+    def extra_queries(self):
+        return {
+            "object_type\__model": "GroundwaterStation",
+            "organisation__unique_id": "f757d2eb6f4841b1a92d57d7e72f450c"
+        }
 
 
 class GroundwaterTimeSeries(TimeSeries):
@@ -317,6 +375,10 @@ class GroundwaterTimeSeries(TimeSeries):
     Makes a connection to the timeseries endpoint of the lizard api.
     Only selects GroundwaterStations.
     """
-    extra_queries = {
-        "object_type\__model": "GroundwaterStation",
-    }
+
+    @property
+    def extra_queries(self):
+        return {
+            "object_type\__model": "GroundwaterStation",
+            "location__organisation__unique_id": "f757d2eb6f4841b1a92d57d7e72f450c"
+        }

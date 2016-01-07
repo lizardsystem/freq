@@ -82,15 +82,24 @@ function setDate(startDate, endDate){
 
 
 function loadDatePicker(){
+    var changeDate = function(value) {
+        console.log('changing the date?');
+        var dates = datePickerValue();
+        if (window.startpage.startDate !== dates.start || window.startpage.endDate !== dates.end){
+            window.startpage.startDate = dates.start;
+            window.startpage.endDate = dates.end;
+            console.log('changing the date!');
+            changeGraphs('datepicker', datePickerValue)(value);
+        }
+    };
     var daterange = $('.input-daterange');
     daterange.datepicker({
         format: 'dd-mm-yyyy',
         endDate: 'd',
         viewMode: 'years'
     });
-    console.log('updating datepicker');
     setDate(window.startpage.startDate, window.startpage.endDate);
-    daterange.change(changeGraphs('datepicker', datePickerValue));
+    daterange.change(changeDate);
     console.log('updated datepicker');
 }
 

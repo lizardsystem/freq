@@ -28,45 +28,54 @@ return L.divIcon({
 
 function drawLocationsBoundingBox(map, locationsLayer){
     var imagesUrl = window.startpage.leafletImagesUrl;
+    console.log('setup drawLocationsBoundingBox');
 
     return function(data, textStatus, jqXHR){
-        console.log(data);
         var locs = data.result.locations;
-        console.log('Time series:', data.result.timeseries);
-        data.values = {'min_total':0.5, 'max_total':2.5};
-        var minValue = data.values['min_total'];
-        var maxValue = data.values['max_total'];
-        //var legendLabels = JSON.parse(localStorage.getItem("legendLabels"));
-        //var colors = [];
-        //for(var i=0;i<legendLabels.length;i++){
-        //    colors.push(legendLabels[i].color)
-        //}
-        locationsLayer.clearLayers();
-        //var colorScale = d3.scale.linear()
-        //    .range(colors)
-        //    .domain([minValue, maxValue]);
+        var ts = data.result.timeseries;
+        console.log('Time series:', ts);
+        var col = false;
+        if(ts){
+            col = true;
+            var legendLabels = JSON.parse(localStorage.getItem("legendLabels"));
+            var colors = [];
+            for(var i=0;i<legendLabels.length;i++){
+                colors.push(legendLabels[i].color)
+            }
+            var valueRange = ts.extremes.max - ts.extremes.min;
+            var colorDomain = [];
+            for(var i=1; i <= colors.length; i++){
+                colorDomain.push(ts.extremes.min + valueRange / i)
+            }
+            console.log('Colors', colorDomain, colors)
+            locationsLayer.clearLayers();
+            var colorScale = d3.scale.linear()
+                .range(colors)
+                .domain(colorDomain);
+        }
         var pxSize = 7;
-        var color = '#1abc9c';
-        for(var i=0; i<locs.length; i++) {
-            var coordinates = [locs[i][0][1], locs[i][0][0]];
+        for(var loc_uuid in locs) {
+            var coordinates = locs[loc_uuid].coordinates;
+            var color = col ? colorScale(ts.values[loc_uuid]) : '#1abc9c';
 
             if(coordinates.length > 0){
                 var marker = L.marker(
-                    coordinates,
+                    [coordinates[1], coordinates[0]],
                     {
+                        title: ts ? ts.values[loc_uuid] : locs[loc_uuid].name,
                         icon: icon(pxSize, color)
                     }
                 );
                 marker.on('click', visitUrl('/timeseries/location_uuid/?uuid='
-                    + locs[i][1] + '&x_coord=' +  locs[i][0][1] + '&y_coord='
-                    + locs[i][0][0]));
+                    + loc_uuid + '&x_coord=' +  coordinates[0] + '&y_coord='
+                    + coordinates[1]));
                 locationsLayer.addLayer(marker);
             }
         }
         coordinates = window.startpage.coordsSelected;
         if(coordinates.length > 0){
             var marker = L.marker(
-                coordinates,
+                [coordinates[1], coordinates[0]],
                 {
                     icon: icon(pxSize, color, '#444')
                 }
@@ -113,31 +122,32 @@ function drawGraph(){
 
 function loadMap() {
     function drawLocations () {
-        var bounds = map.getBounds();
-        var bbox = {
-            coordinates: JSON.stringify({
-                SWlat: bounds._southWest.lat,
-                SWlng: bounds._southWest.lng,
-                NElat: bounds._northEast.lat,
-                NElng: bounds._northEast.lng
-            })
-        };
-        loadData('/bbox/?datatypes=locations', drawLocationsBoundingBox(map, locationsLayer),
-            'GET', bbox);
+        var bounds = window.map_.map.getBounds();
+        console.log('bounds', bounds);
+
+        loadData(
+            '/map__data/?datatypes=locations',
+            drawLocationsBoundingBox(
+                window.map_.map,
+                window.map_.locationsLayer
+            ),
+            'GET',
+            {bounds: JSON.stringify(bounds)}
+        );
     }
 
-    var map = L.map('map').setView(window.map_.center, window.map_.zoom);
+    window.map_.map = L.map('map').fitBounds(window.map_.bounds);
     L.tileLayer('http://{s}.tiles.mapbox.com/v3/nelenschuurmans.iaa98k8k/{z}/{x}/{y}.png ', {
-        maxZoom: 18,
+        maxZoom: 17,
         tooltip: true
-    }).addTo(map);
+    }).addTo(window.map_.map);
 
-    var locationsLayer = L.layerGroup();
-    locationsLayer.addTo(map);
+    window.map_.locationsLayer = L.layerGroup();
+    window.map_.locationsLayer.addTo(window.map_.map);
 
     drawLocations ();
 
-    map.on('moveend', drawLocations);
+    window.map_.map.on('moveend', drawLocations);
 }
 
 function logData(data, textStatus, jqXHR){

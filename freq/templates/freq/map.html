@@ -4,39 +4,8 @@
   <br>
   <div class="container full-page-map">
     <div class="row">
-      <div class="col-sm-2">
-        <h5>Statistic</h5>
-        <div class="btn-group full-width">
-          <button type="button"
-                  class="btn btn-default dropdown-toggle full-width"
-                  data-toggle="dropdown"
-                  aria-haspopup="true"
-                  aria-expanded="false"
-                  id="current-statistic">
-            {{ view.active_statistic }} <span class="caret"></span>
-          </button>
-          <ul class="dropdown-menu full-width">
-            {% for statistic in view.statistics %}
-              <li><a href="#" id="dropdown-{{ statistic }}"
-                  >{{ statistic }}</a></li>
-            {% endfor %}
-          </ul>
-        </div>
-      </div> <!-- /col-sm-4 -->
-
-      <div class="col-sm-4">
-        <h5>Daterange</h5>
-        <div class="input-daterange input-group" id="datepicker">
-          <input type="text"
-                 class="input form-control"
-                 name="start" />
-          <span class="input-group-addon">to</span>
-          <input type="text"
-                 class="input form-control"
-                 name="end" />
-        </div> <!-- /input-daterange -->
-      </div> <!-- /col-sm-4 -->
-
+      {% include 'freq/include/dropdown.html' with dropdown=view.dropdowns %}
+      {% include 'freq/include/datepicker.html' %}
       <div class="col-sm-6">
         <h5>Legend</h5>
         <div id="legend" onselectstart="return false"></div>
@@ -63,8 +32,8 @@
 
 {% block extra_javascript_before %}
   <script src="{{ STATIC_URL }}d3-colorpicker/colorPicker.js"></script>
-  <script src="{{ STATIC_URL }}freq/js/map.js"></script>
 {% endblock extra_javascript_before %}
 
 {% block extra_javascript %}
+  <script src="{{ STATIC_URL }}freq/js/map.js"></script>
 {% endblock extra_javascript %}

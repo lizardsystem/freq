@@ -221,6 +221,18 @@ function loadLegend(data){
     }
 }
 
+function updateGraphs(data){
+    // First update the date picker with the first and last dates found
+    var timeseries = data.result.timeseries;
+    var datePickerDates = datePickerValue();
+    var startDate =  timeseries.dates.start || datePickerDates['start'];
+    var endDate = timeseries.dates.end || datePickerDates['end'];
+    console.log(startDate, endDate);
+    setDate(startDate, endDate);
+    console.log('in update graphs', data);
+    drawLocationsBoundingBox(window.map_.map, window.map_.locationsLayer)(data)
+}
+
 $(document).ready(
     function() {
         var defaultLabels = [{
@@ -231,7 +243,7 @@ $(document).ready(
           color: '#3498db'
         }];
         var legendLabels = JSON.parse(localStorage.getItem("legendLabels"));
-        legendLabels = legendLabels == undefined ? defaultLabels : legendLabels;
+        legendLabels = legendLabels || defaultLabels;
         localStorage.setItem("legendLabels", JSON.stringify(legendLabels));
         loadLegend(legendLabels);
     });

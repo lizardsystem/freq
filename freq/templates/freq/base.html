@@ -141,13 +141,13 @@
                   <a
                     class="glyphicon glyphicon-trash pull-right"
                     href="{% url 'restart' %}"></a>
-                  <a
-                    href="{% url view.active %}?redo=1"
-                    class="glyphicon glyphicon-share-alt pull-right"></a>
-                  <a
-                    href="{% url view.active %}?undo=1"
-                    class="glyphicon glyphicon-share-alt icon-flipped
-                    pull-right"></a>
+{#                  <a#}
+{#                    href="{% url view.active %}?redo=1"#}
+{#                    class="glyphicon glyphicon-share-alt pull-right"></a>#}
+{#                  <a#}
+{#                    href="{% url view.active %}?undo=1"#}
+{#                    class="glyphicon glyphicon-share-alt icon-flipped#}
+{#                    pull-right"></a>#}
               </h2>
             </div><!-- /row -->
             <div class="row">
@@ -238,11 +238,13 @@
         <script src="{% static 'd3/d3.min.js' %}"></script>
         <script src="{% static 'nvd3/nv.d3.min.js' %}"></script>
         <script type="text/javascript">
+          {% autoescape off %}
           window['startpage'] = {};
           window['map_'] = {};
           window.startpage.leafletImagesUrl=
                   "{% static 'ajax/libs/leaflet/0.7.3/images/' %}";
           window.active = "{{ view.active }}";
+          window.map_.bounds = {{ view.bounds }};
           window.map_.center = {{ view.center }};
           window.startpage.coordsSelected = {{ view.selected_coords }};
           window.map_.zoom = {{ view.zoom }};
@@ -253,6 +255,7 @@
               startDate[0]);
           window.startpage.endDate = new Date(endDate[2], endDate[1]-1,
               endDate[0]);
+          {% endautoescape %}
         </script>
 
         {% block extra_javascript_before %}

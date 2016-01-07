@@ -15,26 +15,27 @@ import pandas as pd
 from rest_framework.response import Response as RestResponse
 from rest_framework.views import APIView
 
+import freq.jsdatetime as jsdt
 from freq.buttons import *
 import freq.freq_calculator as calculator
-from freq.lizard_api_connector import ApiError
-from freq.lizard_api_connector import GroundwaterLocations
-from freq.lizard_api_connector import GroundwaterTimeSeries
-
-
-def today():
-    return dt.datetime.now().strftime('%d-%m-%Y')
+from freq.lizard_api import ApiError
+from freq.lizard_api import GroundwaterLocations
+from freq.lizard_api import GroundwaterTimeSeries
 
 
 TIMESERIES_MEASUREMENT_FREQUENCY = 'M'
 DEFAULT_STATE = {
     'map_': {
-        'center': [45.0, 0.0],
-        'zoom': 3
+        'bounds': [
+            [-8.0, -85.25],
+            [73.0, 85.25]
+        ],
+        'datepicker': {'start': '1-1-1900', 'end': jsdt.today()},
+        'dropdown_0': {'value': 'mean'},
     },
     'startpage': {
         'chart': 'hidden',
-        'datepicker': {'start': '1-1-1900', 'end': today()},
+        'datepicker': {'start': '1-1-1900', 'end': jsdt.today()},
         'end_js': 1000000000000,
         'graph': {'x': 0, 'y': 0, 'series': 0},
         'measurement_point': 'No Time Series Selected',
@@ -45,7 +46,7 @@ DEFAULT_STATE = {
     },
     'trend_detection': {
         'active': False,
-        'datepicker': {'start': '1-1-1900', 'end': today()},
+        'datepicker': {'start': '1-1-1900', 'end': jsdt.today()},
         'dropdown_0': {'value': '... (choose type)'},
         'graph': {'x': 0, 'y': 0, 'series': 0},
         'spinner_0': {'value': 0.05},
@@ -187,6 +188,10 @@ class BaseViewMixin(object):
                                                                        [45, 0])]
 
     @property
+    def bounds(self):
+        return self.request.session['map_'].get('bounds')
+
+    @property
     def zoom(self):
         if self.request.session['startpage']['selected_coords']:
             return 10
@@ -240,15 +245,6 @@ class BaseViewMixin(object):
 
     # ------------------------------------------------------------------------ #
     ### Date handling
-    JS_EPOCH = dt.datetime(1970, 1, 1)
-
-    def datetime_to_js(self, date_time):
-        if date_time is not None:
-            return int((date_time - self.JS_EPOCH).total_seconds() * 1000)
-
-    def js_to_datetime(self, date_time):
-        if date_time is not None:
-            return self.JS_EPOCH + dt.timedelta(seconds=date_time/1000)
 
     @cached_property
     def today(self):
@@ -271,10 +267,10 @@ class BaseViewMixin(object):
 
     @property
     def time_window(self):
-        start = self.datetime_to_js(dt.datetime.strptime(
+        start = jsdt.datetime_to_js(dt.datetime.strptime(
             self.request.session['startpage']['datepicker']['start'], '%d-%m-%Y'
         ))
-        end = self.datetime_to_js(dt.datetime.strptime(
+        end = jsdt.datetime_to_js(dt.datetime.strptime(
             self.request.session['startpage']['datepicker']['end'], '%d-%m-%Y'
         ))
         return {
@@ -306,12 +302,19 @@ class BaseViewMixin(object):
 
     @cached_property
     def datepicker_start(self):
-        return [int(x) for x in self.request.session['startpage']['datepicker']['start'].split('-')]
+        start = self.request.session['startpage']['datepicker']['start']
+        if isinstance(start, str) and '-' in start:
+            return [int(x) for x in start.split('-')]
+        else:
+            raise TypeError('datepicker start is invalid')
 
     @cached_property
     def datepicker_end(self):
-        return [int(x) for x in self.request.session['startpage']['datepicker']['end'].split('-')]
-
+        end = self.request.session['startpage']['datepicker']['end']
+        if isinstance(end, str) and '-' in end:
+            return [int(x) for x in end.split('-')]
+        else:
+            raise TypeError('datepicker end is invalid')
 
 class FreqTemplateView(TemplateView):
 
@@ -332,6 +335,15 @@ class MapView(BaseView):
     template_name = 'freq/map.html'
     menu_items = []
     map_active = 'active'
+    dropdowns = DropDown(
+        heading= "Statistic",
+    )
+    dropdown_options= [
+        "min",
+        "max",
+        "mean"
+    ]
+
     # statistic_options = ('min', 'max', 'mean')
     #
     # @property
@@ -342,6 +354,11 @@ class MapView(BaseView):
     # def statistics(self):
     #     return [s for s in self.statistic_options if s != self.active_statistic]
     # TODO: update to spinners and other buttons
+
+    def dispatch(self, *args, **kwargs):
+        if not self.request.session.get('session_is_set', False):
+            self.instantiate_session()
+        return super().dispatch(*args, **kwargs)
 
 
 class StartPageBaseView(BaseView):
@@ -355,18 +372,14 @@ class StartPageView(StartPageBaseView):
     freq_active = 'active'
     template_name = 'freq/startpage.html'
 
-    def dispatch(self, *args, **kwargs):  # TODO: PUT IN ALL VIEWS
+    def dispatch(self, *args, **kwargs):
         if not self.request.session.get('session_is_set', False):
             self.instantiate_session()
         return super().dispatch(*args, **kwargs)
 
 
 class ReStartPageView(StartPageView):
-
-    def get(self, request, *args, **kwargs):
-        self.instantiate_session()
-        return super().get(request, *args, **kwargs)
-
+    pass
 
 class TimeSeriesByLocationUUIDView(StartPageBaseView):
     error_message = ''
@@ -434,7 +447,7 @@ class TimeSeriesByLocationUUIDView(StartPageBaseView):
 class TimeSeriesByUUIDView(StartPageBaseView):
 
     def to_date(self, date_extreme):
-        return self.js_to_datetime(int(self.request.GET[date_extreme])
+        return jsdt.js_to_datetime(int(self.request.GET[date_extreme])
                                    ).strftime('%d-%m-%Y')
 
     @property
@@ -533,10 +546,6 @@ class AutoRegressiveView(BaseView):
 class BaseApiView(BaseViewMixin, APIView):
     text_output = []
 
-    def js_to_datestring(self, js_date_int):
-        date_time = self.js_to_datetime(js_date_int)
-        return date_time.strftime('%Y-%m-%d')
-
     def get(self, request, *args, **kwargs):
         if self.button == 'datepicker':
             self.set_session_value(
@@ -556,7 +565,7 @@ class BaseApiView(BaseViewMixin, APIView):
 
     def pd_timeseries_from_json(self, json_data, name=''):
         # store results in a numpy array
-        dates = np.array([self.js_to_datestring(x['x']) for x in json_data],
+        dates = np.array([jsdt.js_to_datestring(x['x']) for x in json_data],
                          dtype='datetime64')
         values = np.array([y['y'] for y in json_data])
         index = pd.DatetimeIndex(dates, freq='infer')
@@ -577,7 +586,7 @@ class BaseApiView(BaseViewMixin, APIView):
         )
 
     def series_to_js(self, npseries, index, key, color='#2980b9', dates=True):
-        values = [{'x': self.datetime_to_js(index[i]) if dates else i,
+        values = [{'x': jsdt.datetime_to_js(index[i]) if dates else i,
                    'y': float(value)}
                 for i, value in enumerate(npseries)]
         return {
@@ -607,7 +616,7 @@ class BaseApiView(BaseViewMixin, APIView):
             split = int(self.request.session['trend_detection']['graph']['x'])
             if split == 0:
                 return
-            breakpoint = self.js_to_datetime(split)
+            breakpoint = jsdt.js_to_datetime(split)
             return [calculator.step(
                 data=timeseries[1],
                 bp=int(timeseries[0].index.searchsorted(breakpoint)),
@@ -709,23 +718,26 @@ class BaseApiView(BaseViewMixin, APIView):
             'statistics': self.text_output
         }
 
-
-class BoundingBoxDataView(BaseApiView):
-
-    def _lambda(self, x, *args):
-        for arg in args:
-            x = x.get(arg)
-        return x
-
-    def _divide_lambda(self, x, denominator, divisor):
-        return self._lambda(x, denominator) / self._lambda(x, divisor)
-
-    def min_max(self, lmbda, values, *args):
-        return {'min': self._lambda(min(values, lmbda), *args),
-                'max': self._lambda(max(values, lmbda), *args)}
+class TimeSeriesDataView(BaseApiView):
 
     def get(self, request, *args, **kwargs):
-        datatypes = request.GET.get('datatypes').split(',')
+        response_dict = {
+            'data': self.timeseries,
+            'start': self.request.session['startpage']['start_js'],
+            'end': self.request.session['startpage']['end_js'],
+            'uuid': self.request.session['startpage']['uuid'],
+            'name': self.request.session['startpage']['measurement_point']
+        }
+        return RestResponse(response_dict)
+
+
+class MapDataView(BaseApiView):
+    active = 'map_'
+
+    def get(self, request, *args, **kwargs):
+        super().get(self, request, *args, **kwargs)
+        datatypes = request.GET.get('datatypes', 'locations,timeseries').split(
+            ',')
         try:
             response_dict = {
                 "result": {
@@ -744,61 +756,39 @@ class BoundingBoxDataView(BaseApiView):
     def locations(self):
         locations = GroundwaterLocations()
         locations.in_bbox(*self.coordinates)
-        x = locations.coord_uuid_name()
-        return x
+        return locations.coord_uuid_name()
 
     @property
     def timeseries(self):
+        extreme = self.request.session['map_'].get(
+            'dropdown_0', {'value': 'mean'})['value']
         timeseries = GroundwaterTimeSeries()
-        timeseries.from_bbox(*self.coordinates, **self.time_window)
-        values = [{
-                      'location_uuid': x['location']['unique_id'],
-                      'values': x['events'][0],
-                      'start': x['first_value_timestamp'],
-                      'end': x['last_value_timestamp']
-                  }
-                  for x in timeseries.results]
-        time = self.min_max(self._lambda, values, 'first')
-        max_ = self.min_max(self._lambda, values, 'values', 'max')
-        min_ = self.min_max(self._lambda, values, 'values', 'min')
-        mean_ = self.min_max(self._divide_lambda, values,
-                             ['values', 'sum'], ['values', 'count'])
-        return {
-            "values": values,
-            "extremes": {
-                "time": time,
-                "max": max_,
-                "min": min_,
-                "mean": mean_,
-            }
+        timeseries.queries = {
+            "name": self.request.GET.get("groundwater_type", "GWmMSL")
         }
+        timeseries.from_bbox(*self.coordinates, **self.time_window)
+        return timeseries.min_max_mean(
+            extreme=extreme,
+            start_date=self.request.session['map_']['datepicker']['start'],
+            end_date=self.request.session['map_']['datepicker']['end']
+        )
 
     @cached_property
     def coordinates(self):
-        coordinates = json.loads(self.request.GET.get('coordinates'))
-        self.set_session_value(
-            'map_',
-            'center',
-            [
-                mean([coordinates['SWlat'], coordinates['NElat']]),
-                mean([coordinates['SWlng'], coordinates['NElng']])
+        try:
+            bounds = json.loads(self.request.GET.get('bounds'))
+            bounds_array = [
+                [bounds['_southWest']['lat'], bounds['_southWest']['lng']],
+                [bounds['_northEast']['lat'], bounds['_northEast']['lng']]
             ]
-        )
-        return [coordinates['SWlng'], coordinates['SWlat'],
-                coordinates['NElng'], coordinates['NElat']]
+            self.set_session_value('map_', 'bounds', bounds_array)
+        except TypeError:
+            bounds_array = self.request.session['map_'].get('bounds')
+        return bounds_array
 
-
-class TimeSeriesDataView(BaseApiView):
-
-    def get(self, request, *args, **kwargs):
-        response_dict = {
-            'data': self.timeseries,
-            'start': self.request.session['startpage']['start_js'],
-            'end': self.request.session['startpage']['end_js'],
-            'uuid': self.request.session['startpage']['uuid'],
-            'name': self.request.session['startpage']['measurement_point']
-        }
-        return RestResponse(response_dict)
+    @property
+    def base_response(self):
+        return {}
 
 
 class StartpageDataView(BaseApiView):
