@@ -1,0 +1,44 @@
+{% extends "freq/base.html" %}
+
+{% block body %}
+    </br>
+
+    <div class="container full-page-map">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="input-daterange input-group" id="datepicker">
+            <input type="text" class="input-sm form-control" name="start" />
+            <span class="input-group-addon">to</span>
+            <input type="text" class="input-sm form-control" name="end" />
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="input-group colorpick-min">
+            <input type="text" value="" class="form-control" />
+            <span class="input-group-addon"><i></i></span>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="input-group colorpick-max">
+            <input type="text" value="" class="form-control" />
+            <span class="input-group-addon"><i></i></span>
+          </div>
+        </div>
+      </div>
+
+        </br>
+
+      <div class="row full-page-map">
+        <div id="error-well" class="well well-sm hidden">
+            {{ error_message }}
+        </div>
+        <div id="map" class="full-page-map"></div>
+      </div>
+    </div>
+
+{% endblock body %}
+
+{% block charts_javascript %}
+{% endblock charts_javascript %}
+{% block chart_css %}
+{% endblock chart_css %}

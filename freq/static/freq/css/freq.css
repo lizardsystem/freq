@@ -41,6 +41,9 @@
 ul.navbar-nav > li > a {
     color:#fff ;
 }
+ul.navbar-nav > li.active {
+  background-color: #16a085;
+}
 ul.navbar-nav > li > a:hover {
   background-color: #16a085;
 }
@@ -73,19 +76,22 @@ ul.nav-tabs > li.disabled > a:hover {
 strong {
     color: #16a085;
 }
-.body-container {
-    display: table;
-    height: 75%;
-}
-.side-container {
-  float: none;
-  display: table-cell;
-  height:0;
-}
 
+.map-row {
+    margin: 0 15px 0 25px;
+}
 #map {
     height: 92%;
-
+    min-height: 200px;
+}
+.full-width {
+    width:100%;
+}
+.eighty-width {
+    width:80%;
+}
+.twenty-width {
+    width:20%;
 }
 .full-page-map {
     height: 90%;
@@ -93,8 +99,12 @@ strong {
 html, body {
     height: 100%;
 }
+.stat {
+    margin: 0 5px 0 0;
+}
 .graph-height {
-    height: 80%;
+    height: 250px;
+    margin-left: -15px;
 }
 .icon-flipped {
 transform: scaleX(-1);
@@ -110,4 +120,60 @@ h2 > a.glyphicon {
 h2 > a.glyphicon:hover {
     color: #1abc9c;
     text-decoration: none;
+}
+
+.axis text {
+    font: 10px sans-serif;
+}
+
+.axis line, .axis path {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
+
+#legend {
+    margin-top: -5px;
+    margin-bottom: 10px;
+}
+
+.axis text {
+   fill: #555;
+}
+.tick line {
+   stroke: #fff;
+}
+.axis > path {
+   stroke: #fff;
+}
+
+#tab-number- {
+    font-weight: bold;
+}
+
+#tab-number-active {
+    color: #1abc9c;
+    /*background-color:#e7ffe9;*/
+    /*background-image:*/
+    /*linear-gradient(*/
+      /*to right,*/
+      /*#1abc9c,*/
+      /*#fff 40%*/
+    /*);*/
+    font-weight: bold;
+    /*padding: 12px 5px 13px 12px;*/
+    /*margin: 0 -5px 0 -15px;*/
+    /*border-radius: 3px 0 0 0;*/
+}
+
+#tab-number-disabled {
+    color: #e7e7e7;
+}
+
+h5 {
+    color: #16a085;
+}
+
+.glyphicon-sm {
+    font-size: 0.8em;
 }

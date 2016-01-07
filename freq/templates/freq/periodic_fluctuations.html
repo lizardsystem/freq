@@ -1,4 +1,11 @@
 {% extends "freq/base.html" %}
+{% block extra_css %}
+  <style>
+    .graph-margin {
+        margin-top: 50px;
+    }
+  </style>
+{% endblock extra_css %}
 {% block well %}
   <p>
     Groundwater levels often exhibit certain periodicity in fluctuations due to
@@ -24,6 +31,7 @@
     </strong>
   </p>
 {% endblock well %}
-{% block content %}
-    
-{% endblock content %}
+{% block chart_controls %}
+  {% include 'freq/include/spinner.html' with spinner=view.spinners.0 spinner_value=view.spinner_value %}
+  {% include 'freq/include/spinner.html' with spinner=view.spinners.1 spinner_value=view.spinner_1_value %}
+{% endblock chart_controls %}

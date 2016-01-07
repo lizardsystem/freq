@@ -1,18 +1,39 @@
 {% extends "freq/base.html" %}
 
 {% block body %}
-    </br>
-
-    <div class="container full-page-map">
-        <div id="error-well" class="well well-sm hidden">
-            {{ error_message }}
-        </div>
-        <div id="map" class="full-page-map"></div>
+  <br>
+  <div class="container full-page-map">
+    <div class="row">
+      {% include 'freq/include/dropdown.html' with dropdown=view.dropdowns %}
+      {% include 'freq/include/datepicker.html' %}
+      <div class="col-sm-6">
+        <h5>Legend</h5>
+        <div id="legend" onselectstart="return false"></div>
+      </div>
     </div>
+  </br>
+
+    <div class="row full-page-map">
+      <div id="error-well" class="well well-sm hidden">
+        {{ error_message }}
+      </div>
+      <div class="colorpick-min pull-right">
+      </div>
+      <div id="map" class="full-page-map"></div>
+    </div>
+  </div>
 
 {% endblock body %}
 
-{% block charts_javascript %}
-{% endblock charts_javascript %}
-{% block chart_css %}
-{% endblock chart_css %}
+{% block extra_css %}
+  <link rel="stylesheet" href=
+      "{{ STATIC_URL }}d3-colorpicker/colorpicker.css" />
+{% endblock extra_css %}
+
+{% block extra_javascript_before %}
+  <script src="{{ STATIC_URL }}d3-colorpicker/colorPicker.js"></script>
+{% endblock extra_javascript_before %}
+
+{% block extra_javascript %}
+  <script src="{{ STATIC_URL }}freq/js/map.js"></script>
+{% endblock extra_javascript %}

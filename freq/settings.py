@@ -140,7 +140,7 @@ TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 # SSO *can* be disabled for development with local accounts.
 SSO_ENABLED = True
 
-from freq.secrets import SSO_KEY, SSO_SECRET, SECRET_KEY
+from freq.secretsettings import SSO_KEY, SSO_SECRET, SECRET_KEY
 
 # URL used to redirect the user to the SSO server.
 # Note: needs a trailing slash
@@ -164,9 +164,9 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'django.contrib.staticfiles',
     'lizard_auth_client',
+    'rest_framework',
     ]
 
-ROOT_URLCONF = 'freq.urls'
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
@@ -182,8 +182,6 @@ MIDDLEWARE_CLASSES = (
 ALLOWED_HOSTS = ['freq.lizard.net', 'localhost:8078']
 
 
-TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
-
 # Used for django-staticfiles (and for media files
 STATIC_URL = '/static_media/'
 MEDIA_URL = '/media/'
@@ -193,7 +191,7 @@ MEDIA_ROOT = os.path.join(BUILDOUT_DIR, 'var', 'media')
 #     os.path.join(BUILDOUT_DIR, 'bower_components'),
 #     # ^^^ bower-managed files.
 # ]
-
+SESSION_SAVE_EVERY_REQUEST = True
 
 try:
     # Import local settings that aren't stored in svn/git.

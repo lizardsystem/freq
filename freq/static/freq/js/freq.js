@@ -1,213 +1,165 @@
-+/*global $:false, jQuery:false, moment:false, ko:false, fillChart:false,
+/*global $:false, jQuery:false, moment:false, ko:false, fillChart:false,
 demandChart:false, console:false*/
-(function($) {
-        /**
-     * Configure jQuery to send cookies with XmlHttpRequests. Necessary to access
-     * the Lizard API.
-     *
-     * For this to work, the API server must explicitly respond with:
-     * Access-Control-Allow-Credentials: true
-     * Access-Control-Allow-Origin: [origin_sent_in_request]
-     *
-     * Note: this must be executed before any Ajax calls!
-     */
-    var api = 'demo.lizard.net';
-    $.ajaxSetup({
-        // Be friends with django, add csrf token. cp-ed from
-        // http://stackoverflow.com/questions/5100539/django-csrf-check-failing-with-an-ajax-post-request
-        beforeSend: function(xhr, settings) {
-          function getCookie(name) {
-            var cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-              var cookies = document.cookie.split(';');
-                for (var i = 0; i < cookies.length; i++) {
-                  var cookie = $.trim(cookies[i]);
-                  // Does this cookie string begin with the name we want?
-                  if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                  cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                  break;
-                }
-              }
+
+
+function visitUrl(url){
+    return function(){
+        window.location.href = url;
+    };
+}
+
+function icon(pxSize, color, innerColor){
+color = color == undefined ? '#1abc9c' : color;
+innerColor = innerColor == undefined ? '#fff' : innerColor;
+
+return L.divIcon({
+    className: 'nens-div-icon',
+    iconAnchor: [pxSize, pxSize],
+    html: '<svg height="' + (pxSize * 2 + 2) + '" width="' + (pxSize * 2 + 2)
+    + '">'
+    + '<circle cx="' + (pxSize + 1) + '" cy="' + (pxSize + 1)
+    + '" r="' + pxSize + '" stroke="' + innerColor + '" stroke-width="1"'
+    + 'fill-opacity="0.8" fill="' + color + '" />'
+    + '<circle cx="' + (pxSize + 1) + '" cy="' + (pxSize + 1) + '" r="'
+    + (pxSize/ 3) + '" fill-opacity="1" fill="' + innerColor + '" />'
+    + '</svg>'
+  });
+}
+
+function drawLocationsBoundingBox(map, locationsLayer){
+    var imagesUrl = window.startpage.leafletImagesUrl;
+    console.log('setup drawLocationsBoundingBox');
+
+    return function(data, textStatus, jqXHR){
+        var locs = data.result.locations;
+        var ts = data.result.timeseries;
+        console.log('Time series:', ts);
+        var col = false;
+        if(ts){
+            col = true;
+            var legendLabels = JSON.parse(localStorage.getItem("legendLabels"));
+            var colors = [];
+            for(var i=0;i<legendLabels.length;i++){
+                colors.push(legendLabels[i].color)
             }
-            return cookieValue;
-          }
-          if (!(/^http:.*/.test(api) || /^https:.*/.test(api))) {
-            // Only send the token to relative URLs i.e. locally.
-            xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+            var valueRange = ts.extremes.max - ts.extremes.min;
+            var colorDomain = [];
+            for(var i=1; i <= colors.length; i++){
+                colorDomain.push(ts.extremes.min + valueRange / i)
             }
-         },
-        timeout: 60 * 1000,
-        // The docs say: default: false for same-domain requests, true for
-        // cross-domain requests. So the default is good enough for us.
-        // crossDomain: true,
-        xhrFields: {
-            // withCredentials:
-            // The docs say withCredentials has no effect when same origin is used:
-            // https://dvcs.w3.org/hg/xhr/raw-file/tip/Overview.html#dom-xmlhttprequest-withcredentials
-            // "True when user credentials are to be included in a cross-origin request.
-            // False when they are to be excluded in a cross-origin request
-            // and when cookies are to be ignored in its response. Initially false."
-            // So, explicitly set this to true for our purposes.
-            withCredentials: true
+            console.log('Colors', colorDomain, colors)
+            locationsLayer.clearLayers();
+            var colorScale = d3.scale.linear()
+                .range(colors)
+                .domain(colorDomain);
         }
-    });
+        var pxSize = 7;
+        for(var loc_uuid in locs) {
+            var coordinates = locs[loc_uuid].coordinates;
+            var color = col ? colorScale(ts.values[loc_uuid]) : '#1abc9c';
 
-    function loadDataError(jqXHR, textStatus, errorThrown) {
-        var $error = $('<p>Fout bij het laden van de grafiekdata: ' +
-            errorThrown + '</p>')
-    }
-
-    function visitUrl(url){
-        return function(){
-            window.location.href = url;
-        };
-    }
-
-    function drawLocationsBoundingBox(map, locationsLayer){
-        var imagesUrl = window.startpage.leafletImagesUrl;
-        var greenIcon = L.icon({
-            iconUrl: imagesUrl + 'marker-icon.png',
-            shadowUrl: imagesUrl + 'marker-shadow-new.png',
-
-            iconSize:     [16, 16], // size of the icon
-            shadowSize:   [40, 40], // size of the shadow
-            iconAnchor:   [8, 8], // point of the icon which will
-            // correspond to marker's location
-            shadowAnchor: [16, 16],  // the same for the shadow
-            popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-        });
-        var selectedIcon = L.icon({
-            iconUrl: imagesUrl + 'marker-selected.png',
-            shadowUrl: imagesUrl + 'marker-shadow.png',
-
-            iconSize:     [16, 16], // size of the icon
-            shadowSize:   [40, 40], // size of the shadow
-            iconAnchor:   [8, 8], // point of the icon which will
-            // correspond to marker's location
-            shadowAnchor: [11, 20],  // the same for the shadow
-            popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-        });
-
-        return function(data, textStatus, jqXHR){
-            var locationError = data['error'];
-            if(locationError !=="" ){
-                $('#error-well').removeClass('hidden')
-            } else {
-                var locs = data['locations'];
-                locationsLayer.clearLayers();
-                for(var i=0; i<locs.length; i++){
-                    var coordinates = [locs[i][0][1], locs[i][0][0]];
-                    var marker = L.marker(
-                        coordinates,
-                        {
-                            icon: greenIcon,
-                            title: locs[i][2],
-                            opacity: 0.6
-                        });
-                    marker.on('click', visitUrl('/timeseries/location_uuid/' + locs[i][1] + '&' +  locs[i][0][1] + '&' + locs[i][0][0]));
-                    locationsLayer.addLayer(marker);
-                }
-                coordinates = JSON.parse(window.startpage.coordsSelected);
-                if(coordinates.length > 0){
-                    var marker = L.marker(
-                        coordinates,
-                        {
-                            icon: selectedIcon
-                        }
-                    );
-                    locationsLayer.addLayer(marker);
-                }
+            if(coordinates.length > 0){
+                var marker = L.marker(
+                    [coordinates[1], coordinates[0]],
+                    {
+                        title: ts ? ts.values[loc_uuid] : locs[loc_uuid].name,
+                        icon: icon(pxSize, color)
+                    }
+                );
+                marker.on('click', visitUrl('/timeseries/location_uuid/?uuid='
+                    + loc_uuid + '&x_coord=' +  coordinates[0] + '&y_coord='
+                    + coordinates[1]));
+                locationsLayer.addLayer(marker);
             }
-        };
-    }
-
-    function loadData(queryUrl, successFunction, requestType, data) {
-        var ajaxCall = {
-            url: queryUrl,
-            success: successFunction,
-            type: requestType == undefined ? 'GET' : 'POST',
-            error: loadDataError
-        };
-        if(data !== undefined){
-            ajaxCall['data'] = data
         }
-        return $.ajax(ajaxCall);
-    }
+        coordinates = window.startpage.coordsSelected;
+        if(coordinates.length > 0){
+            var marker = L.marker(
+                [coordinates[1], coordinates[0]],
+                {
+                    icon: icon(pxSize, color, '#444')
+                }
+            );
+            locationsLayer.addLayer(marker);
+        }
+    };
+}
 
-    function drawGraph(data, textStatus, jqXHR){
-        console.log(data, textStatus, jqXHR);
-        if(data['data'].length > 0) {
-            nv.addGraph(function () {
-                var chart = nv.models.lineChart()
-                    .x(function(d){return d['x'];})
-                    .y(function(d){return d['y'];})
-                    .useInteractiveGuideline(true)
 
-                chart.xAxis
-                    .axisLabel('Date')
-                    .tickFormat(function(d) {
-                      return d3.time.format('%x')(new Date(d))
+function drawGraph(){
+
+    for(var i=0; i < 2; i++){
+        nv.addGraph(function() {
+            var chart = nv.models.lineChart()
+                .useInteractiveGuideline(true);
+            chart.xAxis
+                .tickFormat(function(d) {
+                    return d3.time.format('%x')(new Date(d))
                 });
 
-                chart.yAxis
-                    .axisLabel('Waterlevel (m)')
-                    .tickFormat(d3.format('.02f'));
+            chart.yAxis
+                .tickFormat(d3.format('.02f'));
 
-                chart.lines.dispatch.on('elementClick', function(e){
-                    console.log(e[0].point);
-                });
+            d3.select('#chart_' + i + ' svg')
+                .datum([{
+                    'values': [{'y': 0, 'x': 0}, {'y': 1, 'x': 1}],
+                    'key': 'empty',
+                    'color': '#ffffff'
+                }])
+                .transition().duration(500)
+                .call(chart);
 
-                d3.select('#chart svg')
-                    .datum(data.data)
-                    //.transition().duration(500)
-                    .call(chart);
+            chart.lines.dispatch.on('elementClick', clickGraphPoint);
+            nv.utils.windowResize(chart.update);
 
-                nv.utils.windowResize(chart.update);
+            window.charts.push(chart);
 
-                return chart;
-            });
-        }
-    }
-
-    function loadMap() {
-        function drawLocations () {
-            var bounds = map.getBounds();
-            var bbox = {
-                SWlat: bounds._southWest.lat,
-                SWlng: bounds._southWest.lng,
-                NElat: bounds._northEast.lat,
-                NElng: bounds._northEast.lng
-            };
-            loadData('/locations/', drawLocationsBoundingBox(map, locationsLayer), 'POST', bbox);
-        }
-        var coordinates = JSON.parse(window.startpage.coordsSelected);
-        var zoom = 10;
-        if(coordinates.length == 0){
-            coordinates = [45, 0];
-            zoom = 3;
-        }
-
-        var map = L.map('map').setView(coordinates, zoom);
-        L.tileLayer('http://{s}.tiles.mapbox.com/v3/nelenschuurmans.iaa98k8k/{z}/{x}/{y}.png ', {
-            maxZoom: 18,
-            tooltip: true
-        }).addTo(map);
-
-        var locationsLayer = L.layerGroup();
-        locationsLayer.addTo(map);
-
-        drawLocations ();
-
-        map.on('moveend', drawLocations);
-    }
-
-    function logData(data, textStatus, jqXHR){
-        console.log(data, textStatus, jqXHR);
-    }
-
-    $(document).ready(
-        function() {
-            loadMap();
-            loadData('/timeseries/data', drawGraph);
+            return chart;
         });
-})(jQuery);
+    }
+}
+
+
+function loadMap() {
+    function drawLocations () {
+        var bounds = window.map_.map.getBounds();
+        console.log('bounds', bounds);
+
+        loadData(
+            '/map__data/?datatypes=locations',
+            drawLocationsBoundingBox(
+                window.map_.map,
+                window.map_.locationsLayer
+            ),
+            'GET',
+            {bounds: JSON.stringify(bounds)}
+        );
+    }
+
+    window.map_.map = L.map('map').fitBounds(window.map_.bounds);
+    L.tileLayer('http://{s}.tiles.mapbox.com/v3/nelenschuurmans.iaa98k8k/{z}/{x}/{y}.png ', {
+        maxZoom: 17,
+        tooltip: true
+    }).addTo(window.map_.map);
+
+    window.map_.locationsLayer = L.layerGroup();
+    window.map_.locationsLayer.addTo(window.map_.map);
+
+    drawLocations ();
+
+    window.map_.map.on('moveend', drawLocations);
+}
+
+function logData(data, textStatus, jqXHR){
+    console.log(data, textStatus, jqXHR);
+}
+
+
+$(document).ready(
+    function() {
+        loadMap();
+        drawGraph();
+        changeGraphs()();
+        //loadData('/timeseries/data', drawGraph);
+    }
+);
