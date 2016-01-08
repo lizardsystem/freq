@@ -66,9 +66,11 @@ function drawLocationsBoundingBox(map, locationsLayer){
                         icon: icon(pxSize, color)
                     }
                 );
-                marker.on('click', visitUrl('/timeseries/location_uuid/?uuid='
-                    + loc_uuid + '&x_coord=' +  coordinates[0] + '&y_coord='
-                    + coordinates[1]));
+                marker.on('click', visitUrl(
+                        '/timeseries/location_uuid/?datatypes=locations&uuid='
+                        + loc_uuid + '&x_coord=' +  coordinates[0] + '&y_coord='
+                        + coordinates[1])
+                );
                 locationsLayer.addLayer(marker);
             }
         }

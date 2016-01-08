@@ -27,8 +27,8 @@ TIMESERIES_MEASUREMENT_FREQUENCY = 'M'
 DEFAULT_STATE = {
     'map_': {
         'bounds': [
-            [-8.0, -85.25],
-            [73.0, 85.25]
+            [48.0, -6.8],
+            [56.2, 18.9]
         ],
         'datepicker': {'start': '1-1-1900', 'end': jsdt.today()},
         'dropdown_0': {'value': 'mean'},
@@ -248,22 +248,7 @@ class BaseViewMixin(object):
 
     @cached_property
     def today(self):
-        return today()
-
-    # TODO: 'old' code once written for the map part, probably obsolete.
-    # @cached_property
-    # def current(self):
-    #     return self.active if self.active else 'map_'
-    #
-    # @cached_property
-    # def start(self):
-    #     start_old = self.request.session[self.current].get('start', self.today)
-    #     return self.request.GET.get('start', start_old)
-    #
-    # @cached_property
-    # def end(self):
-    #     start_old = self.request.session[self.current].get('end', self.today)
-    #     return self.request.GET.get('end', start_old)
+        return jsdt.today()
 
     @property
     def time_window(self):
@@ -316,6 +301,7 @@ class BaseViewMixin(object):
         else:
             raise TypeError('datepicker end is invalid')
 
+
 class FreqTemplateView(TemplateView):
 
     def get(self, request, *args, **kwargs):
@@ -344,17 +330,6 @@ class MapView(BaseView):
         "mean"
     ]
 
-    # statistic_options = ('min', 'max', 'mean')
-    #
-    # @property
-    # def active_statistic(self):
-    #     return self.request.session['map_'].get('active_statistic', 'mean')
-    #
-    # @property
-    # def statistics(self):
-    #     return [s for s in self.statistic_options if s != self.active_statistic]
-    # TODO: update to spinners and other buttons
-
     def dispatch(self, *args, **kwargs):
         if not self.request.session.get('session_is_set', False):
             self.instantiate_session()
@@ -379,7 +354,11 @@ class StartPageView(StartPageBaseView):
 
 
 class ReStartPageView(StartPageView):
-    pass
+
+    def dispatch(self, *args, **kwargs):
+        self.instantiate_session()
+        return super().dispatch(*args, **kwargs)
+
 
 class TimeSeriesByLocationUUIDView(StartPageBaseView):
     error_message = ''
@@ -437,9 +416,16 @@ class TimeSeriesByLocationUUIDView(StartPageBaseView):
     def coordinates(self):
         return [self.request.GET['x_coord'], self.request.GET['y_coord']]
 
+    @cached_property
+    def bounds(self):
+        x = float(self.request.GET['x_coord'])
+        y = float(self.request.GET['y_coord'])
+        bounds = [[y - 0.25, x -0.25], [y + 0.25, x + 0.25]]
+        return bounds
+
     def get(self, request, *args, **kwargs):
         self.request.session['startpage']['selected_coords'] = self.coordinates
-        self.request.session['map_']['center'] = self.coordinates
+        self.request.session['map_']['bounds'] = self.bounds
         self.request.session.modified = True
         return super().get(request, *args, **kwargs)
 

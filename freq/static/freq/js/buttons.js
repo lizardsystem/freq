@@ -17,19 +17,22 @@ function spinnerValue(i) {
     };
 }
 
+function nextTabActive(){
+    var nextTab = {
+        trend_detection: 'periodic_fluctuations',
+        periodic_fluctuations: 'autoregressive'
+    }[window.active];
+    if(nextTab != undefined){
+        console.log(nextTab);
+        $('[aria-controls="' + nextTab + '"]').removeClass('disabled')
+        $('[aria-controls="' + nextTab + '"] > a').attr('href', '/' + nextTab);
+    }
+}
 
 function changeGraphs(buttonType, altValue, changeTabs){
     return function(value){
         if (changeTabs) {
-            var nextTab = {
-                trend_detection: 'periodic_fluctuations',
-                periodic_fluctuations: 'autoregressive'
-            }[window.active];
-            if(nextTab != undefined){
-                console.log(nextTab);
-                $('[aria-controls="' + nextTab + '"]').removeClass('disabled')
-                $('[aria-controls="' + nextTab + '"] > a').attr('href', '/' + nextTab);
-            }
+            nextTabActive()
         }
         if (altValue !==undefined) { value = altValue(); }
         var queryUrl = '/' + window.active + '_data/?button=' + buttonType +
@@ -137,6 +140,7 @@ function clickDropDown(dropdown_id, option_id){
     for(var i=0; i < dropdowns.length; i++){
         $('#dropdown_' + dropdown_id + '-option-' + i).text(dropdowns[i])
     }
+    nextTabActive()
     changeGraphs('dropdown_' + dropdown_id)({ value: $.trim(newText) }, undefined, true);
 }
 

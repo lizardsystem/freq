@@ -6,7 +6,8 @@ import requests
 import freq.jsdatetime as jsdt
 
 try:
-    from freq.secretsettings import USR, PWD
+    from django.conf import settings
+    USR, PWD = settings.USR, settings.PWD
 except ImportError:
     print('WARNING: no secretsettings.py is found. USR and PWD should have been set '
           'beforehand')
@@ -54,6 +55,7 @@ class Base(object):
         :param base: the site one wishes to connect to. Defaults to the
                      Lizard staging site.
         """
+        self.queries = {}
         self.results = []
         if base.startswith('http'):
             self.base = base
@@ -236,9 +238,9 @@ class TimeSeries(Base):
     """
     data_type = 'timeseries'
 
-    def __init__(self):
+    def __init__(self, base="http://ggmn.un-igrac.org"):
         self.uuids = []
-        super().__init__()
+        super().__init__(base)
 
     def location_name(self, name):
         """
