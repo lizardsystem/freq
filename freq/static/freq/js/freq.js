@@ -68,23 +68,27 @@ function drawLocationsBoundingBox(map, locationsLayer){
                         icon: icon(pxSize, color)
                     }
                 );
-                marker.on('click', visitUrl(
+                if(window.active != "map_"){
+                    marker.on('click', visitUrl(
                         '/timeseries/location_uuid/?datatypes=locations&uuid='
                         + loc_uuid + '&x_coord=' +  coordinates[0] + '&y_coord='
                         + coordinates[1])
-                );
+                    );
+                }
                 locationsLayer.addLayer(marker);
             }
         }
-        coordinates = window.startpage.coordsSelected;
-        if(coordinates.length > 0){
-            var marker = L.marker(
-                [coordinates[1], coordinates[0]],
-                {
-                    icon: icon(pxSize, color, '#444')
-                }
-            );
-            locationsLayer.addLayer(marker);
+        if(window.active != 'map_'){
+            coordinates = window.startpage.coordsSelected;
+            if(coordinates.length > 0){
+                var marker = L.marker(
+                    [coordinates[1], coordinates[0]],
+                    {
+                        icon: icon(pxSize, color, '#444')
+                    }
+                );
+                locationsLayer.addLayer(marker);
+            }
         }
     };
 }
