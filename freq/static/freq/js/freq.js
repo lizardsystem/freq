@@ -28,26 +28,28 @@ return L.divIcon({
 
 function drawLocationsBoundingBox(map, locationsLayer){
     var imagesUrl = window.startpage.leafletImagesUrl;
-    console.log('setup drawLocationsBoundingBox');
 
     return function(data, textStatus, jqXHR){
         var locs = data.result.locations;
         var ts = data.result.timeseries;
-        console.log('Time series:', ts);
         var col = false;
         if(ts){
+            window.map_.min = ts.extremes.min;
+            window.map_.max = ts.extremes.max;
             col = true;
             var legendLabels = JSON.parse(localStorage.getItem("legendLabels"));
+            loadLegend(legendLabels);
             var colors = [];
             for(var i=0;i<legendLabels.length;i++){
                 colors.push(legendLabels[i].color)
             }
             var valueRange = ts.extremes.max - ts.extremes.min;
-            var colorDomain = [];
-            for(var i=1; i <= colors.length; i++){
-                colorDomain.push(ts.extremes.min + valueRange / i)
+            var colorDomain = [ts.extremes.min];
+            for(var i=colors.length - 1; i > 0; i--){
+                console.log(ts.extremes.min + (valueRange / i));
+                colorDomain.push(ts.extremes.min + (valueRange / i))
             }
-            console.log('Colors', colorDomain, colors)
+            console.log('Colors', colorDomain, colors);
             locationsLayer.clearLayers();
             var colorScale = d3.scale.linear()
                 .range(colors)
@@ -125,7 +127,6 @@ function drawGraph(){
 function loadMap() {
     function drawLocations () {
         var bounds = window.map_.map.getBounds();
-        console.log('bounds', bounds);
 
         loadData(
             '/map__data/?datatypes=locations',

@@ -23,7 +23,6 @@ function nextTabActive(){
         periodic_fluctuations: 'autoregressive'
     }[window.active];
     if(nextTab != undefined){
-        console.log(nextTab);
         $('[aria-controls="' + nextTab + '"]').removeClass('disabled')
         $('[aria-controls="' + nextTab + '"] > a').attr('href', '/' + nextTab);
     }
@@ -55,13 +54,11 @@ function updateGraphs(data){
             $(".statistics-well_" + i).text(info[i]);
         }
     }
-    console.log(graphs, graphs.length, window.charts.length);
     var chart = $('#chart_1');
     var chart0 = $('#chart_0');
     if(graphs.length == 2){
         var height = chart0.height();
         var width = chart0.width();
-        console.log(height, width);
         $('#chart_1 > svg > g').css('height', height).css('width', width)
             .css('margin-top', '-50px');
         chart.removeClass('hidden').addClass('show');
@@ -86,12 +83,10 @@ function setDate(startDate, endDate){
 
 function loadDatePicker(){
     var changeDate = function(value) {
-        console.log('changing the date?');
         var dates = datePickerValue();
         if (window.startpage.startDate !== dates.start || window.startpage.endDate !== dates.end){
             window.startpage.startDate = dates.start;
             window.startpage.endDate = dates.end;
-            console.log('changing the date!');
             changeGraphs('datepicker', datePickerValue)(value);
         }
     };
@@ -103,13 +98,11 @@ function loadDatePicker(){
     });
     setDate(window.startpage.startDate, window.startpage.endDate);
     daterange.change(changeDate);
-    console.log('updated datepicker');
 }
 
 
 function loadSpinner(range){
     for(var i=0; i < range; i++){
-        console.log('spinner instantiating: ', i);
         $('#spinner_' + i).spinner().change(changeGraphs('spinner_' + i, spinnerValue(i), true));
     }
         // hier setTimeout(function() gebruiken! en even checken of

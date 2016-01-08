@@ -2,6 +2,9 @@
 demandChart:false, console:false*/
 
 function loadLegend(data){
+    console.log('LOADLEGEND', data);
+    var dataMin = window.map_.min || 0;
+    var dataMax = window.map_.max || 1;
     d3.select("svg").remove();
 
     var tickWidth = 6;
@@ -75,7 +78,7 @@ function loadLegend(data){
       .attr('fill', 'url(#grad)');
 
     var axisScale = d3.scale.linear()
-      .domain([0.5,3.0])
+      .domain([dataMin, dataMax])
       .range([0,width]);
 
     var xAxis = d3.svg.axis()
