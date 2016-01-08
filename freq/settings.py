@@ -138,9 +138,9 @@ ROOT_URLCONF = 'freq.urls'
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 
 # SSO *can* be disabled for development with local accounts.
-SSO_ENABLED = False  #True
+SSO_ENABLED = True
 
-from freq.secretsettings import SECRET_KEY  #, SSO_KEY, SSO_SECRET
+from freq.secretsettings import SECRET_KEY , SSO_KEY, SSO_SECRET
 
 # URL used to redirect the user to the SSO server.
 # Note: needs a trailing slash
@@ -163,7 +163,7 @@ INSTALLED_APPS = [
     'django.contrib.gis',
     'django.contrib.sites',
     'django.contrib.staticfiles',
-    # 'lizard_auth_client',
+    'lizard_auth_client',
     'rest_framework',
     ]
 
@@ -174,7 +174,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    # 'lizard_auth_client.middleware.LoginRequiredMiddleware',
+    'lizard_auth_client.middleware.LoginRequiredMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     )
 
