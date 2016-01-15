@@ -492,11 +492,6 @@ class PeriodicFluctuationsView(BaseView):
     template_name = 'freq/periodic_fluctuations.html'
     spinners = [
         Spinner(
-            heading='Correlation lags',
-            title="Number of lags used for the correlogram computation",
-            number=0
-        ),
-        Spinner(
             heading='Number of harmonics',
             title="Number of harmonics to be removed from the series",
             number=1
@@ -741,22 +736,25 @@ class MapDataView(BaseApiView):
     @property
     def locations(self):
         locations = GroundwaterLocations()
-        locations.in_bbox(*self.coordinates)
+        locations.bbox(*self.coordinates)
         return locations.coord_uuid_name()
 
     @property
     def timeseries(self):
-        extreme = self.request.session['map_'].get(
+        statistic = self.request.session['map_'].get(
             'dropdown_0', {'value': 'mean'})['value']
         timeseries = GroundwaterTimeSeries()
         timeseries.queries = {
             "name": self.request.GET.get("groundwater_type", "GWmMSL")
         }
-        timeseries.from_bbox(*self.coordinates, **self.time_window)
-        return timeseries.min_max_mean(
-            extreme=extreme,
-            start_date=self.request.session['map_']['datepicker']['start'],
-            end_date=self.request.session['map_']['datepicker']['end']
+        timeseries.bbox(*self.coordinates, statistic=statistic,
+                        **self.time_window)
+        return timeseries.ts_to_dict(
+            start_date=jsdt.datestring_to_js(self.request.session['map_']['datepicker'][
+                'start']),
+            end_date=jsdt.datestring_to_js(self.request.session['map_'][
+                                               'datepicker']['end']),
+            date_time='str'
         )
 
     @cached_property
@@ -837,9 +835,9 @@ class FluctuationsDataView(BaseApiView):
     def additional_response(self):
         return [[
             self.series_to_js(
-                npseries=self.correllogram,
+                npseries=self.harmonic[3],
                 index=[],
-                key='Cumulative Periodogram (Cp)',
+                key='Accumulated power spectrum',
                 dates=False
             )
         ], [
@@ -887,3 +885,10 @@ class RegressiveDataView(BaseApiView):
                 color='#f39c12'
             ),
         ]]
+
+class MapFeatureInfoView(APIView):
+
+    def get(self, request, *args, **kwargs):
+        request.get('url')
+        response = {}
+        return RestResponse(response)

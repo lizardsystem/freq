@@ -31,15 +31,19 @@ def js_to_datetime(date_time):
         return JS_EPOCH + dt.timedelta(seconds=date_time/1000)
 
 
-def js_to_datestring(js_date, iso=True):
+def js_to_datestring(js_date, iso=False):
     date_time = js_to_datetime(js_date)
+    return datetime_to_datestring(date_time, iso)
+
+
+def datetime_to_datestring(date_time, iso=False):
     if iso:
         return date_time.strftime('%Y-%m-%d')
     else:
         return date_time.strftime('%d-%m-%Y')
 
 
-def datestring_to_js(date_string, iso=True):
+def datestring_to_js(date_string, iso=False):
     if iso:
         date_time = dt.datetime.strptime(date_string, '%Y-%m-%d')
     else:

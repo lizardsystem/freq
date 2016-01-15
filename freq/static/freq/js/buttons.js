@@ -23,19 +23,24 @@ function nextTabActive(){
         periodic_fluctuations: 'autoregressive'
     }[window.active];
     if(nextTab != undefined){
-        $('[aria-controls="' + nextTab + '"]').removeClass('disabled')
+        $('[aria-controls="' + nextTab + '"]').removeClass('disabled');
         $('[aria-controls="' + nextTab + '"] > a').attr('href', '/' + nextTab);
     }
 }
 
 function changeGraphs(buttonType, altValue, changeTabs){
     return function(value){
+        spinnerShow()
         if (changeTabs) {
             nextTabActive()
         }
         if (altValue !==undefined) { value = altValue(); }
+        if (value !== undefined){
+            window[window.active][buttonType] = value.value;
+        }
+        var val = JSON.stringify(value);
         var queryUrl = '/' + window.active + '_data/?button=' + buttonType +
-            '&value=' + JSON.stringify(value);
+            '&value=' + val;
         loadData(queryUrl, updateGraphs)
     };
 }
@@ -72,10 +77,15 @@ function updateGraphs(data){
         var graph = graphs[i];
         d3.select(graph.name).datum(graph.data).call(window.charts[i]);
     }
+    spinnerClear();
 }
 
+function spinnerShow(){};
+
+function spinnerClear(){};
 
 function setDate(startDate, endDate){
+    console.log("startDate, endDate", startDate, endDate);
     $('#date_picker_start').datepicker('setDate', startDate);
     $('#date_picker_end').datepicker('setDate', endDate);
 }

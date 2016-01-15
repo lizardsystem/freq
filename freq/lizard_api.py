@@ -1,16 +1,29 @@
 __author__ = 'roel.vandenberg@nelen-schuurmans.nl'
 
 import json
-import requests
+from pprint import pprint  # left here for debugging purposes
+from time import time
+import urllib.request as request
 
-import freq.jsdatetime as jsdt
+import numpy as np
+import django.core.exceptions
+
+try:
+    import jsdatetime as jsdt
+except ImportError:
+    import freq.jsdatetime as jsdt
 
 try:
     from django.conf import settings
     USR, PWD = settings.USR, settings.PWD
-except ImportError:
-    print('WARNING: no secretsettings.py is found. USR and PWD should have been set '
-          'beforehand')
+except django.core.exceptions.ImproperlyConfigured:
+    try:
+        from freq.secretsettings import USR, PWD
+    except ImportError:
+        print('WARNING: no secretsettings.py is found. USR and PWD should have been set '
+              'beforehand')
+        USR = None
+        PWD = None
 
 ## When you use this script stand alone, please set your login information here:
 # USR = ******  # Replace the stars with your user name.
@@ -50,7 +63,7 @@ class Base(object):
         """
         return {}
 
-    def __init__(self, base="http://ggmn.un-igrac.org"):
+    def __init__(self, base="https://ggmn.un-igrac.org"):
         """
         :param base: the site one wishes to connect to. Defaults to the
                      Lizard staging site.
@@ -60,8 +73,8 @@ class Base(object):
         if base.startswith('http'):
             self.base = base
         else:
-            self.base = join_urls('https:/', base) # without extra '/', this is
-                                                   # added in join_urls
+            self.base = join_urls('https:/', base)  # without extra '/', this is
+                                                    # added in join_urls
         self.base_url = join_urls(self.base, 'api/v2', self.data_type)
 
     def get(self, **queries):
@@ -72,6 +85,7 @@ class Base(object):
         :param queries: all keyword arguments are used as queries.
         :return: a dictionary of the api-response.
         """
+        queries.update({'page_size': self.max_results})
         queries.update(self.extra_queries)
         queries.update(getattr(self, "queries", {}))
         query = '?' + '&'.join(str(key) + '=' +
@@ -93,25 +107,27 @@ class Base(object):
                     [base_url]/api/v2/[endpoint]/?[query_key]=[query_value]&...
         :return: the JSON from the response
         """
-        if self.use_header:
-            response = requests.get(url, headers=self.header)
-        else:
-            response = requests.get(url)
-        self.json = response.json()
+        request_obj = request.Request(url, headers=self.header)
+        with request.urlopen(request_obj) as resp:
+            encoding = resp.headers.get_content_charset()
+            encoding = encoding if encoding else 'UTF-8'
+            content = resp.read().decode(encoding)
+            self.json = json.loads(content)
+
         return self.json
 
-    def post(self, UUID, data):
-        """
-        POST data to the api.
-        :param UUID: UUID of the object in the database you wish to store
-                     data to.
-        :param data: Dictionary with the data to post to the api
-        """
-        post_url = join_urls(self.base_url, UUID, 'data')
-        if self.use_header:
-            requests.post(post_url, data=json.dumps(data), headers=self.header)
-        else:
-            requests.post(post_url, data=json.dumps(data))
+    # def post(self, UUID, data):
+    #     """
+    #     POST data to the api.
+    #     :param UUID: UUID of the object in the database you wish to store
+    #                  data to.
+    #     :param data: Dictionary with the data to post to the api
+    #     """
+    #     post_url = join_urls(self.base_url, UUID, 'data')
+    #     if self.use_header:
+    #         requests.post(post_url, data=json.dumps(data), headers=self.header)
+    #     else:
+    #         requests.post(post_url, data=json.dumps(data))
 
     def parse(self):
         """
@@ -148,10 +164,12 @@ class Base(object):
         """
         The header with credentials for the api.
         """
-        return {
-            "username": self.username,
-            "password": self.password
-        }
+        if self.use_header:
+            return {
+                "username": self.username,
+                "password": self.password
+            }
+        return {}
 
 
 class Organisations(Base):
@@ -180,7 +198,7 @@ class Locations(Base):
         self.uuids = []
         super().__init__()
 
-    def in_bbox(self, south_west, north_east):
+    def bbox(self, south_west, north_east):
         """
         Find all locations within a certain bounding box.
         returns records within bounding box using Bounding Box format (min Lon,
@@ -222,12 +240,10 @@ class Locations(Base):
         result = {}
         for x in self.results:
             if x['uuid'] not in self.uuids:
-                result.update({
-                    x['uuid']: {
+                result[x['uuid']] = {
                         'coordinates': x['geometry']['coordinates'],
                         'name': x['name']
-                    }
-                })
+                }
                 self.uuids.append(x['uuid'])
         return result
 
@@ -240,6 +256,7 @@ class TimeSeries(Base):
 
     def __init__(self, base="http://ggmn.un-igrac.org"):
         self.uuids = []
+        self.statistic = None
         super().__init__(base)
 
     def location_name(self, name):
@@ -282,7 +299,7 @@ class TimeSeries(Base):
             end = jsdt.now_iso()
         self.get(uuid=uuid, start=start, end=end)
 
-    def from_bbox(self, south_west, north_east,
+    def bbox(self, south_west, north_east, statistic=None,
                   start='0001-01-01T00:00:00Z', end=None):
         """
         Find all timeseries within a certain bounding box.
@@ -295,6 +312,13 @@ class TimeSeries(Base):
         :param end: end timestamp in ISO 8601 format
         :return: a dictionary of the api-response.
         """
+        self.statistic = statistic
+        if statistic == 'mean':
+            statistic = ['count', 'sum']
+        if not statistic:
+            statistic = ['min', 'max', 'count', 'sum']
+            self.statistic = None
+
         if not end:
             end = jsdt.now_iso()
 
@@ -308,54 +332,83 @@ class TimeSeries(Base):
             [max_lon, min_lat],
             [min_lon, min_lat],
         ]
-        points = [' '.join([str(x), str(y)]) for x, y in polygon_coordinates]
-        geom_within = 'POLYGON ((' + ', '.join(points) + '))'
-        self.get(start=start, end=end, min_points=1, fields=[
-            'count', 'sum', 'min', 'max'], location__geom_within=geom_within)
+        points = ['%20'.join([str(x), str(y)]) for x, y in polygon_coordinates]
+        geom_within = 'POLYGON%20((' + ',%20'.join(points) + '))'
+        self.get(start=start, end=end, min_points=1, fields=statistic,
+                 location__geom_within=geom_within)
 
-    def minmax(self, extreme, results):
-        args = {
-            'mean': ('events', 0),
-            'first': ('first_value_timestamp', ),
-            'last': ('last_value_timestamp', )
-        }.get(extreme, ('events', 0, extreme))
-        def lambda_func(x):
-            for arg in args:
-                x = x[arg]
-            return x
-        lmbd = {
-            'mean': lambda x: lambda_func(x)['sum']/ lambda_func(x)['count']
-        }.get(extreme, lambda_func)
-        return {
-            'min': lmbd(min(results, key=lmbd)),
-            'max': lmbd(max(results, key=lmbd))
-        }
+    def ts_to_dict(self, statistic=None, values=None,
+                   start_date=None, end_date=None, date_time='js'):
+        """
+        :param date_time: default: js. Several options:
+            'js': javascript integer datetime representation
+            'dt': python datetime object
+            'str': date in date format (dutch representation)
+        """
+        if len(self.results) == 0:
+            self.response = {}
+            return self.response
+        if values:
+            values = values
+        else:
+            values = {}
+        if not statistic and self.statistic:
+            statistic = self.statistic
 
-    def min_max_mean(self, extreme, start_date, end_date):
-        values = {}
-        for x in self.results:
-            val = x['events'][0].get(
-                extreme, x['events'][0]['sum'] / x['events'][0]['count']
-            )
-            if x['uuid'] not in self.uuids:
-                values.update({
-                    x['location']['uuid']: val
-                })
-                self.uuids.append(x['uuid'])
-        first = max(int(self.minmax('first', self.results)['min']),
-                    jsdt.datestring_to_js(date_string=start_date, iso=False))
-        last = min(int(self.minmax('last', self.results)['max']),
-                    jsdt.datestring_to_js(date_string=end_date, iso=False))
-        start_date = jsdt.js_to_datestring(js_date=first, iso=False)
-        end_date = jsdt.js_to_datestring(js_date=last, iso=False)
-        return {
-                "extremes": self.minmax(extreme, self.results),
+        # np array with cols: 'min', 'max', 'sum', 'count', 'first', 'last'
+        if not statistic:
+            stats1 = ('min', 'max', 'sum', 'count')
+            stats2 = ((0, 'min'), (1, 'max'), (2, 'range'), (3, 'mean'))
+            start_index, end_index = 4, 5
+        else:
+            stats1 = ('sum', 'count') if statistic == 'mean' else (statistic, )
+            stats2 = ((0, statistic), )
+            start_index = int(statistic == 'mean') + 1
+            end_index = start_index + 1
+        npts = np.array([
+            [None for y in stats1] if len(x['events']) == 0 else
+            [float(x['events'][0][y]) for y in stats1] +
+            [int(x['first_value_timestamp']), int(x['last_value_timestamp'])]
+            for x in self.results
+        ])
+        if statistic:
+            npts_calculated = np.hstack((
+                (npts[:, 0] / npts[:, 1]).reshape(-1, 1) if statistic == "mean"
+                    else npts[:, 0].reshape(-1, 1),
+                npts[:, slice(start_index, -1)]
+            ))
+        else:
+            npts_calculated = np.hstack((
+                npts[:, 0:2], (npts[:, 1] - npts[:, 0]).reshape(-1, 1),
+                (npts[:, 2] / npts[:, 3]).reshape(-1, 1), npts[:, 4:]
+            ))
+
+        for i, row in enumerate(npts_calculated):
+            location_uuid = self.results[i]['location']['uuid']
+            loc_dict = values.get(location_uuid, {})
+            loc_dict.update({stat: row[i] for i, stat in stats2})
+            loc_dict['timeseries uuid'] = self.results[i]['uuid']
+            values[location_uuid] = loc_dict
+        npts_min = npts_calculated.min(0)
+        npts_max = npts_calculated.max(0)
+        extremes = {stat: {'min': npts_min[i], 'max': npts_max[i]}
+                    for i, stat in stats2}
+        dt_conversion = {
+            'js': lambda x: x,
+            'dt': jsdt.js_to_datetime,
+            'str': jsdt.js_to_datestring
+        }[date_time]
+        start = dt_conversion(max(start_date, npts_min[-2]))
+        end = dt_conversion(min(end_date, npts_max[-1]))
+        self.response = {
+                "extremes": extremes,
                 "dates": {
-                    "start": start_date,
-                    "end": end_date
+                    "start": start,
+                    "end": end
                 },
                 "values": values
             }
+        return self.response
 
 
 class GroundwaterLocations(Locations):
@@ -384,3 +437,60 @@ class GroundwaterTimeSeries(TimeSeries):
             "object_type\__model": "GroundwaterStation",
             "location__organisation__unique_id": "f757d2eb6f4841b1a92d57d7e72f450c"
         }
+
+
+class GroundwaterTimeSeriesAndLocations(object):
+
+    def __init__(self):
+        self.locs = GroundwaterLocations()
+        self.ts = GroundwaterTimeSeries()
+        self.values = {}
+
+    def bbox(self, south_west, north_east, start='0001-01-01T00:00:00Z',
+             end=None, groundwater_type="GWmMSL"):
+        if not end:
+            self.end = jsdt.now_iso()
+        else:
+            self.end = end
+        self.start = start
+        self.ts.queries = {"name": groundwater_type}
+        self.locs.bbox(south_west, north_east)
+        self.ts.bbox(south_west=south_west, north_east=north_east, start=start,
+                     end=self.end)
+
+    def locs_to_dict(self, values=None):
+        if values:
+            self.values = values
+        for loc in self.locs.results:
+            self.values.get(loc['uuid'], {}).update({
+                    'coordinates': loc['geometry']['coordinates'],
+                    'name': loc['name']
+                })
+        self.response = self.values
+
+    def results_to_dict(self):
+        self.locs_to_dict()
+        self.ts.ts_to_dict(values=self.values)
+        return self.ts.response
+
+    # var url = "https://demo.lizard.net/api/v2/raster-aggregates/" +
+    #   "?agg=curve&geom=POINT(" + evt.latlng.lng + "+" + evt.latlng.lat +
+    #   ")&srs=EPSG:4326&raster_names=" + layerName;
+
+
+class RasterAggregates(Base):
+
+    def location(self):
+        self.get(agg='curve', geom='')
+
+
+if __name__ == '__main__':
+    end="1452470400000"
+    start="-2208988800000"
+    start_time = time()
+    GWinfo = GroundwaterTimeSeriesAndLocations()
+    GWinfo.bbox(south_west=[-65.80277639340238, -223.9453125], north_east=[
+        81.46626086056541, 187.3828125], start=start, end=end)
+    x = GWinfo.results_to_dict()
+    print(time() - start_time)
+    pprint(x)

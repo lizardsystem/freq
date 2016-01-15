@@ -241,13 +241,15 @@
           {% autoescape off %}
           window['startpage'] = {};
           window['map_'] = {};
+            {% if view.active == 'map_' %}
+              window.map_.dropdown_0 = "{{ view.dropdown_selected }}";
+            {% endif %}
           window.startpage.leafletImagesUrl=
                   "{% static 'ajax/libs/leaflet/0.7.3/images/' %}";
           window.active = "{{ view.active }}";
           window.map_.bounds = {{ view.bounds }};
           window.map_.center = {{ view.center }};
           window.startpage.coordsSelected = {{ view.selected_coords }};
-          window.map_.zoom = {{ view.zoom }};
           window.spinnersLength = {{ view.spinners | length }};
           var startDate = {{ view.datepicker_start }};
           var endDate = {{ view.datepicker_end }};

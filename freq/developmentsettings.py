@@ -70,7 +70,7 @@ DATABASES = {
 
 
 try:
-    from rws_site.localsettings import *
+    from freq.localsettings import *
     # For local dev overrides.
 except ImportError:
     pass

@@ -230,10 +230,37 @@ function updateGraphs(data){
     var datePickerDates = datePickerValue();
     var startDate =  timeseries.dates.start || datePickerDates['start'];
     var endDate = timeseries.dates.end || datePickerDates['end'];
-    console.log(startDate, endDate);
     setDate(startDate, endDate);
-    console.log('in update graphs', data);
-    drawLocationsBoundingBox(window.map_.map, window.map_.locationsLayer)(data)
+    drawLocationsBoundingBox(window.map_.map, window.map_.locationsLayer)(data);
+    spinnerClear();
+}
+
+function loadTimeseries(event) {
+    var zoomLevel = window.map_.map.getZoom();
+    console.log('zoomlevel: ', zoomLevel);
+    if (zoomLevel > 5) {
+      spinnerShow();
+      var queryUrl = '/' + window.active + '_data';
+      var bounds = window.map_.map.getBounds();
+      loadData(queryUrl, updateGraphs, 'GET', {bounds: JSON.stringify(bounds)});
+    }
+}
+
+function spinnerShow(){
+  console.log('SPINNER start');
+  var map = $('#map');
+  var height = map.height() * -0.55 + "px";
+  var width = map.width() * 0.49 + "px";
+  console.log(width);
+  $('#wait-spinner')
+    .css('margin-top', height)
+    .css('margin-left', width)
+    .removeClass('hidden');
+}
+
+function spinnerClear(){
+  console.log('SPINNER gone');
+  $('#wait-spinner').addClass('hidden');
 }
 
 $(document).ready(
@@ -249,4 +276,5 @@ $(document).ready(
         legendLabels = legendLabels || defaultLabels;
         localStorage.setItem("legendLabels", JSON.stringify(legendLabels));
         loadLegend(legendLabels);
+        window.map_.map.on('moveend', loadTimeseries);
     });

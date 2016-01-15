@@ -10,7 +10,7 @@
         {{ view.dropdown_selected }}</span> <span
         class="caret"></span>
     </button>
-    <ul class="dropdown-menu">
+    <ul class="dropdown-menu" style="z-index: 10000">
       {% for option in view.dropdown_unselected  %}
         <li>
           <a onclick="clickDropDown({{ dropdown.id }}, {{ forloop.counter0 }});"
