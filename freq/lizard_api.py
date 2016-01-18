@@ -322,6 +322,11 @@ class TimeSeries(Base):
         if not end:
             end = jsdt.now_iso()
 
+        if isinstance(start, int):
+            start -= 10000
+        if isinstance(end, int):
+            end += 10000
+
         min_lat, min_lon = south_west
         max_lat, max_lon = north_east
 
@@ -366,8 +371,8 @@ class TimeSeries(Base):
             start_index = int(statistic == 'mean') + 1
             end_index = start_index + 1
         npts = np.array([
-            [None for y in stats1] if len(x['events']) == 0 else
-            [float(x['events'][0][y]) for y in stats1] +
+            [np.nan for y in range(len(stats1) + 2)] if len(x['events']) == 0
+            else [float(x['events'][0][y]) for y in stats1] +
             [int(x['first_value_timestamp']), int(x['last_value_timestamp'])]
             for x in self.results
         ])
@@ -386,11 +391,12 @@ class TimeSeries(Base):
         for i, row in enumerate(npts_calculated):
             location_uuid = self.results[i]['location']['uuid']
             loc_dict = values.get(location_uuid, {})
-            loc_dict.update({stat: row[i] for i, stat in stats2})
+            loc_dict.update({stat: 'NaN' if np.isnan(row[i]) else row[i]
+                             for i, stat in stats2})
             loc_dict['timeseries uuid'] = self.results[i]['uuid']
             values[location_uuid] = loc_dict
-        npts_min = npts_calculated.min(0)
-        npts_max = npts_calculated.max(0)
+        npts_min = np.nanmin(npts_calculated, 0)
+        npts_max = np.nanmax(npts_calculated, 0)
         extremes = {stat: {'min': npts_min[i], 'max': npts_max[i]}
                     for i, stat in stats2}
         dt_conversion = {
@@ -398,16 +404,18 @@ class TimeSeries(Base):
             'dt': jsdt.js_to_datetime,
             'str': jsdt.js_to_datestring
         }[date_time]
-        start = dt_conversion(max(start_date, npts_min[-2]))
-        end = dt_conversion(min(end_date, npts_max[-1]))
+        start = dt_conversion(max(jsdt.round_js_to_date(start_date),
+                                  jsdt.round_js_to_date(npts_min[-2])))
+        end = dt_conversion(min(jsdt.round_js_to_date(end_date),
+                                jsdt.round_js_to_date(npts_max[-1])))
         self.response = {
-                "extremes": extremes,
-                "dates": {
-                    "start": start,
-                    "end": end
-                },
-                "values": values
-            }
+            "extremes": extremes,
+            "dates": {
+                "start": start,
+                "end": end
+            },
+            "values": values
+        }
         return self.response
 
 

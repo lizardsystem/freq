@@ -52,8 +52,7 @@ DEFAULT_STATE = {
         'spinner_0': {'value': 0.05},
     },
     'periodic_fluctuations': {
-        'spinner_0': {'value': 10},
-        'spinner_1': {'value': 0},
+        'spinner_0': {'value': 0},
         'graph': {'x': 0, 'y': 0, 'series': 0},
     },
     'autoregressive': {
@@ -494,18 +493,12 @@ class PeriodicFluctuationsView(BaseView):
         Spinner(
             heading='Number of harmonics',
             title="Number of harmonics to be removed from the series",
-            number=1
         )
     ]
 
     @property
     def spinner_max(self):
         return int(self.length / 2)
-
-    @property
-    def spinner_1_value(self):
-        return self.request.session['periodic_fluctuations'].get(
-            'spinner_1', {'value': '0'})['value']
 
 
 class AutoRegressiveView(BaseView):
@@ -546,8 +539,10 @@ class BaseApiView(BaseViewMixin, APIView):
 
     def pd_timeseries_from_json(self, json_data, name=''):
         # store results in a numpy array
-        dates = np.array([jsdt.js_to_datestring(x['x']) for x in json_data],
-                         dtype='datetime64')
+        dates = np.array(
+            [jsdt.js_to_datestring(x['x'], iso=True) for x in json_data],
+            dtype='datetime64'
+        )
         values = np.array([y['y'] for y in json_data])
         index = pd.DatetimeIndex(dates, freq='infer')
         # build a timeseries object so we can compare it with other timeseries
@@ -578,29 +573,24 @@ class BaseApiView(BaseViewMixin, APIView):
 
     def linear_trend(self, timeseries=None, name=None):
         if timeseries is None:
-            timeseries = self.timeseries['values']
-            if not name:
-                name = self.timeseries['key']
-            timeseries = self.load_timeseries(timeseries, name)[1]
+            timeseries = self.pandas_timeseries
         result = calculator.linear(
             data=timeseries,
-            alpha=float(self.request.session[
-                                'trend_detection']['spinner_0']['value']),
+            alpha=float(
+                self.request.session['trend_detection']['spinner_0']['value']),
             detrend_anyway=True
         )
         return [result]
 
     def step_trend(self):
-        timeseries = self.load_timeseries(self.timeseries['values'],
-                                          self.timeseries['key'])
         try:
             split = int(self.request.session['trend_detection']['graph']['x'])
             if split == 0:
                 return
             breakpoint = jsdt.js_to_datetime(split)
             return [calculator.step(
-                data=timeseries[1],
-                bp=int(timeseries[0].index.searchsorted(breakpoint)),
+                data=self.pandas_timeseries,
+                bp=int(self.pandas_timeseries.index.searchsorted(breakpoint)),
                 alpha=float(self.request.session[
                                 'trend_detection']['spinner_0']['value']),
                 detrend_anyway=True
@@ -617,8 +607,9 @@ class BaseApiView(BaseViewMixin, APIView):
 
     @cached_property
     def pandas_timeseries(self):
-        return self.load_timeseries(self.timeseries['values'],
-                                          self.timeseries['key'])
+        ts = self.load_timeseries(self.timeseries['values'],
+                                  self.timeseries['key'])
+        return ts[0]
 
     @cached_property
     def selected_trend(self):
@@ -649,7 +640,7 @@ class BaseApiView(BaseViewMixin, APIView):
         return calculator.harmonic(
             data=self.selected_trend[-1][0],
             n_harmonics=int(self.request.session['periodic_fluctuations'][
-                'spinner_1']['value'])
+                'spinner_0']['value'])
         )
 
     @cached_property
@@ -676,10 +667,6 @@ class BaseApiView(BaseViewMixin, APIView):
             print("ERROR BUTTON VALUE IS NOT A JSON: ", self.button, value)
             return value
 
-    @property
-    def pd_timeseries(self):
-        return self.pd_timeseries_from_json(self.timeseries)
-
     @cached_property
     def additional_response(self):
         """Overwrite this property"""
@@ -698,6 +685,7 @@ class BaseApiView(BaseViewMixin, APIView):
             'graphs': response,
             'statistics': self.text_output
         }
+
 
 class TimeSeriesDataView(BaseApiView):
 
@@ -788,15 +776,20 @@ class TrendDataView(BaseApiView):
         if self.selected_trend is None:
             return [[self.timeseries]]
         result.append([
-            self.timeseries,
+            self.series_to_js(
+                npseries=self.pandas_timeseries,
+                index=self.pandas_timeseries.index,
+                key='Groundwaterlevels (m)',
+                color='#1abc9c'
+            ),
             self.series_to_js(
                 npseries=self.selected_trend[0][0],
-                index=self.pandas_timeseries[0].index,
+                index=self.pandas_timeseries.index,
                 key='Detrended groundwaterlevels (m)'
             ),
             self.series_to_js(
                 npseries=self.selected_trend[0][1],
-                index=self.pandas_timeseries[0].index,
+                index=self.pandas_timeseries.index,
                 key='Removed trend (m)',
                 color='#f39c12'
             ),
@@ -806,18 +799,18 @@ class TrendDataView(BaseApiView):
             result.append([
                 self.series_to_js(
                     npseries=self.selected_trend[0][0],
-                    index=self.pandas_timeseries[0].index,
+                    index=self.pandas_timeseries.index,
                     key='Detrended groundwaterlevels [step trend] (m)',
                     color='#1abc9c'
                 ),
                 self.series_to_js(
                     npseries=self.selected_trend[1][0],
-                    index=self.pandas_timeseries[0].index,
+                    index=self.pandas_timeseries.index,
                     key='Detrended groundwaterlevels [linear trend] (m)'
                 ),
                 self.series_to_js(
                     npseries=self.selected_trend[1][1],
-                    index=self.pandas_timeseries[0].index,
+                    index=self.pandas_timeseries.index,
                     key='Removed trend (m)',
                     color='#f39c12'
                 ),
@@ -843,18 +836,18 @@ class FluctuationsDataView(BaseApiView):
         ], [
             self.series_to_js(
                 npseries=self.selected_trend[-1][0],
-                index=self.pandas_timeseries[0].index,
+                index=self.pandas_timeseries.index,
                 key='Detrended groundwaterlevels (m)',
                 color='#1abc9c'
             ),
             self.series_to_js(
                 npseries=self.harmonic[0],
-                index=self.pandas_timeseries[0].index,
+                index=self.pandas_timeseries.index,
                 key='Groundwaterlevels with periodic fluctuations removed (m)'
             ),
             self.series_to_js(
                 npseries=self.harmonic[1],
-                index=self.pandas_timeseries[0].index,
+                index=self.pandas_timeseries.index,
                 key='Removed periodic fluctuations (m)',
                 color='#f39c12'
             ),
@@ -869,18 +862,18 @@ class RegressiveDataView(BaseApiView):
         return [[
             self.series_to_js(
                 npseries=self.harmonic[0],
-                index=self.pandas_timeseries[0].index,
+                index=self.pandas_timeseries.index,
                 key='Groundwaterlevels with periodic fluctuations removed (m)',
                 color='#1abc9c'
             ),
             self.series_to_js(
                 npseries=self.autoregressive[0],
-                index=self.pandas_timeseries[0].index,
+                index=self.pandas_timeseries.index,
                 key='Autoregressive model result (m)'
             ),
             self.series_to_js(
                 npseries=self.autoregressive[1],
-                index=self.pandas_timeseries[0].index,
+                index=self.pandas_timeseries.index,
                 key='Removed trend',
                 color='#f39c12'
             ),

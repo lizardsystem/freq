@@ -224,19 +224,28 @@ function drawLocationsBoundingBox(map, locationsLayer){
     var pxSize = 7;
     for(var loc_uuid in locs) {
       var coordinates = locs[loc_uuid].coordinates;
-      var color = col ? colorScale(ts.values[loc_uuid][statistic]) : '#1abc9c';
-
+      if(ts && ts.values[loc_uuid][statistic] == 'NaN'){
+        var color = "#ccc";
+      } else {
+        var color = col ? colorScale(ts.values[loc_uuid][statistic]) : '#1abc9c';
+      }
       if(coordinates.length > 0){
         var marker = L.marker(
           [coordinates[1], coordinates[0]],
           {
-            title: ts ? ts.values[loc_uuid] : locs[loc_uuid].name,
+            title: ts ? ts.values[loc_uuid][statistic] : locs[loc_uuid].name,
             icon: icon(pxSize, color)
           }
         );
         if(window.active != "map_"){
           marker.on('click', visitUrl(
             '/timeseries/location_uuid/?datatypes=locations&uuid='
+            + loc_uuid + '&x_coord=' +  coordinates[0] + '&y_coord='
+            + coordinates[1])
+          );
+        } else {
+          marker.on('click', visitUrl(
+            '/map_/?datatypes=locations&uuid='
             + loc_uuid + '&x_coord=' +  coordinates[0] + '&y_coord='
             + coordinates[1])
           );
