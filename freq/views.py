@@ -56,7 +56,8 @@ DEFAULT_STATE = {
         'graph': {'x': 0, 'y': 0, 'series': 0},
     },
     'autoregressive': {
-        'spinner_0': {'value': 1},
+        'spinner_0': {'value': 10},
+        'spinner_1': {'value': 1},
         'graph': {'x': 0, 'y': 0, 'series': 0},
     },
     'disabled': {
@@ -505,12 +506,24 @@ class AutoRegressiveView(BaseView):
     freq_active = 'active'
     active = 'autoregressive'
     template_name = 'freq/autoregressive.html'
-    spinners = Spinner(
-        heading='Number of periods',
-        title="Number of periods used in the training of the autoregressive " \
-               "model",
-        min_=1
-    )
+    spinners = [
+        Spinner(
+            heading='Correlation lags',
+            title="Number of lags used for the correlogram computation",
+        ),
+        Spinner(
+            heading='Number of periods',
+            title="Number of periods used in the training of the autoregressive " \
+                   "model",
+            min_=1,
+            number=1
+        )
+    ]
+
+    @property
+    def spinner_1_value(self):
+        return self.request.session['autoregressive'].get(
+            'spinner_1', {'value': '1'})['value']
 
     @property
     def spinner_max(self):
@@ -628,14 +641,6 @@ class BaseApiView(BaseViewMixin, APIView):
         raise ValueError('Trend type unknown: ' + str(selected_trend_type))
 
     @cached_property
-    def correllogram(self):
-        return calculator.correlogram(
-            data=self.selected_trend[-1][0],
-            n_lags=int(self.request.session['periodic_fluctuations'][
-                'spinner_0']['value'])
-        )
-
-    @cached_property
     def harmonic(self):
         return calculator.harmonic(
             data=self.selected_trend[-1][0],
@@ -644,11 +649,19 @@ class BaseApiView(BaseViewMixin, APIView):
         )
 
     @cached_property
+    def correllogram(self):
+        return calculator.correlogram(
+            data=self.selected_trend[-1][0],
+            n_lags=int(self.request.session['autoregressive'][
+                'spinner_0']['value'])
+        )
+
+    @cached_property
     def autoregressive(self):
         return calculator.autoregressive(
             data=self.harmonic[0],
             per=int(self.request.session['autoregressive'][
-                'spinner_0']['value'])
+                'spinner_1']['value'])
         )
 
     @property
@@ -860,6 +873,13 @@ class RegressiveDataView(BaseApiView):
     @cached_property
     def additional_response(self):
         return [[
+            self.series_to_js(
+                npseries=self.correllogram,
+                index=[],
+                key='Correllogram',
+                dates=False
+            )
+        ], [
             self.series_to_js(
                 npseries=self.harmonic[0],
                 index=self.pandas_timeseries.index,

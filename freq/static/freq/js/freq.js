@@ -323,88 +323,101 @@ function loadMap() {
     );
   }
 
-  var topography = L.tileLayer('http://{s}.tiles.mapbox.com/v3/nelenschuurmans.iaa98k8k/{z}/{x}/{y}.png ', {
-    maxZoom: 17,
-    tooltip: true
-  });
-  var satellite = L.tileLayer('http://{s}.tiles.mapbox.com/v3/nelenschuurmans.iaa79205/{z}/{x}/{y}.png ', {
-    maxZoom: 17,
-    tooltip: true
-  });
-  var neutral = L.tileLayer('http://{s}.tiles.mapbox.com/v3/nelenschuurmans.l15e647c/{z}/{x}/{y}.png ', {
-    maxZoom: 17,
-    tooltip: true
-  });
-
-  var aquifers = L.tileLayer.betterWms(
-    'https://ggis.un-igrac.org/geoserver/tbamap2015/wms/', {
-      layers: 'tbamap_2015ggis',
+  if(window.active === "map_"){
+    var topography = L.tileLayer('http://{s}.tiles.mapbox.com/v3/nelenschuurmans.iaa98k8k/{z}/{x}/{y}.png ', {
       maxZoom: 17,
-      tooltip: true,
-      format: 'image/png',
-      transparent: true,
+      tooltip: true
     });
-  var landcover = L.tileLayer.betterWms(
-    'https://raster.lizard.net/wms', {
-      layers: 'world:cover',
+    var satellite = L.tileLayer('http://{s}.tiles.mapbox.com/v3/nelenschuurmans.iaa79205/{z}/{x}/{y}.png ', {
       maxZoom: 17,
-      tooltip: true,
-      format: 'image/png',
-      transparent: true,
-      styles: "lc-world"
+      tooltip: true
     });
-  var WHYMAP = L.tileLayer.betterWms(
-    'https://raster.lizard.net/wms', {
-      layers: 'extern:ww:whymap',
+    var neutral = L.tileLayer('http://{s}.tiles.mapbox.com/v3/nelenschuurmans.l15e647c/{z}/{x}/{y}.png ', {
       maxZoom: 17,
-      tooltip: true,
-      format: 'image/png',
-      transparent: true,
-      styles: "whymap"
-    });
-  var soil = L.tileLayer.betterWms(
-    'https://raster.lizard.net/wms', {
-      layers: 'world:soil',
-      maxZoom: 17,
-      tooltip: true,
-      format: 'image/png',
-      transparent: true,
-      styles: "su-world"
-    })
-  var DEM = L.tileLayer.betterWms(
-    'https://raster.lizard.net/wms', {
-      layers: 'world:dem',
-      maxZoom: 17,
-      tooltip: true,
-      format: 'image/png',
-      transparent: true,
-      styles: "dem-world",
-      effects: "shade:0:0.9"
+      tooltip: true
     });
 
-  window.map_.locationsLayer = L.layerGroup();
+    var aquifers = L.tileLayer.betterWms(
+      'https://ggis.un-igrac.org/geoserver/tbamap2015/wms/', {
+        layers: 'tbamap_2015ggis',
+        maxZoom: 17,
+        tooltip: true,
+        format: 'image/png',
+        transparent: true,
+      });
+    var landcover = L.tileLayer.betterWms(
+      'https://raster.lizard.net/wms', {
+        layers: 'world:cover',
+        maxZoom: 17,
+        tooltip: true,
+        format: 'image/png',
+        transparent: true,
+        styles: "lc-world"
+      });
+    var WHYMAP = L.tileLayer.betterWms(
+      'https://raster.lizard.net/wms', {
+        layers: 'extern:ww:whymap',
+        maxZoom: 17,
+        tooltip: true,
+        format: 'image/png',
+        transparent: true,
+        styles: "whymap"
+      });
+    var soil = L.tileLayer.betterWms(
+      'https://raster.lizard.net/wms', {
+        layers: 'world:soil',
+        maxZoom: 17,
+        tooltip: true,
+        format: 'image/png',
+        transparent: true,
+        styles: "su-world"
+      });
+    var DEM = L.tileLayer.betterWms(
+      'https://raster.lizard.net/wms', {
+        layers: 'world:dem',
+        maxZoom: 17,
+        tooltip: true,
+        format: 'image/png',
+        transparent: true,
+        styles: "dem-world",
+        effects: "shade:0:0.9"
+      });
 
-  window.map_.map = L.map('map', {
-    layers: [topography, window.map_.locationsLayer]
-  }).fitBounds(window.map_.bounds);
+    window.map_.locationsLayer = L.layerGroup();
 
-  var baseMaps = {
-    "topography": topography,
-    "satellite": satellite,
-    "neutral": neutral
-  };
+    window.map_.map = L.map('map', {
+        layers: [topography, window.map_.locationsLayer]
+    }).fitBounds(window.map_.bounds);
 
-  var overlayMaps = {
-    "groundwater": window.map_.locationsLayer,
-    "aquifers": aquifers,
-    "WHYMAP": WHYMAP,
-    'landcover': landcover,
-    "soil": soil,
-    "DEM": DEM
-  };
+    var baseMaps = {
+      "topography": topography,
+      "satellite": satellite,
+      "neutral": neutral
+    };
 
-  L.control.layers(baseMaps, overlayMaps).addTo(window.map_.map);
+    var overlayMaps = {
+      "groundwater": window.map_.locationsLayer,
+      "aquifers": aquifers,
+      "WHYMAP": WHYMAP,
+      'landcover': landcover,
+      "soil": soil,
+      "DEM": DEM
+    };
 
+    L.control.layers(baseMaps, overlayMaps).addTo(window.map_.map);
+  } else {
+    window.map_.map = L.map('map').fitBounds(window.map_.bounds);
+    L.tileLayer(
+      'http://{s}.tiles.mapbox.com/v3/nelenschuurmans.iaa98k8k/{z}/{x}/{y}.png ',
+      {
+        maxZoom: 17,
+        tooltip: true
+      }
+    ).addTo(window.map_.map);
+
+    window.map_.locationsLayer = L.layerGroup();
+    window.map_.locationsLayer.addTo(window.map_.map);
+  }
 
   drawLocations ();
 

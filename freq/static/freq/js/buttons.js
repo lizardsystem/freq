@@ -122,29 +122,11 @@ function loadSpinner(range){
 
 
 function clickDropDown(dropdown_id, option_id){
-    var options = true;
-    var i = 0;
-    var oldSelected = $('#dropdown_selected_' + dropdown_id);
-    var dropdowns = [oldSelected.text()];
-    var newText = $('#dropdown_' + dropdown_id + '-option-' + option_id).text();
-    oldSelected.text(newText);
-    while(options) {
-        var dropdown = $('#dropdown_' + dropdown_id + '-option-' + i);
-        if(dropdown.length) {
-            dropdowns.push(dropdown.text());
-        } else {
-            options = false
-        }
-        i++;
-    }
-    dropdowns = dropdowns.slice(0, option_id + 1).concat(
-        dropdowns.slice(option_id + 2, dropdowns.length));
-    dropdowns.sort();
-    for(var i=0; i < dropdowns.length; i++){
-        $('#dropdown_' + dropdown_id + '-option-' + i).text(dropdowns[i])
-    }
-    nextTabActive()
-    changeGraphs('dropdown_' + dropdown_id)({ value: $.trim(newText) }, undefined, true);
+  var oldSelected = $('#dropdown_selected_' + dropdown_id);
+  var newText = $('#dropdown_' + dropdown_id + '-option-' + option_id).text();
+  oldSelected.text(newText);
+  nextTabActive();
+  changeGraphs('dropdown_' + dropdown_id)({ value: $.trim(newText) }, undefined, true);
 }
 
 
