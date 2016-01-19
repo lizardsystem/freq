@@ -393,7 +393,7 @@ class TimeSeries(Base):
             loc_dict = values.get(location_uuid, {})
             loc_dict.update({stat: 'NaN' if np.isnan(row[i]) else row[i]
                              for i, stat in stats2})
-            loc_dict['timeseries uuid'] = self.results[i]['uuid']
+            loc_dict['timeseries_uuid'] = self.results[i]['uuid']
             values[location_uuid] = loc_dict
         npts_min = np.nanmin(npts_calculated, 0)
         npts_max = np.nanmax(npts_calculated, 0)

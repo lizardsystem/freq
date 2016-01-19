@@ -32,6 +32,13 @@ DEFAULT_STATE = {
         ],
         'datepicker': {'start': '1-1-1900', 'end': jsdt.today()},
         'dropdown_0': {'value': 'mean'},
+        'graph': {'x': 0, 'y': 0, 'series': 0},
+        'measurement_point': 'No Time Series Selected',
+        'uuid': 'EMPTY',
+        'end_js': 1000000000000,
+        'timeseries_length': -9999,
+        'start_js': 0,
+        'chart': 'hidden',
     },
     'startpage': {
         'chart': 'hidden',
@@ -172,14 +179,16 @@ class BaseViewMixin(object):
 
     @cached_property
     def measurement_point(self):
-        return self.request.session['startpage'].get(
+        page = self.request.GET.get('active', 'startpage')
+        return self.request.session[page].get(
             'measurement_point', 'No Time Series Selected')
 
     # ------------------------------------------------------------------------ #
     ### Map properties
     @cached_property
     def selected_coords(self):
-        return json.dumps([float(x) for x in self.request.session['startpage'].get(
+        page = self.request.GET.get('active', 'startpage')
+        return json.dumps([float(x) for x in self.request.session[page].get(
             'selected_coords', [])])
 
     @property
@@ -190,12 +199,6 @@ class BaseViewMixin(object):
     @property
     def bounds(self):
         return self.request.session['map_'].get('bounds')
-
-    @property
-    def zoom(self):
-        if self.request.session['startpage']['selected_coords']:
-            return 10
-        return self.request.session['map_'].get('zoom', 3)
 
     @property
     def freq_icon_size(self):
@@ -217,7 +220,8 @@ class BaseViewMixin(object):
     @cached_property
     def timeseries(self):
         ts = GroundwaterTimeSeries()
-        ts.uuid(self.request.session['startpage']['uuid'], **self.time_window)
+        page = self.request.GET.get('active', 'startpage')
+        ts.uuid(self.request.session[page]['uuid'], **self.time_window)
         if len(ts.results) != 0:
             data = [{'y': x['max'], 'x': x['timestamp']}
                              for x in ts.results[0]['events']]
@@ -230,7 +234,7 @@ class BaseViewMixin(object):
             'color': '#1abc9c'
         }
 
-        self.request.session['startpage']['timeseries_length'] = len(data)
+        self.request.session[page]['timeseries_length'] = len(data)
         self.request.session.modified = True
 
         return self.data
@@ -252,11 +256,12 @@ class BaseViewMixin(object):
 
     @property
     def time_window(self):
+        page = self.request.GET.get('active', 'startpage')
         start = jsdt.datetime_to_js(dt.datetime.strptime(
-            self.request.session['startpage']['datepicker']['start'], '%d-%m-%Y'
+            self.request.session[page]['datepicker']['start'], '%d-%m-%Y'
         ))
         end = jsdt.datetime_to_js(dt.datetime.strptime(
-            self.request.session['startpage']['datepicker']['end'], '%d-%m-%Y'
+            self.request.session[page]['datepicker']['end'], '%d-%m-%Y'
         ))
         return {
             'start': start,
@@ -268,7 +273,8 @@ class BaseViewMixin(object):
 
     @cached_property
     def length(self):
-        length = self.request.session['startpage']['timeseries_length']
+        page = self.request.GET.get('active', 'startpage')
+        length = self.request.session[page]['timeseries_length']
         if length < 0:
             return len(self.timeseries['values'])
         return length
@@ -287,7 +293,8 @@ class BaseViewMixin(object):
 
     @cached_property
     def datepicker_start(self):
-        start = self.request.session['startpage']['datepicker']['start']
+        page = self.request.GET.get('active', 'startpage')
+        start = self.request.session[page]['datepicker']['start']
         if isinstance(start, str) and '-' in start:
             return [int(x) for x in start.split('-')]
         else:
@@ -295,7 +302,8 @@ class BaseViewMixin(object):
 
     @cached_property
     def datepicker_end(self):
-        end = self.request.session['startpage']['datepicker']['end']
+        page = self.request.GET.get('active', 'startpage')
+        end = self.request.session[page]['datepicker']['end']
         if isinstance(end, str) and '-' in end:
             return [int(x) for x in end.split('-')]
         else:
@@ -398,7 +406,7 @@ class TimeSeriesByLocationUUIDView(StartPageBaseView):
         elif len(self.timeseries) == 1:
             result = self.timeseries[0]
             self.set_session_value('startpage', 'measurement_point',
-                "Meetpunt: " + result['name'])
+                "Groundwater well: " + result['name'])
             self.set_session_value('disabled', 'trend_detection', 'enabled')
             self.request.session.modified = True
             self.set_session_value('trend_detection', 'active', True)
@@ -424,7 +432,8 @@ class TimeSeriesByLocationUUIDView(StartPageBaseView):
         return bounds
 
     def get(self, request, *args, **kwargs):
-        self.request.session['startpage']['selected_coords'] = self.coordinates
+        page = self.request.GET.get('active', 'startpage')
+        self.request.session[page]['selected_coords'] = self.coordinates
         self.request.session['map_']['bounds'] = self.bounds
         self.request.session.modified = True
         return super().get(request, *args, **kwargs)
@@ -446,7 +455,7 @@ class TimeSeriesByUUIDView(StartPageBaseView):
 
     def get(self, request, uuid, *args, **kwargs):
         self.set_session_value('startpage', 'measurement_point',
-                               "Meetpunt: " + self.request.GET['name'])
+                               "Groundwater well: " + self.request.GET['name'])
         self.set_session_value('startpage', 'datepicker',
                                {
                                     'start': self.startdate,
@@ -535,10 +544,11 @@ class BaseApiView(BaseViewMixin, APIView):
 
     def get(self, request, *args, **kwargs):
         if self.button == 'datepicker':
+            page = self.request.GET.get('active', 'startpage')
             self.set_session_value(
-                'startpage', self.button,
+                page, self.button,
                 json.loads(self.request.GET.get('value', self.request.session[
-                    'startpage']['datepicker']))
+                    page]['datepicker']))
             )
         elif self.button and self.button != 'undefined':
             next_tab = {
@@ -703,12 +713,13 @@ class BaseApiView(BaseViewMixin, APIView):
 class TimeSeriesDataView(BaseApiView):
 
     def get(self, request, *args, **kwargs):
+        page = self.request.GET.get('active', 'startpage')
         response_dict = {
             'data': self.timeseries,
-            'start': self.request.session['startpage']['start_js'],
-            'end': self.request.session['startpage']['end_js'],
-            'uuid': self.request.session['startpage']['uuid'],
-            'name': self.request.session['startpage']['measurement_point']
+            'start': self.request.session[page]['start_js'],
+            'end': self.request.session[page]['end_js'],
+            'uuid': self.request.session[page]['uuid'],
+            'name': self.request.session[page]['measurement_point']
         }
         return RestResponse(response_dict)
 
@@ -717,13 +728,21 @@ class MapDataView(BaseApiView):
     active = 'map_'
 
     def get(self, request, *args, **kwargs):
+        page = self.request.GET.get('active')
+        if page:
+            self.set_session_value(page, 'measurement_point',
+                       "Groundwater well: " + self.request.GET['name'])
+            self.set_session_value(page, 'uuid', request.GET['uuid'])
+            add_response = True
+        else:
+            add_response = False
         super().get(self, request, *args, **kwargs)
-        datatypes = request.GET.get('datatypes', 'locations,timeseries').split(
+        datatypes = request.GET.get('datatypes', 'locations,timeseries_').split(
             ',')
         try:
             response_dict = {
                 "result": {
-                    x: getattr(self, x) for x in datatypes},
+                    x.strip('_'): getattr(self, x) for x in datatypes},
                 "error": ""
             }
         except ApiError:
@@ -732,6 +751,8 @@ class MapDataView(BaseApiView):
                 "error": "Too many groundwater locations to show on map. "
                          "Please zoom in."
             }
+        if add_response:
+            response_dict.update(self.base_response)
         return RestResponse(response_dict)
 
     @property
@@ -741,7 +762,7 @@ class MapDataView(BaseApiView):
         return locations.coord_uuid_name()
 
     @property
-    def timeseries(self):
+    def timeseries_(self):
         statistic = self.request.session['map_'].get(
             'dropdown_0', {'value': 'mean'})['value']
         timeseries = GroundwaterTimeSeries()
@@ -770,10 +791,6 @@ class MapDataView(BaseApiView):
         except TypeError:
             bounds_array = self.request.session['map_'].get('bounds')
         return bounds_array
-
-    @property
-    def base_response(self):
-        return {}
 
 
 class StartpageDataView(BaseApiView):

@@ -167,16 +167,16 @@ L.tileLayer.betterWms = function (url, options) {
 
 
 function visitUrl(url){
-    return function(){
-        window.location.href = url;
-    };
+  return function(){
+    window.location.href = url;
+  };
 }
 
 function icon(pxSize, color, innerColor){
-color = color == undefined ? '#1abc9c' : color;
-innerColor = innerColor == undefined ? '#fff' : innerColor;
+  color = color == undefined ? '#1abc9c' : color;
+  innerColor = innerColor == undefined ? '#fff' : innerColor;
 
-return L.divIcon({
+  return L.divIcon({
     className: 'nens-div-icon',
     iconAnchor: [pxSize, pxSize],
     html: '<svg height="' + (pxSize * 2 + 2) + '" width="' + (pxSize * 2 + 2)
@@ -189,6 +189,16 @@ return L.divIcon({
     + '</svg>'
   });
 }
+
+
+function loadMapTimeseries(uuid, name, coordinates) {
+  return function(event){
+    var queryUrl = 'map__data/?active=map_&name=' + name + '&uuid=' +
+      uuid + '&x_coord=' +  coordinates[0] + '&y_coord=' + coordinates[1];
+    loadData(queryUrl, updateGraphs);
+  }
+}
+
 
 function drawLocationsBoundingBox(map, locationsLayer){
   var imagesUrl = window.startpage.leafletImagesUrl;
@@ -212,7 +222,6 @@ function drawLocationsBoundingBox(map, locationsLayer){
       var valueRange = ts.extremes[statistic].max - ts.extremes[statistic].min;
       var colorDomain = [ts.extremes[statistic].min];
       for(var i=colors.length - 1; i > 0; i--){
-        console.log(ts.extremes[statistic].min + (valueRange / i));
         colorDomain.push(ts.extremes[statistic].min + (valueRange / i))
       }
       console.log('Colors', colorDomain, colors);
@@ -233,46 +242,46 @@ function drawLocationsBoundingBox(map, locationsLayer){
         var marker = L.marker(
           [coordinates[1], coordinates[0]],
           {
-            title: ts ? ts.values[loc_uuid][statistic] : locs[loc_uuid].name,
+            title: ts ?
+              Math.round(parseFloat(ts.values[loc_uuid][statistic]) * 100) / 100 :
+              locs[loc_uuid].name,
             icon: icon(pxSize, color)
           }
         );
-        if(window.active != "map_"){
+        if(window.active !== "map_"){
           marker.on('click', visitUrl(
             '/timeseries/location_uuid/?datatypes=locations&uuid='
             + loc_uuid + '&x_coord=' +  coordinates[0] + '&y_coord='
             + coordinates[1])
           );
-        } else {
-          marker.on('click', visitUrl(
-            '/map_/?datatypes=locations&uuid='
-            + loc_uuid + '&x_coord=' +  coordinates[0] + '&y_coord='
-            + coordinates[1])
-          );
+        } else if (ts !== undefined){
+          marker.on('click', loadMapTimeseries(
+            ts.values[loc_uuid].timeseries_uuid,
+            locs[loc_uuid].name,
+            coordinates
+          ));
         }
         locationsLayer.addLayer(marker);
     }
   }
   if(window.active != 'map_'){
-        coordinates = window.startpage.coordsSelected;
-        if(coordinates.length > 0){
-            var marker = L.marker(
-                [coordinates[1], coordinates[0]],
-                {
-                    icon: icon(pxSize, color, '#444')
-                }
-            );
-            locationsLayer.addLayer(marker);
-        }
+    coordinates = window.startpage.coordsSelected;
+      if(coordinates.length > 0){
+        var marker = L.marker(
+          [coordinates[1], coordinates[0]],
+          {
+            icon: icon(pxSize, color, '#444')
+          }
+        );
+        locationsLayer.addLayer(marker);
+      }
     }
   };
 }
 
 
-function drawGraph(){
-
-  for(var i=0; i < 2; i++){
-    nv.addGraph(function() {
+function nvGraph(i){
+  nv.addGraph(function() {
       var chart = nv.models.lineChart()
         .useInteractiveGuideline(true);
       chart.xAxis
@@ -283,6 +292,10 @@ function drawGraph(){
       chart.yAxis
         .tickFormat(d3.format('.02f'));
 
+      chart.legend
+        .maxKeyLength(60);
+      console.log('#chart_' + i + ' svg');
+
       d3.select('#chart_' + i + ' svg')
         .datum([{
             'values': [{'y': 0, 'x': 0}, {'y': 1, 'x': 1}],
@@ -292,6 +305,9 @@ function drawGraph(){
         .transition().duration(500)
         .call(chart);
 
+      var exp = chart.legend.expanded();
+      chart.legend.expanded(!exp);
+
       chart.lines.dispatch.on('elementClick', clickGraphPoint);
       nv.utils.windowResize(chart.update);
 
@@ -299,7 +315,12 @@ function drawGraph(){
 
       return chart;
     });
-  }
+}
+
+
+function drawGraph(){
+  nvGraph(0);
+  nvGraph(1);
 }
 
 

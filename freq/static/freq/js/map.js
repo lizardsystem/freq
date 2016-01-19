@@ -221,15 +221,21 @@ function loadLegend(data){
   }
 }
 
-function updateGraphs(data){
+
+function extraUpdate(data){
   // First update the date picker with the first and last dates found
-  var timeseries = data.result.timeseries;
-  var datePickerDates = datePickerValue();
-  var startDate =  timeseries.dates.start || datePickerDates['start'];
-  var endDate = timeseries.dates.end || datePickerDates['end'];
-  setDate(startDate, endDate);
-  drawLocationsBoundingBox(window.map_.map, window.map_.locationsLayer)(data);
-  spinnerClear();
+  var graphs = data.graphs;
+  if (graphs !== undefined){$('#chart_0').removeClass('hidden');}
+  var result = data.result;
+  if(result !== undefined){
+    var timeseries = result.timeseries;
+    var datePickerDates = datePickerValue();
+    var startDate =  timeseries.dates.start || datePickerDates['start'];
+    var endDate = timeseries.dates.end || datePickerDates['end'];
+    setDate(startDate, endDate);
+    drawLocationsBoundingBox(window.map_.map, window.map_.locationsLayer)(data);
+    spinnerClear();
+  }
 }
 
 function loadTimeseries(event) {

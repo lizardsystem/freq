@@ -106,6 +106,9 @@ html, body {
     height: 250px;
     margin-left: -15px;
 }
+.form-control .input-number {
+    min-width: 50px;
+}
 .icon-flipped {
 transform: scaleX(-1);
 -moz-transform: scaleX(-1);

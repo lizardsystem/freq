@@ -12,8 +12,11 @@
       </div>
     </div>
   </br>
-
     <div class="row full-page-map">
+      <div id="chart_0" class="graph-height hidden">
+        <svg class="graph-height"></svg>
+        <svg class="graph-height"></svg>
+      </div>
       <div id="error-well" class="well well-sm hidden">
         {{ error_message }}
       </div>
@@ -25,11 +28,7 @@
         <i class="fa fa-cog fa-spin spin-light"></i>
       </div>
     </div>
-    <div id="chart_0" class="{{ view.chart }} graph-height">
-      <svg class="graph-height"></svg>
-    </div>
   </div>
-
 {% endblock body %}
 
 {% block extra_css %}
