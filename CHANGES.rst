@@ -4,6 +4,9 @@ Changelog of freq
 
 0.1 (unreleased)
 ----------------
+- Added correllogram to autoregressive model.
+- All dropdowns now hover over map.
+- Layer selection on map only in map, not in Freq.
 - Faster loading
 - Load image (wait spinner) for map
 - maps with layers

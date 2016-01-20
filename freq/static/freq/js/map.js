@@ -225,7 +225,12 @@ function loadLegend(data){
 function extraUpdate(data){
   // First update the date picker with the first and last dates found
   var graphs = data.graphs;
-  if (graphs !== undefined){$('#chart_0').removeClass('hidden');}
+  if (graphs !== undefined){
+    $('#chart_0').removeClass('hidden');
+    $("#measurement_point")
+      .removeClass('hidden')
+      .text(graphs[0].measurement_point);
+  }
   var result = data.result;
   if(result !== undefined){
     var timeseries = result.timeseries;

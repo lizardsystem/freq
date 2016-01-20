@@ -3,6 +3,7 @@
 import copy
 import datetime as dt
 import json
+import logging
 from pprint import pprint  # left here for debugging purposes
 from statistics import mean
 
@@ -18,9 +19,12 @@ from rest_framework.views import APIView
 import freq.jsdatetime as jsdt
 from freq.buttons import *
 import freq.freq_calculator as calculator
-from freq.lizard_api import ApiError
-from freq.lizard_api import GroundwaterLocations
-from freq.lizard_api import GroundwaterTimeSeries
+from freq.lizard_connector import ApiError
+from freq.lizard_connector import GroundwaterLocations
+from freq.lizard_connector import GroundwaterTimeSeries
+
+
+logger = logging.getLogger(__name__)
 
 
 TIMESERIES_MEASUREMENT_FREQUENCY = 'M'
@@ -121,9 +125,9 @@ class BaseViewMixin(object):
                       '}'.format(
                     key, old_value, value))
         else:
-            print('NOT MY TYPE!:', state, key, value)
-            print('default:', type(DEFAULT_STATE[state][key]).__name__)
-            print('new:', type(value).__name__)
+            logger.warn('NOT MY TYPE!:', state, key, value)
+            logger.warn('default:', type(DEFAULT_STATE[state][key]).__name__)
+            logger.warn('new:', type(value).__name__)
 
     def is_default_type(self, state, key, value):
         try:
@@ -222,7 +226,7 @@ class BaseViewMixin(object):
         ts = GroundwaterTimeSeries()
         page = self.request.GET.get('active', 'startpage')
         ts.uuid(self.request.session[page]['uuid'], **self.time_window)
-        if len(ts.results) != 0:
+        if len(ts.results):
             data = [{'y': x['max'], 'x': x['timestamp']}
                              for x in ts.results[0]['events']]
         else:
@@ -242,7 +246,7 @@ class BaseViewMixin(object):
 
     @cached_property
     def error_message(self):
-        if len(self.timeseries['values']) == 0:
+        if not len(self.timeseries['values']):
             return 'No time series found for this location, please select ' \
                    'another.'
         return ''
@@ -403,7 +407,8 @@ class TimeSeriesByLocationUUIDView(StartPageBaseView):
                 )
                 for x in self.timeseries
             ]
-        elif len(self.timeseries) == 1:
+        elif len(self.timeseries) == 1:  # TODO: FIX: raise error or
+        # TODO: self.multiple timeseries.
             result = self.timeseries[0]
             self.set_session_value('startpage', 'measurement_point',
                 "Groundwater well: " + result['name'])
@@ -540,7 +545,7 @@ class AutoRegressiveView(BaseView):
 
 
 class BaseApiView(BaseViewMixin, APIView):
-    text_output = []
+    statistics = []
 
     def get(self, request, *args, **kwargs):
         if self.button == 'datepicker':
@@ -682,12 +687,12 @@ class BaseApiView(BaseViewMixin, APIView):
     def value(self):  #TODO: remove errors
         value = self.request.GET.get('value')
         if value is None:
-            print("ERROR BUTTON VALUE == NONE!: ",
+            logger.warn("ERROR BUTTON VALUE == NONE!: ",
                   self.button, value)
         try:
             return json.loads(value)
         except (ValueError, TypeError):
-            print("ERROR BUTTON VALUE IS NOT A JSON: ", self.button, value)
+            logger.warn("ERROR BUTTON VALUE IS NOT A JSON: ", self.button, value)
             return value
 
     @cached_property
@@ -706,7 +711,7 @@ class BaseApiView(BaseViewMixin, APIView):
 
         return {
             'graphs': response,
-            'statistics': self.text_output
+            'statistics': self.statistics
         }
 
 
@@ -824,7 +829,7 @@ class TrendDataView(BaseApiView):
                 color='#f39c12'
             ),
         ])
-        self.text_output = [self.selected_trend[0][3]]
+        self.statistics = [self.selected_trend[0][3]]
         try:
             result.append([
                 self.series_to_js(
@@ -845,7 +850,7 @@ class TrendDataView(BaseApiView):
                     color='#f39c12'
                 ),
             ])
-            self.text_output.append(self.selected_trend[0][3])
+            self.statistics.append(self.selected_trend[0][3])
         except IndexError:
             pass
         return result
@@ -915,6 +920,7 @@ class RegressiveDataView(BaseApiView):
                 color='#f39c12'
             ),
         ]]
+
 
 class MapFeatureInfoView(APIView):
 

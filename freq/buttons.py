@@ -1,10 +1,10 @@
-class LenghtOne(object):
+class LengthOne(object):
 
     def __len__(self):
         return 1
 
 
-class Spinner(LenghtOne):
+class Spinner(LengthOne):
 
     def __init__(self, number=0, heading='', title='', step=1, precision=0,
                  min_=0):
@@ -16,7 +16,7 @@ class Spinner(LenghtOne):
         self.id = 'spinner_' + str(number)
 
 
-class DropDown(LenghtOne):
+class DropDown(LengthOne):
 
     def __init__(self, id_=0, selected=0, heading='', title='', options=None):
         if not options:

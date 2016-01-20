@@ -455,6 +455,5 @@ $(document).ready(
     loadMap();
     drawGraph();
     changeGraphs()();
-    //loadData('/timeseries/data', drawGraph);
   }
 );
