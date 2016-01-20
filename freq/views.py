@@ -22,6 +22,7 @@ import freq.freq_calculator as calculator
 from freq.lizard_connector import ApiError
 from freq.lizard_connector import GroundwaterLocations
 from freq.lizard_connector import GroundwaterTimeSeries
+from freq.lizard_connector import RasterAggregates
 
 
 logger = logging.getLogger(__name__)
@@ -926,6 +927,8 @@ class RegressiveDataView(BaseApiView):
 class MapFeatureInfoView(APIView):
 
     def get(self, request, *args, **kwargs):
-        request.get('url')
-        response = {}
+        aggregates = RasterAggregates()
+        response = aggregates.wms(lat=request.GET.get('lat'),
+                                  lng=request.GET.get('lng'),
+                                  layername=request.GET.get('layername'))
         return RestResponse(response)

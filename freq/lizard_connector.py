@@ -77,7 +77,7 @@ class Base(object):
                                                     # added in join_urls
         self.base_url = join_urls(self.base, 'api/v2', self.data_type)
 
-    def get(self, **queries):
+    def get(self, count=True, **queries):
         """
         Query the api.
         For possible queries see: https://nxt.staging.lizard.net/doc/api.html
@@ -94,8 +94,12 @@ class Base(object):
                                for key, value in queries.items())
         url = join_urls(self.base_url, query)
         self.fetch(url)
-        print('Number found {} : {} with URL: {}'.format(
-            self.data_type, self.json.get('count', 0), url))
+        try:
+            print('Number found {} : {} with URL: {}'.format(
+                self.data_type, self.json.get('count', 0), url))
+        except KeyError:
+            print('Got results from {} with URL: {}'.format(
+                self.data_type, url))
         self.parse()
         return self.results
 
@@ -487,9 +491,20 @@ class GroundwaterTimeSeriesAndLocations(object):
 
 
 class RasterAggregates(Base):
+    data_type = 'raster-aggregates'
 
-    def location(self):
-        self.get(agg='curve', geom='')
+    def wms(self, lat, lng, layername):
+        self.get(
+            agg='curve',
+            geom='POINT(' + lng + '+' + lat + ')',
+            srs='EPSG:4326',
+            raster_names=layername,
+            count=False
+        )
+        return self.results
+
+    def parse(self):
+        self.results = self.json
 
 
 if __name__ == '__main__':

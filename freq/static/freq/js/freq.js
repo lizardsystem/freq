@@ -3,120 +3,86 @@ demandChart:false, console:false*/
 
 
 var colorMap = {
-  "dem-world": {
-    "type": "GradientColormap",
-    "free": false,
-    "data": [
-      [-10000, [  0,   0, 128, 255]],
-      [   -20, [128, 128, 255, 255]],
-      [    -5, [  0, 101,  50, 255]],
-      [     0, [ 15, 126,  52, 255]],
-      [     5, [ 39, 152,  58, 255]],
-      [    10, [ 70, 177,  70, 255]],
-      [    20, [123, 203, 107, 255]],
-      [    50, [177, 228, 152, 255]],
-      [   100, [228, 254, 203, 255]],
-      [   200, [200, 223, 142, 255]],
-      [   500, [186, 192,  92, 255]],
-      [  1000, [162, 145,  51, 255]],
-      [  2000, [131,  90,  20, 255]],
-      [  9000, [101,  41,   0, 255]]
-    ],
-    "interp": [
-      [-10000, 0.00],
-      [   -20, 0.08],
-      [    -5, 0.15],
-      [     0, 0.23],
-      [     5, 0.31],
-      [    10, 0.38],
-      [    20, 0.46],
-      [    50, 0.54],
-      [   100, 0.62],
-      [   200, 0.69],
-      [   500, 0.77],
-      [  1000, 0.85],
-      [  2000, 0.92],
-      [  9000, 1.00]
-    ]
-  },
-  "su-world": {
-    "legend":[
-      [1, "Acrisol"],
-      [2, "Alisol"],
-      [3, "Andosol"],
-      [4, "Arenosol"],
-      [5, "Anthrosol"],
-      [6, "Chernozem"],
-      [7, "Calcisol"],
-      [8, "Cambisol"],
-      [9, "Fluvisol"],
-      [10, "Ferralsol"],
-      [11, "Gleysol"],
-      [12, "Greyzem"],
-      [13, "Gypsisol"],
-      [14, "Histosol"],
-      [15, "Kastanozem"],
-      [16, "Leptosol"],
-      [17, "Luvisol"],
-      [18, "Lixisol"],
-      [19, "Nitisol"],
-      [20, "Podzoluvisol"],
-      [21, "Phaeozem"],
-      [22, "Planosol"],
-      [23, "Plinthosol"],
-      [24, "Podzoluvisol"],
-      [25, "Regosol"],
-      [26, "Solonchak"],
-      [27, "Solonetz"],
-      [28, "Vertisol"],
-      [29, "Rock outcrops"],
-      [30, "Sand dunes"],
-      [31, "Water bodies"],
-      [32, "Urban, mining"],
-      [33, "Salt flats"],
-      [34, "No data"],
-      [35, "Glaciers"],
-      [36, "Islands"]
-    ]
+  "world_dem": {"legend": {}},
+  "soil_world": {
+    "legend":{
+      1: "Acrisol",
+      2: "Alisol",
+      3: "Andosol",
+      4: "Arenosol",
+      5: "Anthrosol",
+      6: "Chernozem",
+      7: "Calcisol",
+      8: "Cambisol",
+      9: "Fluvisol",
+      10: "Ferralsol",
+      11:  "Gleysol",
+      12:  "Greyzem",
+      13:  "Gypsisol",
+      14:  "Histosol",
+      15:  "Kastanozem",
+      16:  "Leptosol",
+      17:  "Luvisol",
+      18:  "Lixisol",
+      19:  "Nitisol",
+      20:  "Podzoluvisol",
+      21:  "Phaeozem",
+      22:  "Planosol",
+      23:  "Plinthosol",
+      24:  "Podzoluvisol",
+      25:  "Regosol",
+      26:  "Solonchak",
+      27:  "Solonetz",
+      28:  "Vertisol",
+      29:  "Rock outcrops",
+      30:  "Sand dunes",
+      31:  "Water bodies",
+      32:  "Urban, mining",
+      33:  "Salt flats",
+      34:  "No data",
+      35:  "Glaciers",
+      36:  "Islands"
+    }
   },
   "whymap": {
-    "legend": [
-      [11, "11 - BGR - very low recharge (<2 mm year)"],
-      [12, "12 - BGR - low recharge (2-20 mm/year)"],
-      [13, "13 - BGR - medium recharge (20-100 mm/year)"],
-      [14, "14 - BGR - high recharge (100-300 mm/year)"],
-      [15, "15 - BGR - very high recharge (>300 mm/year)"],
-      [22, "22 - BGR - low-very low recharge (<20 mm/year)"],
-      [23, "23 - BGR - medium recharge (20-100 mm/year)"],
-      [24, "24 - BGR - high recharge (100-300 mm/year)"],
-      [25, "25 - BGR - very high recharge (>300 mm/year)"],
-      [33, "33 - BGR - very low recharge (<100 mm/year)"],
-      [34, "34 - BGR - high recharge (>100 mm/year)"],
-      [88, "88 - BGR - Continuous Ice Sheet"]
-    ]
+    "legend": {
+     11:  "11 - BGR - very low recharge (<2 mm year)",
+     12:  "12 - BGR - low recharge (2-20 mm/year)",
+     13:  "13 - BGR - medium recharge (20-100 mm/year)",
+     14:  "14 - BGR - high recharge (100-300 mm/year)",
+     15:  "15 - BGR - very high recharge (>300 mm/year)",
+     22:  "22 - BGR - low-very low recharge (<20 mm/year)",
+     23:  "23 - BGR - medium recharge (20-100 mm/year)",
+     24:  "24 - BGR - high recharge (100-300 mm/year)",
+     25:  "25 - BGR - very high recharge (>300 mm/year)",
+     33:  "33 - BGR - very low recharge (<100 mm/year)",
+     34:  "34 - BGR - high recharge (>100 mm/year)",
+     88:  "88 - BGR - Continuous Ice Sheet"
+    }
   },
-  "lc-world": {
-    "legend": [
-      [0, "0 - Water"],
-      [1, "1 - Evergreen Needleleaf Forest"],
-      [2, "2 - Evergreen Broadleaf Forest"],
-      [3, "3 - Deciduous Needleleaf Forest"],
-      [4, "4 - Deciduous Broadleaf Forest"],
-      [5, "5 - Mixed Forest"],
-      [6, "6 - Closed Shrublands"],
-      [7, "7 - Open Shrublands"],
-      [8, "8 - Woody Savannas"],
-      [9, "9 - Savannas"],
-      [10, "10 - Grasslands"],
-      [11, "11 - Permanent Wetlands"],
-      [12, "12 - Croplands"],
-      [13, "13 - Urban and Built-Up"],
-      [14, "14 - Cropland/Natural Vegetation Mosaic"],
-      [15, "15 - Snow and Ice"],
-      [16, "16 - Barren or Sparsely Vegetated"]
-    ]
+  "landcover_world": {
+    "legend": {
+     0:  "0 - Water",
+     1:  "1 - Evergreen Needleleaf Forest",
+     2:  "2 - Evergreen Broadleaf Forest",
+     3:  "3 - Deciduous Needleleaf Forest",
+     4:  "4 - Deciduous Broadleaf Forest",
+     5:  "5 - Mixed Forest",
+     6:  "6 - Closed Shrublands",
+     7:  "7 - Open Shrublands",
+     8:  "8 - Woody Savannas",
+     9:  "9 - Savannas",
+     10:  "10 - Grasslands",
+     11:  "11 - Permanent Wetlands",
+     12:  "12 - Croplands",
+     13:  "13 - Urban and Built-Up",
+     14:  "14 - Cropland/Natural Vegetation Mosaic",
+     15:  "15 - Snow and Ice",
+     16:  "16 - Barren or Sparsely Vegetated"
+    }
   }
 };
+
 
 L.TileLayer.BetterWMS = L.TileLayer.WMS.extend({
 
@@ -136,27 +102,33 @@ L.TileLayer.BetterWMS = L.TileLayer.WMS.extend({
 
   getFeatureInfo: function (evt) {
     var popUp = function(data){
-      console.log(data);
+      console.log(data, layerName, colorMap);
+      if(layerName!=='world_dem'){
+        var value = colorMap[layerName].legend[data.data[0]]
+      } else {
+        var value = "Elevation: " + data.data[0] + " (m)"
+      }
       L.popup({ maxWidth: 800})
         .setLatLng(evt.latlng)
-        .setContent(colorMap[layerName].legend[data.data[0]])
-        .openOn(this._map);
+        .setContent(value)
+        .openOn(window.map_.map);
     };
+
+    var layerMapping = {
+      "world:dem": "world_dem",
+      "world:soil": "soil_world",
+      "extern:ww:whymap": "whymap",
+      "world:cover": 'landcover_world'
+    };
+
     // Make an AJAX request to the server and hope for the best
     console.log(evt);
     console.log(this);
     console.log(this.wmsParams.layers);
-    var layerMapping = {
-      
-    };
     var layerName = layerMapping[this.wmsParams.layers];
-    layerName = 'soil_world';
-    var url = "https://demo.lizard.net/api/v2/raster-aggregates/" +
-      "?agg=curve&geom=POINT(" + evt.latlng.lng + "+" + evt.latlng.lat +
-      ")&srs=EPSG:4326&raster_names=" + layerName;
-    console.log(url);
+    var url = "map/feature_info/?lng=" + evt.latlng.lng + "&lat=" +
+      evt.latlng.lat + "&layername=" + layerName;
     loadData(url, popUp);
-
   }
 });
 
@@ -293,7 +265,7 @@ function nvGraph(i){
 
       d3.select('#chart_' + i + ' svg')
         .datum([{
-            'values': [{'y': 0, 'x': 0}, {'y': 1, 'x': 1}],
+            'values': [],
             'key': 'empty',
             'color': '#ffffff'
         }])
