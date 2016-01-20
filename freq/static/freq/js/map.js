@@ -227,6 +227,7 @@ function extraUpdate(data){
   var graphs = data.graphs;
   if (graphs !== undefined){
     $('#chart_0').removeClass('hidden');
+    console.log('graphs[0].measurement_point', graphs[0].measurement_point);
     $("#measurement_point")
       .removeClass('hidden')
       .text(graphs[0].measurement_point);

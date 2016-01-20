@@ -706,7 +706,8 @@ class BaseApiView(BaseViewMixin, APIView):
         for i in range(len(self.additional_response)):
             response.append({
                 'name': '#chart_' + str(i) + ' svg',
-                'data': self.additional_response[i]
+                'data': self.additional_response[i],
+                'measurement_point': self.measurement_point
             })
 
         return {

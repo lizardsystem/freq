@@ -201,13 +201,10 @@ function loadMapTimeseries(uuid, name, coordinates) {
 
 
 function drawLocationsBoundingBox(map, locationsLayer){
-  var imagesUrl = window.startpage.leafletImagesUrl;
-
   return function(data, textStatus, jqXHR){
     var locs = data.result.locations;
     var ts = data.result.timeseries;
     var statistic = window['map_']['dropdown_0'];
-    console.log('statistic', statistic);
     var col = false;
     if(ts){
       window.map_.min = ts.extremes[statistic].min;
@@ -224,7 +221,6 @@ function drawLocationsBoundingBox(map, locationsLayer){
       for(var i=colors.length - 1; i > 0; i--){
         colorDomain.push(ts.extremes[statistic].min + (valueRange / i))
       }
-      console.log('Colors', colorDomain, colors);
       locationsLayer.clearLayers();
       var colorScale = d3.scale.linear()
         .range(colors)
@@ -294,7 +290,6 @@ function nvGraph(i){
 
       chart.legend
         .maxKeyLength(60);
-      console.log('#chart_' + i + ' svg');
 
       d3.select('#chart_' + i + ' svg')
         .datum([{
