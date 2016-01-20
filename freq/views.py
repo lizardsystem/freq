@@ -126,9 +126,10 @@ class BaseViewMixin(object):
                       '}'.format(
                     key, old_value, value))
         else:
-            logger.warn('NOT MY TYPE!:', state, key, value)
-            logger.warn('default:', type(DEFAULT_STATE[state][key]).__name__)
-            logger.warn('new:', type(value).__name__)
+            logger.warn('NOT MY TYPE!: {}, {}, {}'.format(state, key, value))
+            logger.warn('default: {}'.format(
+                type(DEFAULT_STATE[state][key]).__name__))
+            logger.warn('new: {}'.format(type(value).__name__))
 
     def is_default_type(self, state, key, value):
         try:
@@ -688,12 +689,13 @@ class BaseApiView(BaseViewMixin, APIView):
     def value(self):  #TODO: remove errors
         value = self.request.GET.get('value')
         if value is None:
-            logger.warn("ERROR BUTTON VALUE == NONE!: ",
-                  self.button, value)
+            logger.warn("ERROR BUTTON VALUE == NONE!: {}".format(
+                  self.button, value))
         try:
             return json.loads(value)
         except (ValueError, TypeError):
-            logger.warn("ERROR BUTTON VALUE IS NOT A JSON: ", self.button, value)
+            logger.warn("ERROR BUTTON ({}) VALUE ({}) IS NOT A JSON".format(
+                self.button, value))
             return value
 
     @cached_property
