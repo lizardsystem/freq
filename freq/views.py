@@ -5,7 +5,6 @@ import datetime as dt
 import json
 import logging
 from pprint import pprint  # left here for debugging purposes
-from statistics import mean
 
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
@@ -43,10 +42,8 @@ DEFAULT_STATE = {
         'end_js': 1000000000000,
         'timeseries_length': -9999,
         'start_js': 0,
-        'chart': 'hidden',
     },
     'startpage': {
-        'chart': 'hidden',
         'datepicker': {'start': '1-1-1900', 'end': jsdt.today()},
         'end_js': 1000000000000,
         'graph': {'x': 0, 'y': 0, 'series': 0},
@@ -336,12 +333,15 @@ class MapView(BaseView):
     menu_items = []
     map_active = 'active'
     dropdowns = DropDown(
-        heading= "Statistic",
+        heading = "Statistic",
     )
-    dropdown_options= [
+    dropdown_options = [
         "min",
         "max",
-        "mean"
+        "mean",
+        "range (max - min)",
+        # "difference (last - first)",
+        # "difference (mean last - first year)"
     ]
 
     def dispatch(self, *args, **kwargs):
@@ -474,7 +474,6 @@ class TimeSeriesByUUIDView(StartPageBaseView):
         self.request.session['disabled']['trend_detection'] = 'enabled'
         self.request.session.modified = True
         self.set_session_value('trend_detection', 'active', True)
-        self.chart = ''
         return super().get(request, *args, **kwargs)
 
 

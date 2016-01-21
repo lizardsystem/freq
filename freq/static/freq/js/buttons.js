@@ -65,13 +65,15 @@ function updateGraphs(data){
     var chart = $('#chart_1');
     var chart0 = $('#chart_0');
     if(graphs.length == 2){
-        var height = chart0.height();
-        var width = chart0.width();
-        $('#chart_1 > svg > g').css('height', height).css('width', width)
-            .css('margin-top', '-50px');
-        chart.removeClass('hidden').addClass('show');
+      var height = chart0.height();
+      var width = chart0.width();
+      $('#chart_1 > svg > g').css('height', height).css('width', width)
+        .css('margin-top', '-50px');
+      chart.removeClass('hidden').addClass('show');
+      chart0.removeClass('hidden').addClass('show');
     } else if(graphs.length == 1) {
-        chart.removeClass('show').addClass('hidden');
+      chart.removeClass('show').addClass('hidden');
+      chart0.removeClass('hidden').addClass('show');
     }
     if(window.active == 'periodic_fluctuations' ||
        window.active == 'autoregressive'){

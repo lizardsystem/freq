@@ -122,13 +122,12 @@ L.TileLayer.BetterWMS = L.TileLayer.WMS.extend({
     };
 
     // Make an AJAX request to the server and hope for the best
-    console.log(evt);
-    console.log(this);
-    console.log(this.wmsParams.layers);
     var layerName = layerMapping[this.wmsParams.layers];
-    var url = "map/feature_info/?lng=" + evt.latlng.lng + "&lat=" +
-      evt.latlng.lat + "&layername=" + layerName;
-    loadData(url, popUp);
+    if (layerName!=="tbamap_2015ggis"){
+      var url = "map/feature_info/?lng=" + evt.latlng.lng + "&lat=" +
+        evt.latlng.lat + "&layername=" + layerName;
+      loadData(url, popUp);
+    }
   }
 });
 
@@ -326,7 +325,7 @@ function loadMap() {
     });
 
     var aquifers = L.tileLayer.betterWms(
-      'https://ggis.un-igrac.org/geoserver/tbamap2015/wms/', {
+      'https://ggis.un-igrac.org/geoserver/tbamap2015/wms', {
         layers: 'tbamap_2015ggis',
         maxZoom: 17,
         tooltip: true,

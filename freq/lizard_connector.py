@@ -1,5 +1,6 @@
 __author__ = 'roel.vandenberg@nelen-schuurmans.nl'
 
+import datetime as dt
 import json
 from pprint import pprint  # left here for debugging purposes
 from time import time
@@ -316,16 +317,8 @@ class TimeSeries(Base):
         :param end: end timestamp in ISO 8601 format
         :return: a dictionary of the api-response.
         """
-        self.statistic = statistic
-        if statistic == 'mean':
-            statistic = ['count', 'sum']
-        if not statistic:
-            statistic = ['min', 'max', 'count', 'sum']
-            self.statistic = None
-
         if not end:
             end = jsdt.now_iso()
-
         if isinstance(start, int):
             start -= 10000
         if isinstance(end, int):
@@ -343,8 +336,66 @@ class TimeSeries(Base):
         ]
         points = ['%20'.join([str(x), str(y)]) for x, y in polygon_coordinates]
         geom_within = 'POLYGON%20((' + ',%20'.join(points) + '))'
+
+        self.statistic = statistic
+        if statistic == 'mean':
+            statistic = ['count', 'sum']
+        elif not statistic:
+            statistic = ['min', 'max', 'count', 'sum']
+            self.statistic = None
+        elif statistic == 'range (max - min)':
+            statistic = ['min', 'max']
+        elif statistic == 'difference (last - first)':
+            statistic = 'count'
+        elif statistic == 'difference (mean last - first year)':
+            year = dt.timedelta(days=366)
+            first_end = jsdt.datetime_to_js(jsdt.js_to_datetime(start) + year)
+            last_start = jsdt.datetime_to_js(jsdt.js_to_datetime(end) - year)
+            self.get(
+                start=start,
+                end=first_end,
+                min_points=1,
+                fields=['count', 'sum'],
+                location__geom_within=geom_within
+            )
+            first_year = {}
+            for r in self.results:
+                try:
+                    first_year[r['location']['uuid']] = {
+                      'first_value_timestamp': r['first_value_timestamp'],
+                      'mean': r['events'][0]['sum'] / r['events'][0]['count']
+                    }
+                except IndexError:
+                    first_year[r['location']['uuid']] = {
+                      'first_value_timestamp': np.nan,
+                      'mean': np.nan
+                    }
+            self.results = []
+            self.get(
+                start=last_start,
+                end=end,
+                min_points=1,
+                fields=['count', 'sum'],
+                location__geom_within=geom_within
+            )
+            for r in self.results:
+                try:
+                    r['events'][0]['difference (mean last - first year)'] = \
+                        r['events'][0]['sum'] / r['events'][0]['count'] - \
+                        first_year[r['location']['uuid']]['mean']
+                    r['first_value_timestamp'] = \
+                        first_year[
+                            r['location']['uuid']]['first_value_timestamp']
+                except IndexError:
+                    r['events'] = [{'difference (mean last - first year)':
+                                       np.nan}]
+                    r['first_value_timestamp'] = np.nan
+                    r['last_value_timestamp'] = np.nan
+            return
+
         self.get(start=start, end=end, min_points=1, fields=statistic,
                  location__geom_within=geom_within)
+
 
     def ts_to_dict(self, statistic=None, values=None,
                    start_date=None, end_date=None, date_time='js'):
@@ -367,29 +418,55 @@ class TimeSeries(Base):
         # np array with cols: 'min', 'max', 'sum', 'count', 'first', 'last'
         if not statistic:
             stats1 = ('min', 'max', 'sum', 'count')
-            stats2 = ((0, 'min'), (1, 'max'), (2, 'range'), (3, 'mean'))
-            start_index, end_index = 4, 5
+            stats2 = (
+                (0, 'min'),
+                (1, 'max'),
+                (2, 'mean'),
+                (3, 'range (max - min)'),
+                (4, 'difference (last - first)'),
+                (5, 'difference (mean last - first year)')  #TODO: update code above
+            )
+            start_index, end_index = 6, 7
         else:
-            stats1 = ('sum', 'count') if statistic == 'mean' else (statistic, )
+            if statistic == 'mean':
+                stats1 = ('sum', 'count')
+            elif statistic == 'range (max - min)':
+                stats1 = ('min', 'max')
+            else:
+                stats1 = (statistic, )
             stats2 = ((0, statistic), )
             start_index = int(statistic == 'mean') + 1
             end_index = start_index + 1
-        npts = np.array([
-            [np.nan for y in range(len(stats1) + 2)] if len(x['events']) == 0
-            else [float(x['events'][0][y]) for y in stats1] +
-            [int(x['first_value_timestamp']), int(x['last_value_timestamp'])]
-            for x in self.results
-        ])
+        ts = []
+        for result in self.results:
+            try:
+                timestamps = [int(result['first_value_timestamp']),
+                              int(result['last_value_timestamp'])]
+            except ValueError:
+                timestamps = [np.nan, np.nan]
+            if not len(result['events']):
+                ts.append([np.nan for _ in range(len(stats1) + 2)] + timestamps)
+            else:
+                ts.append([float(result['events'][0][s]) for s in stats1] +
+                          timestamps)
+        npts = np.array(ts)
         if statistic:
-            npts_calculated = np.hstack((
-                (npts[:, 0] / npts[:, 1]).reshape(-1, 1) if statistic == "mean"
-                    else npts[:, 0].reshape(-1, 1),
-                npts[:, slice(start_index, -1)]
-            ))
+            if statistic == 'mean':
+                stat = (npts[:, 0] / npts[:, 1]).reshape(-1, 1)
+            elif statistic == 'range (max - min)':
+                stat = (npts[:, 1] - npts[:, 0]).reshape(-1, 1)
+            elif statistic == 'difference (last - first)':
+                stat = (npts[:, 1] - npts[:, 0]).reshape(-1, 1)
+            else:
+                stat = npts[:, 0].reshape(-1, 1)
+            npts_calculated = np.hstack((stat, npts[:, slice(start_index, -1)]))
         else:
             npts_calculated = np.hstack((
-                npts[:, 0:2], (npts[:, 1] - npts[:, 0]).reshape(-1, 1),
-                (npts[:, 2] / npts[:, 3]).reshape(-1, 1), npts[:, 4:]
+                npts[:, 0:2],
+                (npts[:, 2] / npts[:, 3]).reshape(-1, 1),
+                (npts[:, 1] - npts[:, 0]).reshape(-1, 1),
+
+                npts[:, 4:]
             ))
 
         for i, row in enumerate(npts_calculated):
@@ -408,10 +485,14 @@ class TimeSeries(Base):
             'dt': jsdt.js_to_datetime,
             'str': jsdt.js_to_datestring
         }[date_time]
-        start = dt_conversion(max(jsdt.round_js_to_date(start_date),
-                                  jsdt.round_js_to_date(npts_min[-2])))
-        end = dt_conversion(min(jsdt.round_js_to_date(end_date),
-                                jsdt.round_js_to_date(npts_max[-1])))
+        if statistic != 'difference (mean last - first year)':
+            start = dt_conversion(max(jsdt.round_js_to_date(start_date),
+                                      jsdt.round_js_to_date(npts_min[-2])))
+            end = dt_conversion(min(jsdt.round_js_to_date(end_date),
+                                    jsdt.round_js_to_date(npts_max[-1])))
+        else:
+            start = jsdt.round_js_to_date(start_date)
+            end = jsdt.round_js_to_date(end_date)
         self.response = {
             "extremes": extremes,
             "dates": {
