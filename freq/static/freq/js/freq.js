@@ -164,7 +164,7 @@ function icon(pxSize, color, innerColor){
 
 function loadMapTimeseries(uuid, name, coordinates) {
   return function(event){
-    var queryUrl = 'map__data/?active=map_&name=' + name + '&uuid=' +
+    var queryUrl = '/map__data/?active=map_&name=' + name + '&uuid=' +
       uuid + '&x_coord=' +  coordinates[0] + '&y_coord=' + coordinates[1];
     loadData(queryUrl, updateGraphs);
   }
