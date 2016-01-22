@@ -21,6 +21,13 @@ def now_iso():
     return dt.datetime.now().isoformat().split('.')[0] + 'Z'
 
 
+def round_js_to_date(js_datetime):
+    date_time = js_to_datetime(js_datetime)
+    round_datetime = dt.datetime.combine(date_time.date(),
+                                         dt.datetime.min.time())
+    return datetime_to_js(round_datetime)
+
+
 def datetime_to_js(date_time):
     if date_time is not None:
         return int((date_time - JS_EPOCH).total_seconds() * 1000)

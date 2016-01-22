@@ -3,8 +3,8 @@
 import copy
 import datetime as dt
 import json
+import logging
 from pprint import pprint  # left here for debugging purposes
-from statistics import mean
 
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
@@ -18,9 +18,13 @@ from rest_framework.views import APIView
 import freq.jsdatetime as jsdt
 from freq.buttons import *
 import freq.freq_calculator as calculator
-from freq.lizard_api import ApiError
-from freq.lizard_api import GroundwaterLocations
-from freq.lizard_api import GroundwaterTimeSeries
+from freq.lizard_connector import ApiError
+from freq.lizard_connector import GroundwaterLocations
+from freq.lizard_connector import GroundwaterTimeSeries
+from freq.lizard_connector import RasterAggregates
+
+
+logger = logging.getLogger(__name__)
 
 
 TIMESERIES_MEASUREMENT_FREQUENCY = 'M'
@@ -32,9 +36,14 @@ DEFAULT_STATE = {
         ],
         'datepicker': {'start': '1-1-1900', 'end': jsdt.today()},
         'dropdown_0': {'value': 'mean'},
+        'graph': {'x': 0, 'y': 0, 'series': 0},
+        'measurement_point': 'No Time Series Selected',
+        'uuid': 'EMPTY',
+        'end_js': 1000000000000,
+        'timeseries_length': -9999,
+        'start_js': 0,
     },
     'startpage': {
-        'chart': 'hidden',
         'datepicker': {'start': '1-1-1900', 'end': jsdt.today()},
         'end_js': 1000000000000,
         'graph': {'x': 0, 'y': 0, 'series': 0},
@@ -52,12 +61,12 @@ DEFAULT_STATE = {
         'spinner_0': {'value': 0.05},
     },
     'periodic_fluctuations': {
-        'spinner_0': {'value': 10},
-        'spinner_1': {'value': 0},
+        'spinner_0': {'value': 0},
         'graph': {'x': 0, 'y': 0, 'series': 0},
     },
     'autoregressive': {
-        'spinner_0': {'value': 1},
+        'spinner_0': {'value': 10},
+        'spinner_1': {'value': 1},
         'graph': {'x': 0, 'y': 0, 'series': 0},
     },
     'disabled': {
@@ -114,9 +123,10 @@ class BaseViewMixin(object):
                       '}'.format(
                     key, old_value, value))
         else:
-            print('NOT MY TYPE!:', state, key, value)
-            print('default:', type(DEFAULT_STATE[state][key]).__name__)
-            print('new:', type(value).__name__)
+            logger.warn('NOT MY TYPE!: {}, {}, {}'.format(state, key, value))
+            logger.warn('default: {}'.format(
+                type(DEFAULT_STATE[state][key]).__name__))
+            logger.warn('new: {}'.format(type(value).__name__))
 
     def is_default_type(self, state, key, value):
         try:
@@ -172,14 +182,16 @@ class BaseViewMixin(object):
 
     @cached_property
     def measurement_point(self):
-        return self.request.session['startpage'].get(
+        page = self.request.GET.get('active', 'startpage')
+        return self.request.session[page].get(
             'measurement_point', 'No Time Series Selected')
 
     # ------------------------------------------------------------------------ #
     ### Map properties
     @cached_property
     def selected_coords(self):
-        return json.dumps([float(x) for x in self.request.session['startpage'].get(
+        page = self.request.GET.get('active', 'startpage')
+        return json.dumps([float(x) for x in self.request.session[page].get(
             'selected_coords', [])])
 
     @property
@@ -190,12 +202,6 @@ class BaseViewMixin(object):
     @property
     def bounds(self):
         return self.request.session['map_'].get('bounds')
-
-    @property
-    def zoom(self):
-        if self.request.session['startpage']['selected_coords']:
-            return 10
-        return self.request.session['map_'].get('zoom', 3)
 
     @property
     def freq_icon_size(self):
@@ -217,8 +223,9 @@ class BaseViewMixin(object):
     @cached_property
     def timeseries(self):
         ts = GroundwaterTimeSeries()
-        ts.uuid(self.request.session['startpage']['uuid'], **self.time_window)
-        if len(ts.results) != 0:
+        page = self.request.GET.get('active', 'startpage')
+        ts.uuid(self.request.session[page]['uuid'], **self.time_window)
+        if len(ts.results):
             data = [{'y': x['max'], 'x': x['timestamp']}
                              for x in ts.results[0]['events']]
         else:
@@ -230,7 +237,7 @@ class BaseViewMixin(object):
             'color': '#1abc9c'
         }
 
-        self.request.session['startpage']['timeseries_length'] = len(data)
+        self.request.session[page]['timeseries_length'] = len(data)
         self.request.session.modified = True
 
         return self.data
@@ -238,7 +245,7 @@ class BaseViewMixin(object):
 
     @cached_property
     def error_message(self):
-        if len(self.timeseries['values']) == 0:
+        if not len(self.timeseries['values']):
             return 'No time series found for this location, please select ' \
                    'another.'
         return ''
@@ -252,11 +259,12 @@ class BaseViewMixin(object):
 
     @property
     def time_window(self):
+        page = self.request.GET.get('active', 'startpage')
         start = jsdt.datetime_to_js(dt.datetime.strptime(
-            self.request.session['startpage']['datepicker']['start'], '%d-%m-%Y'
+            self.request.session[page]['datepicker']['start'], '%d-%m-%Y'
         ))
         end = jsdt.datetime_to_js(dt.datetime.strptime(
-            self.request.session['startpage']['datepicker']['end'], '%d-%m-%Y'
+            self.request.session[page]['datepicker']['end'], '%d-%m-%Y'
         ))
         return {
             'start': start,
@@ -268,7 +276,8 @@ class BaseViewMixin(object):
 
     @cached_property
     def length(self):
-        length = self.request.session['startpage']['timeseries_length']
+        page = self.request.GET.get('active', 'startpage')
+        length = self.request.session[page]['timeseries_length']
         if length < 0:
             return len(self.timeseries['values'])
         return length
@@ -287,7 +296,8 @@ class BaseViewMixin(object):
 
     @cached_property
     def datepicker_start(self):
-        start = self.request.session['startpage']['datepicker']['start']
+        page = self.request.GET.get('active', 'startpage')
+        start = self.request.session[page]['datepicker']['start']
         if isinstance(start, str) and '-' in start:
             return [int(x) for x in start.split('-')]
         else:
@@ -295,7 +305,8 @@ class BaseViewMixin(object):
 
     @cached_property
     def datepicker_end(self):
-        end = self.request.session['startpage']['datepicker']['end']
+        page = self.request.GET.get('active', 'startpage')
+        end = self.request.session[page]['datepicker']['end']
         if isinstance(end, str) and '-' in end:
             return [int(x) for x in end.split('-')]
         else:
@@ -322,12 +333,15 @@ class MapView(BaseView):
     menu_items = []
     map_active = 'active'
     dropdowns = DropDown(
-        heading= "Statistic",
+        heading = "Statistic",
     )
-    dropdown_options= [
+    dropdown_options = [
         "min",
         "max",
-        "mean"
+        "mean",
+        "range (max - min)",
+        # "difference (last - first)",
+        # "difference (mean last - first year)"
     ]
 
     def dispatch(self, *args, **kwargs):
@@ -395,10 +409,11 @@ class TimeSeriesByLocationUUIDView(StartPageBaseView):
                 )
                 for x in self.timeseries
             ]
-        elif len(self.timeseries) == 1:
+        elif len(self.timeseries) == 1:  # TODO: FIX: raise error or
+        # TODO: self.multiple timeseries.
             result = self.timeseries[0]
             self.set_session_value('startpage', 'measurement_point',
-                "Meetpunt: " + result['name'])
+                "Groundwater well: " + result['name'])
             self.set_session_value('disabled', 'trend_detection', 'enabled')
             self.request.session.modified = True
             self.set_session_value('trend_detection', 'active', True)
@@ -424,7 +439,8 @@ class TimeSeriesByLocationUUIDView(StartPageBaseView):
         return bounds
 
     def get(self, request, *args, **kwargs):
-        self.request.session['startpage']['selected_coords'] = self.coordinates
+        page = self.request.GET.get('active', 'startpage')
+        self.request.session[page]['selected_coords'] = self.coordinates
         self.request.session['map_']['bounds'] = self.bounds
         self.request.session.modified = True
         return super().get(request, *args, **kwargs)
@@ -446,7 +462,7 @@ class TimeSeriesByUUIDView(StartPageBaseView):
 
     def get(self, request, uuid, *args, **kwargs):
         self.set_session_value('startpage', 'measurement_point',
-                               "Meetpunt: " + self.request.GET['name'])
+                               "Groundwater well: " + self.request.GET['name'])
         self.set_session_value('startpage', 'datepicker',
                                {
                                     'start': self.startdate,
@@ -458,7 +474,6 @@ class TimeSeriesByUUIDView(StartPageBaseView):
         self.request.session['disabled']['trend_detection'] = 'enabled'
         self.request.session.modified = True
         self.set_session_value('trend_detection', 'active', True)
-        self.chart = ''
         return super().get(request, *args, **kwargs)
 
 
@@ -494,7 +509,6 @@ class PeriodicFluctuationsView(BaseView):
         Spinner(
             heading='Number of harmonics',
             title="Number of harmonics to be removed from the series",
-            number=1
         )
     ]
 
@@ -502,22 +516,29 @@ class PeriodicFluctuationsView(BaseView):
     def spinner_max(self):
         return int(self.length / 2)
 
-    @property
-    def spinner_1_value(self):
-        return self.request.session['periodic_fluctuations'].get(
-            'spinner_1', {'value': '0'})['value']
-
 
 class AutoRegressiveView(BaseView):
     freq_active = 'active'
     active = 'autoregressive'
     template_name = 'freq/autoregressive.html'
-    spinners = Spinner(
-        heading='Number of periods',
-        title="Number of periods used in the training of the autoregressive " \
-               "model",
-        min_=1
-    )
+    spinners = [
+        Spinner(
+            heading='Correlation lags',
+            title="Number of lags used for the correlogram computation",
+        ),
+        Spinner(
+            heading='Number of periods',
+            title="Number of periods used in the training of the autoregressive " \
+                   "model",
+            min_=1,
+            number=1
+        )
+    ]
+
+    @property
+    def spinner_1_value(self):
+        return self.request.session['autoregressive'].get(
+            'spinner_1', {'value': '1'})['value']
 
     @property
     def spinner_max(self):
@@ -525,14 +546,15 @@ class AutoRegressiveView(BaseView):
 
 
 class BaseApiView(BaseViewMixin, APIView):
-    text_output = []
+    statistics = []
 
     def get(self, request, *args, **kwargs):
         if self.button == 'datepicker':
+            page = self.request.GET.get('active', 'startpage')
             self.set_session_value(
-                'startpage', self.button,
+                page, self.button,
                 json.loads(self.request.GET.get('value', self.request.session[
-                    'startpage']['datepicker']))
+                    page]['datepicker']))
             )
         elif self.button and self.button != 'undefined':
             next_tab = {
@@ -546,8 +568,10 @@ class BaseApiView(BaseViewMixin, APIView):
 
     def pd_timeseries_from_json(self, json_data, name=''):
         # store results in a numpy array
-        dates = np.array([jsdt.js_to_datestring(x['x']) for x in json_data],
-                         dtype='datetime64')
+        dates = np.array(
+            [jsdt.js_to_datestring(x['x'], iso=True) for x in json_data],
+            dtype='datetime64'
+        )
         values = np.array([y['y'] for y in json_data])
         index = pd.DatetimeIndex(dates, freq='infer')
         # build a timeseries object so we can compare it with other timeseries
@@ -578,29 +602,24 @@ class BaseApiView(BaseViewMixin, APIView):
 
     def linear_trend(self, timeseries=None, name=None):
         if timeseries is None:
-            timeseries = self.timeseries['values']
-            if not name:
-                name = self.timeseries['key']
-            timeseries = self.load_timeseries(timeseries, name)[1]
+            timeseries = self.pandas_timeseries
         result = calculator.linear(
             data=timeseries,
-            alpha=float(self.request.session[
-                                'trend_detection']['spinner_0']['value']),
+            alpha=float(
+                self.request.session['trend_detection']['spinner_0']['value']),
             detrend_anyway=True
         )
         return [result]
 
     def step_trend(self):
-        timeseries = self.load_timeseries(self.timeseries['values'],
-                                          self.timeseries['key'])
         try:
             split = int(self.request.session['trend_detection']['graph']['x'])
             if split == 0:
                 return
             breakpoint = jsdt.js_to_datetime(split)
             return [calculator.step(
-                data=timeseries[1],
-                bp=int(timeseries[0].index.searchsorted(breakpoint)),
+                data=self.pandas_timeseries,
+                bp=int(self.pandas_timeseries.index.searchsorted(breakpoint)),
                 alpha=float(self.request.session[
                                 'trend_detection']['spinner_0']['value']),
                 detrend_anyway=True
@@ -617,8 +636,9 @@ class BaseApiView(BaseViewMixin, APIView):
 
     @cached_property
     def pandas_timeseries(self):
-        return self.load_timeseries(self.timeseries['values'],
-                                          self.timeseries['key'])
+        ts = self.load_timeseries(self.timeseries['values'],
+                                  self.timeseries['key'])
+        return ts[0]
 
     @cached_property
     def selected_trend(self):
@@ -637,19 +657,19 @@ class BaseApiView(BaseViewMixin, APIView):
         raise ValueError('Trend type unknown: ' + str(selected_trend_type))
 
     @cached_property
-    def correllogram(self):
-        return calculator.correlogram(
-            data=self.selected_trend[-1][0],
-            n_lags=int(self.request.session['periodic_fluctuations'][
-                'spinner_0']['value'])
-        )
-
-    @cached_property
     def harmonic(self):
         return calculator.harmonic(
             data=self.selected_trend[-1][0],
             n_harmonics=int(self.request.session['periodic_fluctuations'][
-                'spinner_1']['value'])
+                'spinner_0']['value'])
+        )
+
+    @cached_property
+    def correllogram(self):
+        return calculator.correlogram(
+            data=self.selected_trend[-1][0],
+            n_lags=int(self.request.session['autoregressive'][
+                'spinner_0']['value'])
         )
 
     @cached_property
@@ -657,7 +677,7 @@ class BaseApiView(BaseViewMixin, APIView):
         return calculator.autoregressive(
             data=self.harmonic[0],
             per=int(self.request.session['autoregressive'][
-                'spinner_0']['value'])
+                'spinner_1']['value'])
         )
 
     @property
@@ -668,17 +688,14 @@ class BaseApiView(BaseViewMixin, APIView):
     def value(self):  #TODO: remove errors
         value = self.request.GET.get('value')
         if value is None:
-            print("ERROR BUTTON VALUE == NONE!: ",
-                  self.button, value)
+            logger.warn("ERROR BUTTON VALUE == NONE!: {}".format(
+                  self.button, value))
         try:
             return json.loads(value)
         except (ValueError, TypeError):
-            print("ERROR BUTTON VALUE IS NOT A JSON: ", self.button, value)
+            logger.warn("ERROR BUTTON ({}) VALUE ({}) IS NOT A JSON".format(
+                self.button, value))
             return value
-
-    @property
-    def pd_timeseries(self):
-        return self.pd_timeseries_from_json(self.timeseries)
 
     @cached_property
     def additional_response(self):
@@ -691,23 +708,26 @@ class BaseApiView(BaseViewMixin, APIView):
         for i in range(len(self.additional_response)):
             response.append({
                 'name': '#chart_' + str(i) + ' svg',
-                'data': self.additional_response[i]
+                'data': self.additional_response[i],
+                'measurement_point': self.measurement_point
             })
 
         return {
             'graphs': response,
-            'statistics': self.text_output
+            'statistics': self.statistics
         }
+
 
 class TimeSeriesDataView(BaseApiView):
 
     def get(self, request, *args, **kwargs):
+        page = self.request.GET.get('active', 'startpage')
         response_dict = {
             'data': self.timeseries,
-            'start': self.request.session['startpage']['start_js'],
-            'end': self.request.session['startpage']['end_js'],
-            'uuid': self.request.session['startpage']['uuid'],
-            'name': self.request.session['startpage']['measurement_point']
+            'start': self.request.session[page]['start_js'],
+            'end': self.request.session[page]['end_js'],
+            'uuid': self.request.session[page]['uuid'],
+            'name': self.request.session[page]['measurement_point']
         }
         return RestResponse(response_dict)
 
@@ -716,13 +736,21 @@ class MapDataView(BaseApiView):
     active = 'map_'
 
     def get(self, request, *args, **kwargs):
+        page = self.request.GET.get('active')
+        if page:
+            self.set_session_value(page, 'measurement_point',
+                       "Groundwater well: " + self.request.GET['name'])
+            self.set_session_value(page, 'uuid', request.GET['uuid'])
+            add_response = True
+        else:
+            add_response = False
         super().get(self, request, *args, **kwargs)
-        datatypes = request.GET.get('datatypes', 'locations,timeseries').split(
+        datatypes = request.GET.get('datatypes', 'locations,timeseries_').split(
             ',')
         try:
             response_dict = {
                 "result": {
-                    x: getattr(self, x) for x in datatypes},
+                    x.strip('_'): getattr(self, x) for x in datatypes},
                 "error": ""
             }
         except ApiError:
@@ -731,6 +759,8 @@ class MapDataView(BaseApiView):
                 "error": "Too many groundwater locations to show on map. "
                          "Please zoom in."
             }
+        if add_response:
+            response_dict.update(self.base_response)
         return RestResponse(response_dict)
 
     @property
@@ -740,7 +770,7 @@ class MapDataView(BaseApiView):
         return locations.coord_uuid_name()
 
     @property
-    def timeseries(self):
+    def timeseries_(self):
         statistic = self.request.session['map_'].get(
             'dropdown_0', {'value': 'mean'})['value']
         timeseries = GroundwaterTimeSeries()
@@ -770,10 +800,6 @@ class MapDataView(BaseApiView):
             bounds_array = self.request.session['map_'].get('bounds')
         return bounds_array
 
-    @property
-    def base_response(self):
-        return {}
-
 
 class StartpageDataView(BaseApiView):
     active = 'startpage'
@@ -788,41 +814,46 @@ class TrendDataView(BaseApiView):
         if self.selected_trend is None:
             return [[self.timeseries]]
         result.append([
-            self.timeseries,
+            self.series_to_js(
+                npseries=self.pandas_timeseries,
+                index=self.pandas_timeseries.index,
+                key='Groundwaterlevels (m)',
+                color='#1abc9c'
+            ),
             self.series_to_js(
                 npseries=self.selected_trend[0][0],
-                index=self.pandas_timeseries[0].index,
+                index=self.pandas_timeseries.index,
                 key='Detrended groundwaterlevels (m)'
             ),
             self.series_to_js(
                 npseries=self.selected_trend[0][1],
-                index=self.pandas_timeseries[0].index,
+                index=self.pandas_timeseries.index,
                 key='Removed trend (m)',
                 color='#f39c12'
             ),
         ])
-        self.text_output = [self.selected_trend[0][3]]
+        self.statistics = [self.selected_trend[0][3]]
         try:
             result.append([
                 self.series_to_js(
                     npseries=self.selected_trend[0][0],
-                    index=self.pandas_timeseries[0].index,
+                    index=self.pandas_timeseries.index,
                     key='Detrended groundwaterlevels [step trend] (m)',
                     color='#1abc9c'
                 ),
                 self.series_to_js(
                     npseries=self.selected_trend[1][0],
-                    index=self.pandas_timeseries[0].index,
+                    index=self.pandas_timeseries.index,
                     key='Detrended groundwaterlevels [linear trend] (m)'
                 ),
                 self.series_to_js(
                     npseries=self.selected_trend[1][1],
-                    index=self.pandas_timeseries[0].index,
+                    index=self.pandas_timeseries.index,
                     key='Removed trend (m)',
                     color='#f39c12'
                 ),
             ])
-            self.text_output.append(self.selected_trend[0][3])
+            self.statistics.append(self.selected_trend[0][3])
         except IndexError:
             pass
         return result
@@ -843,18 +874,18 @@ class FluctuationsDataView(BaseApiView):
         ], [
             self.series_to_js(
                 npseries=self.selected_trend[-1][0],
-                index=self.pandas_timeseries[0].index,
+                index=self.pandas_timeseries.index,
                 key='Detrended groundwaterlevels (m)',
                 color='#1abc9c'
             ),
             self.series_to_js(
                 npseries=self.harmonic[0],
-                index=self.pandas_timeseries[0].index,
+                index=self.pandas_timeseries.index,
                 key='Groundwaterlevels with periodic fluctuations removed (m)'
             ),
             self.series_to_js(
                 npseries=self.harmonic[1],
-                index=self.pandas_timeseries[0].index,
+                index=self.pandas_timeseries.index,
                 key='Removed periodic fluctuations (m)',
                 color='#f39c12'
             ),
@@ -868,27 +899,37 @@ class RegressiveDataView(BaseApiView):
     def additional_response(self):
         return [[
             self.series_to_js(
+                npseries=self.correllogram,
+                index=[],
+                key='Correllogram',
+                dates=False
+            )
+        ], [
+            self.series_to_js(
                 npseries=self.harmonic[0],
-                index=self.pandas_timeseries[0].index,
+                index=self.pandas_timeseries.index,
                 key='Groundwaterlevels with periodic fluctuations removed (m)',
                 color='#1abc9c'
             ),
             self.series_to_js(
                 npseries=self.autoregressive[0],
-                index=self.pandas_timeseries[0].index,
+                index=self.pandas_timeseries.index,
                 key='Autoregressive model result (m)'
             ),
             self.series_to_js(
                 npseries=self.autoregressive[1],
-                index=self.pandas_timeseries[0].index,
+                index=self.pandas_timeseries.index,
                 key='Removed trend',
                 color='#f39c12'
             ),
         ]]
 
+
 class MapFeatureInfoView(APIView):
 
     def get(self, request, *args, **kwargs):
-        request.get('url')
-        response = {}
+        aggregates = RasterAggregates()
+        response = aggregates.wms(lat=request.GET.get('lat'),
+                                  lng=request.GET.get('lng'),
+                                  layername=request.GET.get('layername'))
         return RestResponse(response)

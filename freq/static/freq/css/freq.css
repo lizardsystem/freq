@@ -106,6 +106,9 @@ html, body {
     height: 250px;
     margin-left: -15px;
 }
+.form-control .input-number {
+    min-width: 50px;
+}
 .icon-flipped {
 transform: scaleX(-1);
 -moz-transform: scaleX(-1);
@@ -192,5 +195,8 @@ h5 {
     color: #16a085;
     opacity: 0.7;
     font-size: 5.3em;
+    z-index: 1500;
+}
+.dropdown-menu {
     z-index: 1500;
 }

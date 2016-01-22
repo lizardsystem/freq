@@ -1,4 +1,11 @@
 {% extends "freq/base.html" %}
+{% block extra_css %}
+  <style>
+    .graph-margin {
+        margin-top: 50px;
+    }
+  </style>
+{% endblock extra_css %}
 {% block well %}
   <p>
     After subtracting  trend and periodic components from the time series the
@@ -12,6 +19,7 @@
   </p>
 {% endblock well %}
 {% block chart_controls %}
-  {% include 'freq/include/spinner.html' with spinner=view.spinners spinner_value=view.spinner_value %}
+  {% include 'freq/include/spinner.html' with spinner=view.spinners.0 spinner_value=view.spinner_value %}
+  {% include 'freq/include/spinner.html' with spinner=view.spinners.1 spinner_value=view.spinner_1_value %}
 {% endblock chart_controls %}
 

@@ -1,4 +1,4 @@
-<div class="col-sm-2" title="{{ dropdown.title }}">
+<div class="col-md-2" title="{{ dropdown.title }}">
   <h5>{{ dropdown.heading }}</h5>
   <div class="btn-group full-width">
     <button type="button"
@@ -11,7 +11,7 @@
         class="caret"></span>
     </button>
     <ul class="dropdown-menu" style="z-index: 10000">
-      {% for option in view.dropdown_unselected  %}
+      {% for option in view.dropdown_options  %}
         <li>
           <a onclick="clickDropDown({{ dropdown.id }}, {{ forloop.counter0 }});"
              id="dropdown_{{ dropdown.id }}-option-{{ forloop.counter0 }}">
