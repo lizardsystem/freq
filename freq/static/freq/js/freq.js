@@ -311,15 +311,15 @@ function loadMap() {
   }
 
   if(window.active === "map_"){
-    var topography = L.tileLayer('http://{s}.tiles.mapbox.com/v3/nelenschuurmans.iaa98k8k/{z}/{x}/{y}.png ', {
+    var topography = L.tileLayer('https://{s}.tiles.mapbox.com/v3/nelenschuurmans.iaa98k8k/{z}/{x}/{y}.png ', {
       maxZoom: 17,
       tooltip: true
     });
-    var satellite = L.tileLayer('http://{s}.tiles.mapbox.com/v3/nelenschuurmans.iaa79205/{z}/{x}/{y}.png ', {
+    var satellite = L.tileLayer('https://{s}.tiles.mapbox.com/v3/nelenschuurmans.iaa79205/{z}/{x}/{y}.png ', {
       maxZoom: 17,
       tooltip: true
     });
-    var neutral = L.tileLayer('http://{s}.tiles.mapbox.com/v3/nelenschuurmans.l15e647c/{z}/{x}/{y}.png ', {
+    var neutral = L.tileLayer('https://{s}.tiles.mapbox.com/v3/nelenschuurmans.l15e647c/{z}/{x}/{y}.png ', {
       maxZoom: 17,
       tooltip: true
     });
@@ -395,7 +395,7 @@ function loadMap() {
   } else {
     window.map_.map = L.map('map').fitBounds(window.map_.bounds);
     L.tileLayer(
-      'http://{s}.tiles.mapbox.com/v3/nelenschuurmans.iaa98k8k/{z}/{x}/{y}.png ',
+      'https://{s}.tiles.mapbox.com/v3/nelenschuurmans.iaa98k8k/{z}/{x}/{y}.png ',
       {
         maxZoom: 17,
         tooltip: true
