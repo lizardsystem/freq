@@ -259,7 +259,7 @@ class TimeSeries(Base):
     """
     data_type = 'timeseries'
 
-    def __init__(self, base="http://ggmn.un-igrac.org"):
+    def __init__(self, base="https://ggmn.un-igrac.org"):
         self.uuids = []
         self.statistic = None
         super().__init__(base)
