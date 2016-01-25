@@ -312,8 +312,9 @@ def harmonic(data, n_harmonics):
     param = a_param, b_param, sigma_param
     
     det_serie = np.array(det_serie)
+    x_ac_ps = len(ac_ps)/np.array(range(1, len(ac_ps) + 1))
     
-    return det_serie, trend, param, ac_ps
+    return det_serie, trend, param, ac_ps, x_ac_ps
 
 
 def autoregressive(data, per):
