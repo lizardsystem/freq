@@ -124,7 +124,7 @@ L.TileLayer.BetterWMS = L.TileLayer.WMS.extend({
     // Make an AJAX request to the server and hope for the best
     var layerName = layerMapping[this.wmsParams.layers];
     if (layerName!=="tbamap_2015ggis"){
-      var url = "map/feature_info/?lng=" + evt.latlng.lng + "&lat=" +
+      var url = "/map/feature_info/?lng=" + evt.latlng.lng + "&lat=" +
         evt.latlng.lat + "&layername=" + layerName;
       loadData(url, popUp);
     }
@@ -142,6 +142,7 @@ function visitUrl(url){
     window.location.href = url;
   };
 }
+
 
 function icon(pxSize, color, innerColor){
   color = color == undefined ? '#1abc9c' : color;
@@ -410,6 +411,7 @@ function loadMap() {
 
   window.map_.map.on('moveend', drawLocations);
 }
+
 
 function logData(data, textStatus, jqXHR){
   console.log(data, textStatus, jqXHR);
