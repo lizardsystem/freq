@@ -120,7 +120,8 @@ class BaseViewMixin(object):
             if old_value != value:
                 skip = False
                 if isinstance(value, dict):
-                    if any(not v for k, v in value.items()):
+                    if any(not v for k, v in value.items() if not k ==
+                            'series'):
                        skip = True
             if not skip:
                 self.request.session[state][key] = value
@@ -563,6 +564,7 @@ class BaseApiView(BaseViewMixin, APIView):
     statistics = []
 
     def get(self, request, *args, **kwargs):
+        print(self.button, self.value)
         if self.button == 'datepicker':
             page = self.request.GET.get('active', 'startpage')
             self.set_session_value(
@@ -803,7 +805,7 @@ class MapDataView(BaseApiView):
                                                'datepicker']['end']),
             date_time='str'
         )
-        if result["dates"]['start'] and result['dates']['end']:
+        if result['dates']['start'] and result['dates']['end']:
             self.request.session['map_']['datepicker'] = result['dates']
             self.request.session.modified = True
         return result

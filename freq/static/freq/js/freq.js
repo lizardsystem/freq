@@ -102,7 +102,6 @@ L.TileLayer.BetterWMS = L.TileLayer.WMS.extend({
 
   getFeatureInfo: function (evt) {
     var popUp = function(data){
-      console.log(data, layerName, colorMap);
       if(layerName!=='world_dem'){
         var value = colorMap[layerName].legend[data.data[0]]
       } else {
@@ -176,10 +175,10 @@ function drawLocationsBoundingBox(map, locationsLayer){
   return function(data, textStatus, jqXHR){
     var locs = data.result.locations;
     var ts = data.result.timeseries;
-    var statistic = window['map_']['dropdown_0'].split(' | ')[1];
     var col = false;
     if(ts){
       try {
+        var statistic = window['map_']['dropdown_0'].split(' | ')[1];
         window.map_.min = ts.extremes[statistic].min;
         window.map_.max = ts.extremes[statistic].max;
         col = true;
