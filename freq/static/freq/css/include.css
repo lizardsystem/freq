@@ -1,0 +1,15 @@
+.dropdown_selected {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    -o-text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 90%;
+}
+
+.dropdown-menu {
+    z-index: 1500;
+}
+
+.caret {
+    margin-top: 8px;
+}

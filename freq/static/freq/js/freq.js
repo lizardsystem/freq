@@ -179,24 +179,26 @@ function drawLocationsBoundingBox(map, locationsLayer){
     var statistic = window['map_']['dropdown_0'];
     var col = false;
     if(ts){
-      window.map_.min = ts.extremes[statistic].min;
-      window.map_.max = ts.extremes[statistic].max;
-      col = true;
-      var legendLabels = JSON.parse(localStorage.getItem("legendLabels"));
-      loadLegend(legendLabels);
-      var colors = [];
-      for(var i=0;i<legendLabels.length;i++){
-        colors.push(legendLabels[i].color)
-      }
-      var valueRange = ts.extremes[statistic].max - ts.extremes[statistic].min;
-      var colorDomain = [ts.extremes[statistic].min];
-      for(var i=colors.length - 1; i > 0; i--){
-        colorDomain.push(ts.extremes[statistic].min + (valueRange / i))
-      }
-      locationsLayer.clearLayers();
-      var colorScale = d3.scale.linear()
-        .range(colors)
-        .domain(colorDomain);
+      try {
+        window.map_.min = ts.extremes[statistic].min;
+        window.map_.max = ts.extremes[statistic].max;
+        col = true;
+        var legendLabels = JSON.parse(localStorage.getItem("legendLabels"));
+        loadLegend(legendLabels);
+        var colors = [];
+        for (var i = 0; i < legendLabels.length; i++) {
+          colors.push(legendLabels[i].color)
+        }
+        var valueRange = ts.extremes[statistic].max - ts.extremes[statistic].min;
+        var colorDomain = [ts.extremes[statistic].min];
+        for (var i = colors.length - 1; i > 0; i--) {
+          colorDomain.push(ts.extremes[statistic].min + (valueRange / i))
+        }
+        locationsLayer.clearLayers();
+        var colorScale = d3.scale.linear()
+          .range(colors)
+          .domain(colorDomain);
+      } catch(error){console.log(error);}
     }
     var pxSize = 7;
     for(var loc_uuid in locs) {
