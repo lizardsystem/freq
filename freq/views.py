@@ -866,7 +866,7 @@ class FluctuationsDataView(BaseApiView):
     def additional_response(self):
         return [[
             self.series_to_js(
-                npseries=self.harmonic[3],
+                npseries=self.harmonic[4],
                 index=[],
                 key='Accumulated power spectrum',
                 dates=False
