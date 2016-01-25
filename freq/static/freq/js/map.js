@@ -238,10 +238,12 @@ function extraUpdate(data){
     var datePickerDates = datePickerValue();
     var startDate =  timeseries.dates.start || datePickerDates['start'];
     var endDate = timeseries.dates.end || datePickerDates['end'];
+    console.log(startDate, endDate);
+    console.log(timeseries.dates.startString, datePickerDates['start']);
     setDate(startDate, endDate);
     drawLocationsBoundingBox(window.map_.map, window.map_.locationsLayer)(data);
-    spinnerClear();
   }
+  spinnerClear();
 }
 
 function loadTimeseries(event) {
@@ -250,7 +252,8 @@ function loadTimeseries(event) {
     spinnerShow();
     var queryUrl = '/' + window.active + '_data/';
     var bounds = window.map_.map.getBounds();
-    loadData(queryUrl, updateGraphs, 'GET', {bounds: JSON.stringify(bounds)});
+    loadData(queryUrl, updateGraphs, 'GET', {
+      bounds: JSON.stringify(bounds)});
   }
 }
 

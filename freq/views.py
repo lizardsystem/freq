@@ -34,22 +34,22 @@ DEFAULT_STATE = {
             [48.0, -6.8],
             [56.2, 18.9]
         ],
-        'datepicker': {'start': '1-1-1900', 'end': jsdt.today()},
-        'dropdown_0': {'value': 'mean'},
+        'datepicker': {'start': '1-1-1930', 'end': jsdt.today()},
+        'dropdown_0': {'value': 'GWmBGS | mean'},
         'graph': {'x': 0, 'y': 0, 'series': 0},
         'measurement_point': 'No Time Series Selected',
         'uuid': 'EMPTY',
         'end_js': 1000000000000,
         'timeseries_length': -9999,
-        'start_js': 0,
+        'start_js': -1262304000000,
     },
     'startpage': {
-        'datepicker': {'start': '1-1-1900', 'end': jsdt.today()},
+        'datepicker': {'start': '1-1-1930', 'end': jsdt.today()},
         'end_js': 1000000000000,
         'graph': {'x': 0, 'y': 0, 'series': 0},
         'measurement_point': 'No Time Series Selected',
         'selected_coords': [],
-        'start_js': 0,
+        'start_js': -1262304000000,
         'timeseries_length': -9999,
         'uuid': 'EMPTY',
     },
@@ -116,7 +116,14 @@ class BaseViewMixin(object):
     def set_session_value(self, state, key, value):
         if self.is_default_type(state, key, value):
             old_value = self.request.session[state].get(key)
+            skip = True
             if old_value != value:
+                skip = False
+                if isinstance(value, dict):
+                    if any(not v for k, v in value.items() if not k ==
+                            'series'):
+                       skip = True
+            if not skip:
                 self.request.session[state][key] = value
                 self.request.session.modified = True
                 print('\nupdated {} with old value {} with new value {'
@@ -260,12 +267,14 @@ class BaseViewMixin(object):
     @property
     def time_window(self):
         page = self.request.GET.get('active', 'startpage')
+
         start = jsdt.datetime_to_js(dt.datetime.strptime(
             self.request.session[page]['datepicker']['start'], '%d-%m-%Y'
         ))
         end = jsdt.datetime_to_js(dt.datetime.strptime(
             self.request.session[page]['datepicker']['end'], '%d-%m-%Y'
         ))
+        print('timewindow for page:', page, start, end)
         return {
             'start': start,
             'end': end
@@ -336,12 +345,18 @@ class MapView(BaseView):
         heading = "Statistic",
     )
     dropdown_options = [
-        "min",
-        "max",
-        "mean",
-        "range (max - min)",
-        # "difference (last - first)",
-        # "difference (mean last - first year)"
+        "GWmBGS | min",
+        "GWmBGS | max",
+        "GWmBGS | mean",
+        "GWmBGS | range (max - min)",
+        # "GWmBGS | difference (last - first)",
+        "GWmBGS | difference (mean last - first year)",
+        "GWmMSL | min",
+        "GWmMSL | max",
+        "GWmMSL | mean",
+        "GWmMSL | range (max - min)",
+        # "GWmMSL | difference (last - first)",
+        "GWmMSL | difference (mean last - first year)"
     ]
 
     def dispatch(self, *args, **kwargs):
@@ -549,6 +564,7 @@ class BaseApiView(BaseViewMixin, APIView):
     statistics = []
 
     def get(self, request, *args, **kwargs):
+        print(self.button, self.value)
         if self.button == 'datepicker':
             page = self.request.GET.get('active', 'startpage')
             self.set_session_value(
@@ -771,21 +787,28 @@ class MapDataView(BaseApiView):
 
     @property
     def timeseries_(self):
-        statistic = self.request.session['map_'].get(
-            'dropdown_0', {'value': 'mean'})['value']
+        gw_type, statistic = [
+            x.strip(' ') for x in self.request.session['map_'].get(
+                'dropdown_0', {'value': 'mean'})['value'].split('|')
+        ]
+        print('gw_type [{}], statistic [{}]'.format(gw_type, statistic))
         timeseries = GroundwaterTimeSeries()
         timeseries.queries = {
-            "name": self.request.GET.get("groundwater_type", "GWmMSL")
+            "name": gw_type
         }
         timeseries.bbox(*self.coordinates, statistic=statistic,
                         **self.time_window)
-        return timeseries.ts_to_dict(
+        result = timeseries.ts_to_dict(
             start_date=jsdt.datestring_to_js(self.request.session['map_']['datepicker'][
                 'start']),
             end_date=jsdt.datestring_to_js(self.request.session['map_'][
                                                'datepicker']['end']),
             date_time='str'
         )
+        if result['dates']['start'] and result['dates']['end']:
+            self.request.session['map_']['datepicker'] = result['dates']
+            self.request.session.modified = True
+        return result
 
     @cached_property
     def coordinates(self):
@@ -866,7 +889,7 @@ class FluctuationsDataView(BaseApiView):
     def additional_response(self):
         return [[
             self.series_to_js(
-                npseries=self.harmonic[3],
+                npseries=self.harmonic[4],
                 index=[],
                 key='Accumulated power spectrum',
                 dates=False

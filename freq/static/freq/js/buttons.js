@@ -81,10 +81,6 @@ function updateGraphs(data){
     }
     for(var i=0; i < graphs.length; i++ ){
         var graph = graphs[i];
-        console.log('graph', i, graph);
-        console.log('d3.select(graph.name)', d3.select(graph.name));
-        console.log('graph.data', graph.data);
-        console.log('chart', i, window.charts[i]);
         d3.select(graph.name).datum(graph.data).call(window.charts[i])
     }
     spinnerClear();
@@ -96,7 +92,6 @@ function spinnerShow(){};
 function spinnerClear(){};
 
 function setDate(startDate, endDate){
-    console.log("startDate, endDate", startDate, endDate);
     $('#date_picker_start').datepicker('setDate', startDate);
     $('#date_picker_end').datepicker('setDate', endDate);
 }

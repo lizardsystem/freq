@@ -445,7 +445,9 @@ class TimeSeries(Base):
             except ValueError:
                 timestamps = [np.nan, np.nan]
             if not len(result['events']):
-                ts.append([np.nan for _ in range(len(stats1) + 2)] + timestamps)
+                y = 2 if statistic == 'difference (mean last - first year)' \
+                    else 0
+                ts.append([np.nan for _ in range(len(stats1) + y)] + timestamps)
             else:
                 ts.append([float(result['events'][0][s]) for s in stats1] +
                           timestamps)
@@ -491,8 +493,8 @@ class TimeSeries(Base):
             end = dt_conversion(min(jsdt.round_js_to_date(end_date),
                                     jsdt.round_js_to_date(npts_max[-1])))
         else:
-            start = jsdt.round_js_to_date(start_date)
-            end = jsdt.round_js_to_date(end_date)
+            start = dt_conversion(jsdt.round_js_to_date(start_date))
+            end = dt_conversion(jsdt.round_js_to_date(end_date))
         self.response = {
             "extremes": extremes,
             "dates": {

@@ -33,6 +33,7 @@
       <link rel="stylesheet"
             href="{% static 'bootstrap-extras/bootstrap-colorpicker/css/bootstrap-colorpicker.min.css' %}" />
       <link rel="stylesheet" href="{% static 'freq/css/freq.css' %}" />
+      <link rel="stylesheet" href="{% static 'freq/css/include.css' %}" />
       <link rel="stylesheet"
             href="{% static 'ajax/libs/leaflet/0.7.3/leaflet.css' %}" />
 
@@ -79,6 +80,13 @@
                   Freq
                   <span class="glyphicon {{ view.freq_icon_size }}
                                glyphicon-scale"> {# glyphicon-map-marker #}
+                  </span>
+                </a>
+              </li>
+              <li>
+                <a href="https://ggmn.un-igrac.org/import" target="_blank">
+                  Import
+                  <span class="glyphicon glyphicon-upload">
                   </span>
                 </a>
               </li>
