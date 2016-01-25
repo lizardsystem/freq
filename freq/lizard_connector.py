@@ -451,7 +451,6 @@ class TimeSeries(Base):
             else:
                 ts.append([float(result['events'][0][s]) for s in stats1] +
                           timestamps)
-        print(ts)
         npts = np.array(ts)
         if statistic:
             if statistic == 'mean':
