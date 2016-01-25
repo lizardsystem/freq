@@ -248,7 +248,7 @@ function loadTimeseries(event) {
   var zoomLevel = window.map_.map.getZoom();
   if (zoomLevel > 5) {
     spinnerShow();
-    var queryUrl = '/' + window.active + '_data';
+    var queryUrl = '/' + window.active + '_data/';
     var bounds = window.map_.map.getBounds();
     loadData(queryUrl, updateGraphs, 'GET', {bounds: JSON.stringify(bounds)});
   }

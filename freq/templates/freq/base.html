@@ -244,8 +244,6 @@
             {% if view.active == 'map_' %}
               window.map_.dropdown_0 = "{{ view.dropdown_selected }}";
             {% endif %}
-          window.startpage.leafletImagesUrl=
-                  "{% static 'ajax/libs/leaflet/0.7.3/images/' %}";
           window.active = "{{ view.active }}";
           window.map_.bounds = {{ view.bounds }};
           window.map_.center = {{ view.center }};
