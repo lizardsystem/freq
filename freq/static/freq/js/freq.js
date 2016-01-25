@@ -176,7 +176,7 @@ function drawLocationsBoundingBox(map, locationsLayer){
   return function(data, textStatus, jqXHR){
     var locs = data.result.locations;
     var ts = data.result.timeseries;
-    var statistic = window['map_']['dropdown_0'];
+    var statistic = window['map_']['dropdown_0'].split(' | ')[1];
     var col = false;
     if(ts){
       try {

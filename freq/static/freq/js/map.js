@@ -252,7 +252,8 @@ function loadTimeseries(event) {
     spinnerShow();
     var queryUrl = '/' + window.active + '_data/';
     var bounds = window.map_.map.getBounds();
-    loadData(queryUrl, updateGraphs, 'GET', {bounds: JSON.stringify(bounds)});
+    loadData(queryUrl, updateGraphs, 'GET', {
+      bounds: JSON.stringify(bounds)});
   }
 }
 

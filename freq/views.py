@@ -35,7 +35,7 @@ DEFAULT_STATE = {
             [56.2, 18.9]
         ],
         'datepicker': {'start': '1-1-1930', 'end': jsdt.today()},
-        'dropdown_0': {'value': 'mean'},
+        'dropdown_0': {'value': 'GWmBGS | mean'},
         'graph': {'x': 0, 'y': 0, 'series': 0},
         'measurement_point': 'No Time Series Selected',
         'uuid': 'EMPTY',
@@ -344,12 +344,18 @@ class MapView(BaseView):
         heading = "Statistic",
     )
     dropdown_options = [
-        "min",
-        "max",
-        "mean",
-        "range (max - min)",
-        # "difference (last - first)",
-        "difference (mean last - first year)"
+        "GWmBGS | min",
+        "GWmBGS | max",
+        "GWmBGS | mean",
+        "GWmBGS | range (max - min)",
+        # "GWmBGS | difference (last - first)",
+        "GWmBGS | difference (mean last - first year)",
+        "GWmMSL | min",
+        "GWmMSL | max",
+        "GWmMSL | mean",
+        "GWmMSL | range (max - min)",
+        # "GWmMSL | difference (last - first)",
+        "GWmMSL | difference (mean last - first year)"
     ]
 
     def dispatch(self, *args, **kwargs):
@@ -779,11 +785,14 @@ class MapDataView(BaseApiView):
 
     @property
     def timeseries_(self):
-        statistic = self.request.session['map_'].get(
-            'dropdown_0', {'value': 'mean'})['value']
+        gw_type, statistic = [
+            x.strip(' ') for x in self.request.session['map_'].get(
+                'dropdown_0', {'value': 'mean'})['value'].split('|')
+        ]
+        print('gw_type [{}], statistic [{}]'.format(gw_type, statistic))
         timeseries = GroundwaterTimeSeries()
         timeseries.queries = {
-            "name": self.request.GET.get("groundwater_type", "GWmMSL")
+            "name": gw_type
         }
         timeseries.bbox(*self.coordinates, statistic=statistic,
                         **self.time_window)
