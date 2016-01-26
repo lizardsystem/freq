@@ -480,8 +480,12 @@ class TimeSeries(Base):
             values[location_uuid] = loc_dict
         npts_min = np.nanmin(npts_calculated, 0)
         npts_max = np.nanmax(npts_calculated, 0)
-        extremes = {stat: {'min': npts_min[i], 'max': npts_max[i]}
-                    for i, stat in stats2}
+        extremes = {
+            stat: {
+                'min': npts_min[i] if not np.isnan(npts_min[i]) else 0,
+                'max': npts_max[i] if not np.isnan(npts_max[i])  else 0
+            } for i, stat in stats2
+        }
         dt_conversion = {
             'js': lambda x: x,
             'dt': jsdt.js_to_datetime,
