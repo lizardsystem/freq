@@ -805,9 +805,12 @@ class MapDataView(BaseApiView):
                                                'datepicker']['end']),
             date_time='str'
         )
-        if result['dates']['start'] and result['dates']['end']:
-            self.request.session['map_']['datepicker'] = result['dates']
-            self.request.session.modified = True
+        try:
+            if result['dates']['start'] and result['dates']['end']:
+                self.request.session['map_']['datepicker'] = result['dates']
+                self.request.session.modified = True
+        except KeyError:
+            pass
         return result
 
     @cached_property

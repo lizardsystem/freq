@@ -202,16 +202,22 @@ function drawLocationsBoundingBox(map, locationsLayer){
     var pxSize = 7;
     for(var loc_uuid in locs) {
       var coordinates = locs[loc_uuid].coordinates;
-      if(ts && ts.values[loc_uuid][statistic] == 'NaN'){
-        var color = "#ccc";
-      } else {
-        var color = col ? colorScale(ts.values[loc_uuid][statistic]) : '#1abc9c';
+      var locTsExists = true;
+      try {
+        if(ts && ts.values[loc_uuid][statistic] == 'NaN'){
+          var color = "#ccc";
+        } else {
+          var color = col ? colorScale(ts.values[loc_uuid][statistic]) : '#1abc9c';
+        }
+      } catch(error){
+        var color = "#ccc"
+        locTsExists = false;
       }
       if(coordinates.length > 0){
         var marker = L.marker(
           [coordinates[1], coordinates[0]],
           {
-            title: ts ?
+            title: ts && locTsExists ?
               Math.round(parseFloat(ts.values[loc_uuid][statistic]) * 100) / 100 :
               locs[loc_uuid].name,
             icon: icon(pxSize, color)
@@ -223,7 +229,7 @@ function drawLocationsBoundingBox(map, locationsLayer){
             + loc_uuid + '&x_coord=' +  coordinates[0] + '&y_coord='
             + coordinates[1])
           );
-        } else if (ts !== undefined){
+        } else if (ts !== undefined && locTsExists){
           marker.on('click', loadMapTimeseries(
             ts.values[loc_uuid].timeseries_uuid,
             locs[loc_uuid].name,

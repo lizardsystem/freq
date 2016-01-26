@@ -236,25 +236,26 @@ function extraUpdate(data){
   if(result !== undefined){
     var timeseries = result.timeseries;
     var datePickerDates = datePickerValue();
-    var startDate =  timeseries.dates.start || datePickerDates['start'];
-    var endDate = timeseries.dates.end || datePickerDates['end'];
-    console.log(startDate, endDate);
-    console.log(timeseries.dates.startString, datePickerDates['start']);
-    setDate(startDate, endDate);
+    if (timeseries !== undefined && timeseries.dates !== undefined) {
+      var startDate =  timeseries.dates.start || datePickerDates['start'];
+      var endDate = timeseries.dates.end || datePickerDates['end'];
+      console.log(timeseries.dates.startString, datePickerDates['start']);
+      setDate(startDate, endDate);
+    }
     drawLocationsBoundingBox(window.map_.map, window.map_.locationsLayer)(data);
   }
   spinnerClear();
 }
 
 function loadTimeseries(event) {
-  var zoomLevel = window.map_.map.getZoom();
-  if (zoomLevel > 5) {
+  //var zoomLevel = window.map_.map.getZoom();
+  //if (zoomLevel > 5) {
     spinnerShow();
     var queryUrl = '/' + window.active + '_data/';
     var bounds = window.map_.map.getBounds();
     loadData(queryUrl, updateGraphs, 'GET', {
       bounds: JSON.stringify(bounds)});
-  }
+  //}
 }
 
 function spinnerShow(){
