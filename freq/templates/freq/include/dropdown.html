@@ -13,7 +13,7 @@
       <span class="caret pull-right"></span>
     </button>
     <ul class="dropdown-menu" style="z-index: 10000">
-      {% for option in view.dropdown_options  %}
+      {% for option in dropdown.options  %}
         <li>
           <a onclick="clickDropDown({{ dropdown.id }}, {{ forloop.counter0 }});"
              id="dropdown_{{ dropdown.id }}-option-{{ forloop.counter0 }}">

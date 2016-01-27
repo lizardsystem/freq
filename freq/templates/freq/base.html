@@ -52,58 +52,82 @@
     {% block header %}
       <header>
         <div id="logo-row" class="navbar">
+          <div class="navbar-brand" id="logo">
+            {% block logo %}
+              {% spaceless %}
+                <a href="/" title='Back to homepage'>
+                    <img class="logo" src="{% static 'freq/logo.png' %}"
+                         alt="Lizard" />
+                </a>
+              {% endspaceless %}
+            {% endblock logo %}
+          </div>
           <div class="container">
-            <div class="navbar-brand" id="logo">
-              {% block logo %}
-                {% spaceless %}
-                  <a href="/" title='Back to homepage'>
-                      <img class="logo" src="{% static 'freq/logo.png' %}"
-                           alt="Lizard" />
+            <div class="row">
+              <div class="navbar-header">
+                <span class="navbar-brand" id="page-title">
+                  {{ view.title }}</span>
+              </div>
+              <ul class="nav navbar-nav pull-right">
+                <li class="{{ view.map_active }}">
+                  <a href="{% url 'map_' %}" >
+                    Map
+                    <span class="glyphicon {{ view.map_icon_size }}
+                                 glyphicon-globe">
+                    </span>
                   </a>
-                {% endspaceless %}
-              {% endblock logo %}
+                </li>
+                <li class="{{ view.freq_active }}">
+                  <a href="{% url 'startpage' %}">
+                    Freq
+                    <span class="glyphicon {{ view.freq_icon_size }}
+                                 glyphicon-scale"> {# glyphicon-map-marker #}
+                    </span>
+                  </a>
+                </li>
+                <li>
+                  <a href="https://ggmn.un-igrac.org/import" target="_blank">
+                    Import
+                    <span class="glyphicon glyphicon-upload">
+                    </span>
+                  </a>
+                </li>
+                <li>
+                  <a href="https://ggmn.un-igrac.org/" target="_blank">
+                    Lizard
+                    <span class="glyphicon glyphicon-sm glyphicon-new-window">
+                    </span>
+                  </a>
+                </li>
+
+                {% if view.logged_in %}
+                  <li>
+                    <a href="/accounts/logout/" style="margin-top:-10px;">
+                      <div>Log out <span class="glyphicon glyphicon-sm glyphicon-off"></span></div>
+                      <div style="margin-top:-5px;"><small>{{ view.user }}</small></div>
+
+                    </a>
+                  </li>
+                  {% include 'freq/include/dropdown_nav.html' with dropdown=view.nav_dropdown %}
+                {% else %}
+                  <li>
+                    <a href="/accounts/login/">
+                      Log in
+                      <span class="glyphicon glyphicon-sm glyphicon-off"></span>
+                    </a>
+                  </li>
+                {% endif %}
+              </ul>
             </div>
-            <div class="navbar-header">
-              <div class="navbar-brand" id="page-title">{{ view.title }}</div>
-            </div>
-            <ul class="nav navbar-nav pull-right">
-              <li class="{{ view.map_active }}">
-                <a href="{% url 'map_' %}" >
-                  Map
-                  <span class="glyphicon {{ view.map_icon_size }}
-                               glyphicon-globe">
-                  </span>
-                </a>
-              </li>
-              <li class="{{ view.freq_active }}">
-                <a href="{% url 'startpage' %}">
-                  Freq
-                  <span class="glyphicon {{ view.freq_icon_size }}
-                               glyphicon-scale"> {# glyphicon-map-marker #}
-                  </span>
-                </a>
-              </li>
-              <li>
-                <a href="https://ggmn.un-igrac.org/import" target="_blank">
-                  Import
-                  <span class="glyphicon glyphicon-upload">
-                  </span>
-                </a>
-              </li>
-              <li>
-                <a href="https://ggmn.un-igrac.org/" target="_blank">
-                  Lizard
-                  <span class="glyphicon glyphicon-sm glyphicon-new-window">
-                  </span>
-                </a>
-              </li>
-              <li>
-                <a href="/accounts/logout/">
-                  Log out
-                  <span class="glyphicon glyphicon-sm glyphicon-off"></span>
-                </a>
-              </li>
-            </ul>
+            {% if view.logged_in %}
+              <div class="row organisation">
+                  <div>{{ view.selected_organisation }}</div>
+              </div>
+            {% else %}
+              <div class="row organisation">
+                <div>Public</div>
+              </div>
+            {% endif %}
           </div>
         </div>
       </header>

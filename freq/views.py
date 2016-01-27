@@ -14,11 +14,13 @@ import numpy as np
 import pandas as pd
 from rest_framework.response import Response as RestResponse
 from rest_framework.views import APIView
+from lizard_auth_client.models import get_organisations_with_role
+from lizard_auth_client.models import Organisation
 
 import freq.jsdatetime as jsdt
 from freq.buttons import *
 import freq.freq_calculator as calculator
-from freq.lizard_connector import ApiError
+from freq.lizard_connector import LizardApiError
 from freq.lizard_connector import GroundwaterLocations
 from freq.lizard_connector import GroundwaterTimeSeries
 from freq.lizard_connector import RasterAggregates
@@ -29,6 +31,10 @@ logger = logging.getLogger(__name__)
 
 TIMESERIES_MEASUREMENT_FREQUENCY = 'M'
 DEFAULT_STATE = {
+    'login': {
+        'selected_organisation': '',
+        'selected_organisation_id': '',
+    },
     'map_': {
         'bounds': [
             [48.0, -6.8],
@@ -81,8 +87,8 @@ DEFAULT_STATE = {
 class BaseViewMixin(object):
     """Base view."""
     template_name = 'freq/base.html'
-    title = _('GGMN - Global Groundwater Network')
-    page_title = _('GGMN - Global Groundwater Network')
+    title = 'GGMN - Global Groundwater Network'
+    page_title = 'GGMN - Global Groundwater Network'
     menu_items = [
         ('Startpage', 'Back to Homepage', 'startpage'),
         ('Detection of Trends', 'Step trend or flat trend detection',
@@ -229,9 +235,10 @@ class BaseViewMixin(object):
 
     @cached_property
     def timeseries(self):
-        ts = GroundwaterTimeSeries()
+        ts = GroundwaterTimeSeries(use_header=self.logged_in)
         page = self.request.GET.get('active', 'startpage')
-        ts.uuid(self.request.session[page]['uuid'], **self.time_window)
+        ts.uuid(ts_uuid=self.request.session[page]['uuid'],
+                organisation=self.selected_organisation_id, **self.time_window)
         if len(ts.results):
             data = [{'y': x['max'], 'x': x['timestamp']}
                              for x in ts.results[0]['events']]
@@ -274,7 +281,6 @@ class BaseViewMixin(object):
         end = jsdt.datetime_to_js(dt.datetime.strptime(
             self.request.session[page]['datepicker']['end'], '%d-%m-%Y'
         ))
-        print('timewindow for page:', page, start, end)
         return {
             'start': start,
             'end': end
@@ -321,6 +327,59 @@ class BaseViewMixin(object):
         else:
             raise TypeError('datepicker end is invalid')
 
+    @cached_property
+    def nav_dropdown(self):
+        return DropDown(
+            heading="Organisation",
+            title="Choose ",
+            options=self.organisations,
+            id_=999
+        )
+
+    # ------------------------------------------------------------------------ #
+    ### Login related:
+
+    def _organisations(self, identifier="unique_id"):
+        if self.logged_in:
+            orgs = get_organisations_with_role(self.user, 'access')
+            return list(set([getattr(org, identifier) for org in orgs]))
+        else:
+            return []
+
+    @cached_property
+    def organisations_id(self):
+        return self._organisations('unique_id')
+
+    @cached_property
+    def organisations(self):
+        return self._organisations('name')
+
+    def _selected_organisation(self, organisations, ext=''):
+        if self.logged_in:
+            org = self.request.session['login']['selected_organisation' + ext]
+            if org:
+                return org
+            try:
+                org = organisations[0]
+                return org
+            except IndexError:
+                return
+
+    @cached_property
+    def selected_organisation(self):
+        return self._selected_organisation(self.organisations)
+
+    @cached_property
+    def selected_organisation_id(self):
+        return self._selected_organisation(self.organisations_id, '_id')
+
+    @cached_property
+    def logged_in(self):
+        return self.request.user.is_authenticated()
+
+    @cached_property
+    def user(self):
+        return self.request.user
 
 class FreqTemplateView(TemplateView):
 
@@ -342,22 +401,22 @@ class MapView(BaseView):
     menu_items = []
     map_active = 'active'
     dropdowns = DropDown(
-        heading = "Statistic",
+        heading="Statistic",
+        options=[
+            "GWmBGS | min",
+            "GWmBGS | max",
+            "GWmBGS | mean",
+            "GWmBGS | range (max - min)",
+            # "GWmBGS | difference (last - first)",
+            "GWmBGS | difference (mean last - first year)",
+            "GWmMSL | min",
+            "GWmMSL | max",
+            "GWmMSL | mean",
+            "GWmMSL | range (max - min)",
+            # "GWmMSL | difference (last - first)",
+            "GWmMSL | difference (mean last - first year)"
+        ]
     )
-    dropdown_options = [
-        "GWmBGS | min",
-        "GWmBGS | max",
-        "GWmBGS | mean",
-        "GWmBGS | range (max - min)",
-        # "GWmBGS | difference (last - first)",
-        "GWmBGS | difference (mean last - first year)",
-        "GWmMSL | min",
-        "GWmMSL | max",
-        "GWmMSL | mean",
-        "GWmMSL | range (max - min)",
-        # "GWmMSL | difference (last - first)",
-        "GWmMSL | difference (mean last - first year)"
-    ]
 
     def dispatch(self, *args, **kwargs):
         if not self.request.session.get('session_is_set', False):
@@ -394,8 +453,9 @@ class TimeSeriesByLocationUUIDView(StartPageBaseView):
 
     @cached_property
     def timeseries(self):
-        ts = GroundwaterTimeSeries()
-        ts.location_uuid(self.uuid)
+        ts = GroundwaterTimeSeries(use_header=self.logged_in)
+        ts.location_uuid(organisation=self.selected_organisation_id,
+                         loc_uuid=self.uuid)
         return ts.results
 
     @cached_property
@@ -506,14 +566,14 @@ class TrendDetectionView(BaseView):
     )
 
     dropdowns = DropDown(
-        heading= "Trend type",
+        heading="Trend type",
+        options=[
+            "Both trends",
+            "Linear trend",
+            "Step trend"
+        ]
     )
     spinner_max = 0.99
-    dropdown_options= [
-        "Both trends",
-        "Linear trend",
-        "Step trend"
-    ]
 
 
 class PeriodicFluctuationsView(BaseView):
@@ -564,7 +624,6 @@ class BaseApiView(BaseViewMixin, APIView):
     statistics = []
 
     def get(self, request, *args, **kwargs):
-        print(self.button, self.value)
         if self.button == 'datepicker':
             page = self.request.GET.get('active', 'startpage')
             self.set_session_value(
@@ -572,6 +631,13 @@ class BaseApiView(BaseViewMixin, APIView):
                 json.loads(self.request.GET.get('value', self.request.session[
                     page]['datepicker']))
             )
+        elif self.button == 'dropdown_999':
+            self.request.session['login']['selected_organisation'] = \
+                self.value['value']
+            self.request.session['login']['selected_organisation_id'] = \
+                Organisation.objects.filter(
+                    name=self.value['value']).values('unique_id')[0][
+                      'unique_id']
         elif self.button and self.button != 'undefined':
             next_tab = {
                 'trend_detection': 'periodic_fluctuations',
@@ -580,6 +646,7 @@ class BaseApiView(BaseViewMixin, APIView):
             if next_tab:
                 self.set_session_value('disabled', next_tab, 'enabled')
             self.set_session_value(self.active, self.button, self.value)
+            self.request.session.modified = True
         return RestResponse(self.base_response)
 
     def pd_timeseries_from_json(self, json_data, name=''):
@@ -769,7 +836,7 @@ class MapDataView(BaseApiView):
                     x.strip('_'): getattr(self, x) for x in datatypes},
                 "error": ""
             }
-        except ApiError:
+        except LizardApiError:
             response_dict = {
                 "result": {},
                 "error": "Too many groundwater locations to show on map. "
@@ -781,26 +848,32 @@ class MapDataView(BaseApiView):
 
     @property
     def locations(self):
-        locations = GroundwaterLocations()
-        locations.bbox(*self.coordinates)
+        locations = GroundwaterLocations(use_header=self.logged_in)
+        south_west, north_east = self.coordinates
+        locations.bbox(south_west=south_west,
+                       north_east=north_east,
+                       organisation=self.selected_organisation_id)
         return locations.coord_uuid_name()
 
     @property
     def timeseries_(self):
         gw_type, statistic = [
             x.strip(' ') for x in self.request.session['map_'].get(
-                'dropdown_0', {'value': 'mean'})['value'].split('|')
+                'dropdown_0', {'value': 'GWmBGS | mean'})['value'].split('|')
         ]
-        print('gw_type [{}], statistic [{}]'.format(gw_type, statistic))
-        timeseries = GroundwaterTimeSeries()
+        timeseries = GroundwaterTimeSeries(use_header=self.logged_in)
         timeseries.queries = {
             "name": gw_type
         }
-        timeseries.bbox(*self.coordinates, statistic=statistic,
+        south_west, north_east = self.coordinates
+        timeseries.bbox(south_west=south_west,
+                        north_east=north_east,
+                        organisation=self.selected_organisation_id,
+                        statistic=statistic,
                         **self.time_window)
         result = timeseries.ts_to_dict(
-            start_date=jsdt.datestring_to_js(self.request.session['map_']['datepicker'][
-                'start']),
+            start_date=jsdt.datestring_to_js(self.request.session['map_'][
+                                                 'datepicker']['start']),
             end_date=jsdt.datestring_to_js(self.request.session['map_'][
                                                'datepicker']['end']),
             date_time='str'
@@ -959,3 +1032,5 @@ class MapFeatureInfoView(APIView):
                                   lng=request.GET.get('lng'),
                                   layername=request.GET.get('layername'))
         return RestResponse(response)
+
+# 'location__name__startswith!=GGMN_CUSTOM'

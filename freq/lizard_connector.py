@@ -4,7 +4,7 @@ import datetime as dt
 import json
 from pprint import pprint  # left here for debugging purposes
 from time import time
-import urllib.request as request
+import urllib
 
 import numpy as np
 import django.core.exceptions
@@ -34,7 +34,7 @@ def join_urls(*args):
     return '/'.join(args)
 
 
-class ApiError(Exception):
+class LizardApiError(Exception):
     pass
 
 
@@ -53,7 +53,6 @@ class Base(object):
     data_type = None
     username = USR
     password = PWD
-    use_header = True
     max_results = 1000
 
     @property
@@ -64,11 +63,27 @@ class Base(object):
         """
         return {}
 
-    def __init__(self, base="https://ggmn.un-igrac.org"):
+    def organisation_query(self, organisation, added_query_string='location__'):
+        org_query = {}
+        if isinstance(organisation, str):
+            org_query.update({added_query_string + "organisation__unique_id":
+            organisation})
+        elif organisation:
+            org_query.update({
+                added_query_string + "organisation__unique_id": ','.join(
+                    org for org in organisation)
+            })
+        if org_query:
+            return dict([urllib.parse.urlencode(org_query).split('=')])
+        else:
+            return {}
+
+    def __init__(self, base="https://ggmn.un-igrac.org", use_header=False):
         """
         :param base: the site one wishes to connect to. Defaults to the
                      Lizard staging site.
         """
+        self.use_header = use_header
         self.queries = {}
         self.results = []
         if base.startswith('http'):
@@ -112,8 +127,11 @@ class Base(object):
                     [base_url]/api/v2/[endpoint]/?[query_key]=[query_value]&...
         :return: the JSON from the response
         """
-        request_obj = request.Request(url, headers=self.header)
-        with request.urlopen(request_obj) as resp:
+        if self.use_header:
+            request_obj = urllib.request.Request(url, headers=self.header)
+        else:
+            request_obj = urllib.request.Request(url)
+        with urllib.request.urlopen(request_obj) as resp:
             encoding = resp.headers.get_content_charset()
             encoding = encoding if encoding else 'UTF-8'
             content = resp.read().decode(encoding)
@@ -143,7 +161,7 @@ class Base(object):
         while True:
             try:
                 if self.json['count'] > self.max_results:
-                    raise ApiError('Too many results: {} found, while max {} '
+                    raise LizardApiError('Too many results: {} found, while max {} '
                                    'are accepted'.format(
                         self.json['count'], self.max_results))
                 self.results += self.json['results']
@@ -183,12 +201,15 @@ class Organisations(Base):
     """
     data_type = 'organisations'
 
-    def all(self):
+    def all(self, organisation=None):
         """
         :return: a list of organisations belonging one has access to
                 (with the credentials from the header attribute)
         """
-        self.get()
+        if organisation:
+            self.get(unique_id=organisation)
+        else:
+            self.get()
         self.parse()
         return self.parse_elements('unique_id')
 
@@ -199,11 +220,11 @@ class Locations(Base):
     """
     data_type = 'locations'
 
-    def __init__(self):
+    def __init__(self, base="https://ggmn.un-igrac.org", use_header=False):
         self.uuids = []
-        super().__init__()
+        super().__init__(base, use_header)
 
-    def bbox(self, south_west, north_east):
+    def bbox(self, south_west, north_east, organisation=None):
         """
         Find all locations within a certain bounding box.
         returns records within bounding box using Bounding Box format (min Lon,
@@ -216,9 +237,10 @@ class Locations(Base):
         min_lat, min_lon = south_west
         max_lat, max_lon = north_east
         coords = self.commaify(min_lon, min_lat, max_lon, max_lat)
-        self.get(in_bbox=coords)
+        org_query = self.organisation_query(organisation, '')
+        self.get(in_bbox=coords, **org_query)
 
-    def distance_to_point(self, distance, lat, lon):
+    def distance_to_point(self, distance, lat, lon, organisation=None):
         """
         Returns records with distance meters from point. Distance in meters
         is converted to WGS84 degrees and thus an approximation.
@@ -228,7 +250,8 @@ class Locations(Base):
         :return: a dictionary of the api-response.
         """
         coords = self.commaify(lon, lat)
-        self.get(distance=distance, point=coords)
+        org_query = self.organisation_query(organisation, '')
+        self.get(distance=distance, point=coords, **org_query)
 
     def commaify(self, *args):
         """
@@ -259,42 +282,46 @@ class TimeSeries(Base):
     """
     data_type = 'timeseries'
 
-    def __init__(self, base="https://ggmn.un-igrac.org"):
+    def __init__(self, base="https://ggmn.un-igrac.org", use_header=False):
         self.uuids = []
         self.statistic = None
-        super().__init__(base)
+        super().__init__(base, use_header)
 
-    def location_name(self, name):
+    def location_name(self, name, organisation=None):
         """
         Returns time series metadata for a location by name.
         :param name: name of a location
         :return: a dictionary of with nested location, aquo quantities and
                  events.
         """
-        return self.get(location__name=name)
+        org_query = self.organisation_query(organisation)
+        return self.get(location__name=name, **org_query)
 
-    def location_uuid(self, uuid, start='0001-01-01T00:00:00Z', end=None):
+    def location_uuid(self, loc_uuid, start='0001-01-01T00:00:00Z', end=None,
+                      organisation=None):
         """
         Returns time series for a location by location-UUID.
-        :param uuid: name of a location
+        :param loc_uuid: name of a location
         :param start: start timestamp in ISO 8601 format
         :param end: end timestamp in ISO 8601 format, defaults to now
         :return: a dictionary of with nested location, aquo quantities and
                  events.
         """
-        self.get(location__uuid=uuid)
+        org_query = self.organisation_query(organisation)
+        self.get(location__uuid=loc_uuid, **org_query)
         timeseries_uuids = [x['uuid'] for x in self.results]
         self.results = []
-        for uuid in timeseries_uuids:
-            ts = TimeSeries(self.base)
-            ts.uuid(uuid, start, end)
+        for ts_uuid in timeseries_uuids:
+            ts = TimeSeries(self.base, use_header=self.use_header)
+            ts.uuid(ts_uuid, start, end, **org_query)
             self.results += ts.results
         return self.results
 
-    def uuid(self, uuid, start='0001-01-01T00:00:00Z', end=None):
+    def uuid(self, ts_uuid, start='0001-01-01T00:00:00Z', end=None,
+             organisation=None):
         """
-        Returns time series for a location by location-UUID.
-        :param uuid: name of a location
+        Returns time series for a timeseries by timeseries-UUID.
+        :param ts_uuid: uuid of a timeseries
         :param start: start timestamp in ISO 8601 format
         :param end: end timestamp in ISO 8601 format
         :return: a dictionary of with nested location, aquo quantities and
@@ -302,10 +329,11 @@ class TimeSeries(Base):
         """
         if not end:
             end = jsdt.now_iso()
-        self.get(uuid=uuid, start=start, end=end)
+        # org_query = self.organisation_query(organisation)
+        self.get(uuid=ts_uuid, start=start, end=end)
 
     def bbox(self, south_west, north_east, statistic=None,
-                  start='0001-01-01T00:00:00Z', end=None):
+                  start='0001-01-01T00:00:00Z', end=None, organisation=None):
         """
         Find all timeseries within a certain bounding box.
         Returns records within bounding box using Bounding Box format (min Lon,
@@ -334,9 +362,10 @@ class TimeSeries(Base):
             [max_lon, min_lat],
             [min_lon, min_lat],
         ]
-        points = ['%20'.join([str(x), str(y)]) for x, y in polygon_coordinates]
-        geom_within = 'POLYGON%20((' + ',%20'.join(points) + '))'
-
+        points = [' '.join([str(x), str(y)]) for x, y in polygon_coordinates]
+        geom_within = {'a': 'POLYGON ((' + ', '.join(points) + '))'}
+        geom_within = urllib.parse.urlencode(geom_within).split('=')[1]
+        org_query = self.organisation_query(organisation)
         self.statistic = statistic
         if statistic == 'mean':
             statistic = ['count', 'sum']
@@ -356,7 +385,8 @@ class TimeSeries(Base):
                 end=first_end,
                 min_points=1,
                 fields=['count', 'sum'],
-                location__geom_within=geom_within
+                location__geom_within=geom_within,
+                **org_query
             )
             first_year = {}
             for r in self.results:
@@ -376,7 +406,8 @@ class TimeSeries(Base):
                 end=end,
                 min_points=1,
                 fields=['count', 'sum'],
-                location__geom_within=geom_within
+                location__geom_within=geom_within,
+                **org_query
             )
             for r in self.results:
                 try:
@@ -393,8 +424,14 @@ class TimeSeries(Base):
                     r['last_value_timestamp'] = np.nan
             return
 
-        self.get(start=start, end=end, min_points=1, fields=statistic,
-                 location__geom_within=geom_within)
+        self.get(
+            start=start,
+            end=end,
+            min_points=1,
+            fields=statistic,
+            location__geom_within=geom_within,
+            **org_query
+        )
 
 
     def ts_to_dict(self, statistic=None, values=None,
@@ -480,8 +517,12 @@ class TimeSeries(Base):
             values[location_uuid] = loc_dict
         npts_min = np.nanmin(npts_calculated, 0)
         npts_max = np.nanmax(npts_calculated, 0)
-        extremes = {stat: {'min': npts_min[i], 'max': npts_max[i]}
-                    for i, stat in stats2}
+        extremes = {
+            stat: {
+                'min': npts_min[i] if not np.isnan(npts_min[i]) else 0,
+                'max': npts_max[i] if not np.isnan(npts_max[i])  else 0
+            } for i, stat in stats2
+        }
         dt_conversion = {
             'js': lambda x: x,
             'dt': jsdt.js_to_datetime,
@@ -516,7 +557,6 @@ class GroundwaterLocations(Locations):
     def extra_queries(self):
         return {
             "object_type\__model": "GroundwaterStation",
-            "organisation__unique_id": "f757d2eb6f4841b1a92d57d7e72f450c"
         }
 
 
@@ -530,7 +570,6 @@ class GroundwaterTimeSeries(TimeSeries):
     def extra_queries(self):
         return {
             "object_type\__model": "GroundwaterStation",
-            "location__organisation__unique_id": "f757d2eb6f4841b1a92d57d7e72f450c"
         }
 
 
