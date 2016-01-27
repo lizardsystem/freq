@@ -31,6 +31,7 @@ function nextTabActive(){
 function changeGraphs(buttonType, altValue, changeTabs){
     return function(value){
         spinnerShow();
+        if(buttonType==='dropdown_999'){$('.organisation').text(value['value'])}
         if (changeTabs) {
             nextTabActive()
         }

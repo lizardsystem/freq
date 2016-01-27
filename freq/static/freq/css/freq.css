@@ -44,6 +44,9 @@ ul.navbar-nav > li > a {
 ul.navbar-nav > li.active {
   background-color: #16a085;
 }
+.open > a:focus {
+  background-color: #16a085!important;
+}
 ul.navbar-nav > li > a:hover {
   background-color: #16a085;
 }
@@ -196,4 +199,12 @@ h5 {
     opacity: 0.7;
     font-size: 5.3em;
     z-index: 1500;
+}
+.navbar-brand {
+    margin-top: -7pt;
+}
+.organisation {
+    position: absolute;
+    color: #e7ffe9;
+    margin: -17pt 0 0 -10pt;
 }

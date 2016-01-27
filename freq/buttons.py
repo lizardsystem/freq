@@ -21,6 +21,8 @@ class DropDown(LengthOne):
     def __init__(self, id_=0, selected=0, heading='', title='', options=None):
         if not options:
             self.options = []
+        else:
+            self.options = options
         self.heading = heading
         self.title = title
         self.selected_id = 'dropdown_selected_' + str(selected)
