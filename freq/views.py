@@ -356,7 +356,9 @@ class BaseViewMixin(object):
 
     def _selected_organisation(self, organisations, ext=''):
         if self.logged_in:
-            org = self.request.session['login']['selected_organisation' + ext]
+            default_login = copy.deepcopy(DEFAULT_STATE['login'])
+            org = self.request.session.get('login', default_login)[
+                'selected_organisation' + ext]
             if org:
                 return org
             try:
