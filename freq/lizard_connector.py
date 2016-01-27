@@ -297,31 +297,31 @@ class TimeSeries(Base):
         org_query = self.organisation_query(organisation)
         return self.get(location__name=name, **org_query)
 
-    def location_uuid(self, uuid, start='0001-01-01T00:00:00Z', end=None,
+    def location_uuid(self, loc_uuid, start='0001-01-01T00:00:00Z', end=None,
                       organisation=None):
         """
         Returns time series for a location by location-UUID.
-        :param uuid: name of a location
+        :param loc_uuid: name of a location
         :param start: start timestamp in ISO 8601 format
         :param end: end timestamp in ISO 8601 format, defaults to now
         :return: a dictionary of with nested location, aquo quantities and
                  events.
         """
         org_query = self.organisation_query(organisation)
-        self.get(location__uuid=uuid, **org_query)
+        self.get(location__uuid=loc_uuid, **org_query)
         timeseries_uuids = [x['uuid'] for x in self.results]
         self.results = []
-        for uuid in timeseries_uuids:
-            ts = TimeSeries(self.base)
-            ts.uuid(uuid, start, end, **org_query)
+        for ts_uuid in timeseries_uuids:
+            ts = TimeSeries(self.base, use_header=self.use_header)
+            ts.uuid(ts_uuid, start, end, **org_query)
             self.results += ts.results
         return self.results
 
-    def uuid(self, uuid, start='0001-01-01T00:00:00Z', end=None,
+    def uuid(self, ts_uuid, start='0001-01-01T00:00:00Z', end=None,
              organisation=None):
         """
-        Returns time series for a location by location-UUID.
-        :param uuid: name of a location
+        Returns time series for a timeseries by timeseries-UUID.
+        :param ts_uuid: uuid of a timeseries
         :param start: start timestamp in ISO 8601 format
         :param end: end timestamp in ISO 8601 format
         :return: a dictionary of with nested location, aquo quantities and
@@ -329,8 +329,8 @@ class TimeSeries(Base):
         """
         if not end:
             end = jsdt.now_iso()
-        org_query = self.organisation_query(organisation)
-        self.get(uuid=uuid, start=start, end=end, **org_query)
+        # org_query = self.organisation_query(organisation)
+        self.get(uuid=ts_uuid, start=start, end=end)
 
     def bbox(self, south_west, north_east, statistic=None,
                   start='0001-01-01T00:00:00Z', end=None, organisation=None):

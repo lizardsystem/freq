@@ -237,7 +237,7 @@ class BaseViewMixin(object):
     def timeseries(self):
         ts = GroundwaterTimeSeries(use_header=self.logged_in)
         page = self.request.GET.get('active', 'startpage')
-        ts.uuid(uuid=self.request.session[page]['uuid'],
+        ts.uuid(ts_uuid=self.request.session[page]['uuid'],
                 organisation=self.selected_organisation_id, **self.time_window)
         if len(ts.results):
             data = [{'y': x['max'], 'x': x['timestamp']}
@@ -455,7 +455,7 @@ class TimeSeriesByLocationUUIDView(StartPageBaseView):
     def timeseries(self):
         ts = GroundwaterTimeSeries(use_header=self.logged_in)
         ts.location_uuid(organisation=self.selected_organisation_id,
-                         uuid=self.uuid)
+                         loc_uuid=self.uuid)
         return ts.results
 
     @cached_property
