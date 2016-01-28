@@ -50,7 +50,6 @@ class Base(object):
                           certain data type this is the plase.
     :param max_results:
     """
-    data_type = None
     username = USR
     password = PWD
     max_results = 1000
@@ -218,9 +217,9 @@ class Locations(Base):
     """
     Makes a connection to the locations endpoint of the lizard api.
     """
-    data_type = 'locations'
 
     def __init__(self, base="https://ggmn.un-igrac.org", use_header=False):
+        self.data_type = 'locations'
         self.uuids = []
         super().__init__(base, use_header)
 
@@ -280,9 +279,9 @@ class TimeSeries(Base):
     """
     Makes a connection to the timeseries endpoint of the lizard api.
     """
-    data_type = 'timeseries'
 
     def __init__(self, base="https://ggmn.un-igrac.org", use_header=False):
+        self.data_type = 'timeseries'
         self.uuids = []
         self.statistic = None
         super().__init__(base, use_header)
@@ -313,7 +312,7 @@ class TimeSeries(Base):
         self.results = []
         for ts_uuid in timeseries_uuids:
             ts = TimeSeries(self.base, use_header=self.use_header)
-            ts.uuid(ts_uuid, start, end, **org_query)
+            ts.uuid(ts_uuid, start, end, organisation)
             self.results += ts.results
         return self.results
 
@@ -329,8 +328,9 @@ class TimeSeries(Base):
         """
         if not end:
             end = jsdt.now_iso()
-        # org_query = self.organisation_query(organisation)
-        self.get(uuid=ts_uuid, start=start, end=end)
+        org_query = self.organisation_query(organisation)
+        self.get(uuid=ts_uuid, start=start, end=end, **org_query)
+
 
     def bbox(self, south_west, north_east, statistic=None,
                   start='0001-01-01T00:00:00Z', end=None, organisation=None):
@@ -569,7 +569,7 @@ class GroundwaterTimeSeries(TimeSeries):
     @property
     def extra_queries(self):
         return {
-            "object_type\__model": "GroundwaterStation",
+            "location\__object_type\__model": "GroundwaterStation",
         }
 
 

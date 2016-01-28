@@ -197,7 +197,10 @@ function drawLocationsBoundingBox(map, locationsLayer){
         var colorScale = d3.scale.linear()
           .range(colors)
           .domain(colorDomain);
-      } catch(error){console.log(error);}
+      } catch(error){
+        console.log(error);
+        locationsLayer.clearLayers();
+      }
     }
     var pxSize = 7;
     for(var loc_uuid in locs) {

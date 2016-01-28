@@ -1035,4 +1035,4 @@ class MapFeatureInfoView(APIView):
                                   layername=request.GET.get('layername'))
         return RestResponse(response)
 
-# 'location__name__startswith!=GGMN_CUSTOM'
+# TODO: 'location__name__startswith!=GGMN_CUSTOM'
