@@ -24,7 +24,7 @@ from freq.lizard_connector import LizardApiError
 from freq.lizard_connector import GroundwaterLocations
 from freq.lizard_connector import GroundwaterTimeSeries
 from freq.lizard_connector import RasterAggregates
-
+from freq.lizard_connector import RasterWMS
 
 logger = logging.getLogger(__name__)
 
@@ -1036,3 +1036,15 @@ class MapFeatureInfoView(APIView):
         return RestResponse(response)
 
 # TODO: 'location__name__startswith!=GGMN_CUSTOM'
+
+
+class InterpolationLimits(APIView):
+
+    def get(self, request, *args, **kwargs):
+        raster_wms = RasterWMS()
+        response = raster_wms.get_limits(
+            layers=request.GET.get('layers'),
+            bbox=request.GET.get('bbox')
+        )
+        return RestResponse(response)
+

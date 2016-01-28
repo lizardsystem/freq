@@ -243,6 +243,7 @@ function extraUpdate(data){
       setDate(startDate, endDate);
     }
     drawLocationsBoundingBox(window.map_.map, window.map_.locationsLayer)(data);
+    resetInterpolation()
   }
   spinnerClear();
 }
@@ -271,6 +272,35 @@ function spinnerShow(){
 function spinnerClear(){
   $('#wait-spinner').addClass('hidden');
 }
+
+
+function resetInterpolation(){
+  var layers = 'world:dem';
+  var bbox = window.map_.map.getBounds().toBBoxString();
+  console.log(bbox, 'should look like: 2.804441731588852,51.1097471300875,' +
+    '7.69580509387341,53.039276641988344');
+  var url = "/map/interpolation_limits/?layers=" + layers + "&bbox=" + bbox;
+  loadData(url, function(data){
+    var lowestValue = data[0][0];
+    var highestValue = data[0][1];
+    window.map_.controlLayers.removeLayer(window.map_.interpolationLayer);
+    window.map_.map.removeLayer(window.map_.interpolationLayer);
+    window.map_.interpolationLayer = L.tileLayer.betterWms(
+      'https://raster.lizard.net/wms', {
+        layers: 'world:dem',
+        maxZoom: 17,
+        tooltip: true,
+        format: 'image/png',
+        transparent: true,
+        styles: "RdYlBu:" + lowestValue + ":" + highestValue,
+      }
+    );
+    window.map_.controlLayers.addOverlay(
+      window.map_.interpolationLayer, 'interpolation');
+    window.map_.interpolationLayer.addTo(window.map_.map);
+  });
+}
+
 
 $(document).ready(
   function() {

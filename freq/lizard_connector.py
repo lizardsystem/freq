@@ -90,7 +90,7 @@ class Base(object):
         else:
             self.base = join_urls('https:/', base)  # without extra '/', this is
                                                     # added in join_urls
-        self.base_url = join_urls(self.base, 'api/v2', self.data_type)
+        self.base_url = join_urls(self.base, 'api/v2', self.data_type) + '/'
 
     def get(self, count=True, **queries):
         """
@@ -100,19 +100,20 @@ class Base(object):
         :param queries: all keyword arguments are used as queries.
         :return: a dictionary of the api-response.
         """
-        queries.update({'page_size': self.max_results})
+        if self.max_results:
+            queries.update({'page_size': self.max_results})
         queries.update(self.extra_queries)
         queries.update(getattr(self, "queries", {}))
         query = '?' + '&'.join(str(key) + '=' +
                                (('&' + str(key) + '=').join(value)
                                if isinstance(value, list) else str(value))
                                for key, value in queries.items())
-        url = join_urls(self.base_url, query)
+        url = self.base_url + query
         self.fetch(url)
         try:
             print('Number found {} : {} with URL: {}'.format(
                 self.data_type, self.json.get('count', 0), url))
-        except KeyError:
+        except (KeyError, AttributeError):
             print('Got results from {} with URL: {}'.format(
                 self.data_type, url))
         self.parse()
@@ -624,6 +625,28 @@ class RasterAggregates(Base):
             count=False
         )
         return self.results
+
+    def parse(self):
+        self.results = self.json
+
+
+class RasterWMS(Base):
+    data_type = 'wms'
+
+    def __init__(self, base="https://raster.lizard.net", use_header=False):
+        super().__init__(base, use_header)
+        self.base_url = join_urls(base, self.data_type)
+        self.max_results = None
+
+    def get_limits(self, layers, bbox):
+        return self.get(
+            request='getlimits',
+            layers=layers,
+            bbox=bbox,
+            width=16,
+            height=16,
+            srs='epsg:4326'
+        )
 
     def parse(self):
         self.results = self.json
