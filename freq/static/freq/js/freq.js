@@ -102,10 +102,10 @@ L.TileLayer.BetterWMS = L.TileLayer.WMS.extend({
 
   getFeatureInfo: function (evt) {
     var popUp = function(data){
-      if(layerName!=='world_dem'){
+      if(layerName!=='world_dem' && layerName.indexOf('igrac') == -1){
         var value = colorMap[layerName].legend[data.data[0]]
       } else {
-        var value = "Elevation: " + data.data[0] + " (m)"
+        var value = data.data[0] + " (m)"
       }
       L.popup({ maxWidth: 800})
         .setLatLng(evt.latlng)
@@ -117,11 +117,16 @@ L.TileLayer.BetterWMS = L.TileLayer.WMS.extend({
       "world:dem": "world_dem",
       "world:soil": "soil_world",
       "extern:ww:whymap": "whymap",
-      "world:cover": 'landcover_world'
+      "world:cover": 'landcover_world',
+      "tbamap_2015ggis": "tbamap_2015ggis"
     };
 
+    var orgCode = window.map_.organisationWMSLayers[$('.organisation').text().trim()];
+    layerMapping[orgCode] = orgCode;
     // Make an AJAX request to the server and hope for the best
     var layerName = layerMapping[this.wmsParams.layers];
+    console.log(orgCode, layerName, layerMapping, this.wmsParams.layers);
+
     if (layerName!=="tbamap_2015ggis"){
       var url = "/map/feature_info/?lng=" + evt.latlng.lng + "&lat=" +
         evt.latlng.lat + "&layername=" + layerName;
@@ -213,7 +218,7 @@ function drawLocationsBoundingBox(map, locationsLayer){
           var color = col ? colorScale(ts.values[loc_uuid][statistic]) : '#1abc9c';
         }
       } catch(error){
-        var color = "#ccc"
+        var color = "#ccc";
         locTsExists = false;
       }
       if(coordinates.length > 0){
@@ -383,13 +388,13 @@ function loadMap() {
 
     var layers = window.map_.organisationWMSLayers[$('.organisation').text().trim()];
     window.map_.interpolationLayer = L.tileLayer.betterWms(
-      'https://raster.lizard.net/wms', {
+      'https://raster.staging.lizard.net/wms', {
         layers: layers,
         maxZoom: 17,
         tooltip: true,
         format: 'image/png',
         transparent: true,
-        styles: "RdYlBu:-1000:1000" // TODO: = hack, improve
+        styles: "RdYlBu:-1000:1000"
       });
 
     window.map_.locationsLayer = L.layerGroup();
@@ -411,16 +416,21 @@ function loadMap() {
       'landcover': landcover,
       "soil": soil,
       "DEM": DEM,
-      "interpolation": window.map_.interpolationLayer
     };
 
+    var organisation = $('.organisation').text().trim()
+    if (organisation !== 'Public'){
+      overlayMaps.interpolation = window.map_.interpolationLayer
+    }
+
     // create the control
-    var rescaleControl = L.control({position: 'topright'});
 
     window.map_.controlLayers = L.control.layers(baseMaps, overlayMaps);
     window.map_.controlLayers.addTo(window.map_.map);
 
-    rescaleControl.onAdd = function (map) {
+    if (organisation !== 'Public') {
+      var rescaleControl = L.control({position: 'topright'});
+      rescaleControl.onAdd = function (map) {
         var div = L.DomUtil.create('div', 'rescale-control');
 
         div.innerHTML = '<button id="rescale-button"' +
@@ -428,9 +438,9 @@ function loadMap() {
           ' class="btn btn-sm"> <div class="glyphicon' +
           ' glyphicon-resize-full"></div></button>';
         return div;
-    };
-    rescaleControl.addTo(window.map_.map);
-
+      };
+      rescaleControl.addTo(window.map_.map);
+    }
   } else {
     window.map_.map = L.map('map').fitBounds(window.map_.bounds);
     L.tileLayer(

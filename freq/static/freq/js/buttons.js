@@ -31,7 +31,13 @@ function nextTabActive(){
 function changeGraphs(buttonType, altValue, changeTabs){
     return function(value){
         spinnerShow();
-        if(buttonType==='dropdown_999'){$('.organisation').text(value['value'])}
+        if(buttonType==='dropdown_999'){
+          $('.organisation').text(value['value']);
+          try{
+            resetInterpolation();
+            window.map_.map.removeLayer(window.map_.interpolationLayer);
+          } catch(e){}
+        }
         if (changeTabs) {
             nextTabActive()
         }

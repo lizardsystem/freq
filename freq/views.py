@@ -23,8 +23,8 @@ import freq.freq_calculator as calculator
 from freq.lizard_connector import LizardApiError
 from freq.lizard_connector import GroundwaterLocations
 from freq.lizard_connector import GroundwaterTimeSeries
-from freq.lizard_connector import RasterAggregates
-from freq.lizard_connector import RasterWMS
+from freq.lizard_connector import RasterFeatureInfo
+from freq.lizard_connector import RasterLimits
 
 logger = logging.getLogger(__name__)
 
@@ -420,11 +420,18 @@ class MapView(BaseView):
         ]
     )
 
+
     def dispatch(self, *args, **kwargs):
         if not self.request.session.get('session_is_set', False):
             self.instantiate_session()
         return super().dispatch(*args, **kwargs)
 
+    @cached_property
+    def interpolation_layers(self):
+        return {
+            org.name: "extern:igrac:" + org.unique_id for
+            org in Organisation.objects.all()
+            }
 
 class StartPageBaseView(BaseView):
     active = 'startpage'
@@ -1029,8 +1036,8 @@ class RegressiveDataView(BaseApiView):
 class MapFeatureInfoView(APIView):
 
     def get(self, request, *args, **kwargs):
-        aggregates = RasterAggregates()
-        response = aggregates.wms(lat=request.GET.get('lat'),
+        feature_info = RasterFeatureInfo()
+        response = feature_info.wms(lat=request.GET.get('lat'),
                                   lng=request.GET.get('lng'),
                                   layername=request.GET.get('layername'))
         return RestResponse(response)
@@ -1041,10 +1048,13 @@ class MapFeatureInfoView(APIView):
 class InterpolationLimits(APIView):
 
     def get(self, request, *args, **kwargs):
-        raster_wms = RasterWMS()
+        raster_wms = RasterLimits()
         response = raster_wms.get_limits(
-            layers=request.GET.get('layers'),
+            layername=request.GET.get('layers'),
             bbox=request.GET.get('bbox')
         )
+        print(response)
+        if response == [[None, None]]:
+            response = [[-1000, 1000]]
         return RestResponse(response)
 
