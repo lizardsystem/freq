@@ -13,7 +13,7 @@ admin.autodiscover()
 
 urlpatterns = patterns(
     '',
-    url(r'', include('lizard_auth_client.urls')),
+    url(r'^', include('lizard_auth_client.urls')),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^trend_detection/$', views.TrendDetectionView.as_view(), name='trend_detection'),
     url(r'^periodic_fluctuations/$', views.PeriodicFluctuationsView.as_view(),
