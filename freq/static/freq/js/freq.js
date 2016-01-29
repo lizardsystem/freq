@@ -197,7 +197,10 @@ function drawLocationsBoundingBox(map, locationsLayer){
         var colorScale = d3.scale.linear()
           .range(colors)
           .domain(colorDomain);
-      } catch(error){console.log(error);}
+      } catch(error){
+        console.log(error);
+        locationsLayer.clearLayers();
+      }
     }
     var pxSize = 7;
     for(var loc_uuid in locs) {
@@ -377,6 +380,27 @@ function loadMap() {
         styles: "dem-world",
         effects: "shade:0:0.9"
       });
+    var DEM = L.tileLayer.betterWms(
+      'https://raster.lizard.net/wms', {
+        layers: 'world:dem',
+        maxZoom: 17,
+        tooltip: true,
+        format: 'image/png',
+        transparent: true,
+        styles: "dem-world",
+        effects: "shade:0:0.9"
+      });
+
+    var layers = window.map_.organisationWMSLayers[$('.organisation').text().trim()];
+    window.map_.interpolationLayer = L.tileLayer.betterWms(
+      'https://raster.lizard.net/wms', {
+        layers: layers,
+        maxZoom: 17,
+        tooltip: true,
+        format: 'image/png',
+        transparent: true,
+        styles: "RdYlBu:-1000:1000" // TODO: = hack, improve
+      });
 
     window.map_.locationsLayer = L.layerGroup();
 
@@ -396,10 +420,12 @@ function loadMap() {
       "WHYMAP": WHYMAP,
       'landcover': landcover,
       "soil": soil,
-      "DEM": DEM
+      "DEM": DEM,
+      "interpolation": window.map_.interpolationLayer
     };
 
-    L.control.layers(baseMaps, overlayMaps).addTo(window.map_.map);
+    window.map_.controlLayers = L.control.layers(baseMaps, overlayMaps);
+    window.map_.controlLayers.addTo(window.map_.map);
   } else {
     window.map_.map = L.map('map').fitBounds(window.map_.bounds);
     L.tileLayer(
@@ -418,7 +444,6 @@ function loadMap() {
 
   window.map_.map.on('moveend', drawLocations);
 }
-
 
 function logData(data, textStatus, jqXHR){
   console.log(data, textStatus, jqXHR);
