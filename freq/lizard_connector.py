@@ -109,6 +109,7 @@ class Base(object):
                                if isinstance(value, list) else str(value))
                                for key, value in queries.items())
         url = self.base_url + query
+        print(url)
         self.fetch(url)
         try:
             print('Number found {} : {} with URL: {}'.format(

@@ -1,6 +1,59 @@
 /*global $:false, jQuery:false, moment:false, ko:false, fillChart:false,
 demandChart:false, console:false*/
 
+
+window.map_.organisationWMSLayers = {
+  "TNO": "world:dem",
+  "TNO Geologische Dienst (Netherlands)": "world:dem",
+  "Department of Water Resources Planning, Ministry of Energy and Water (Angola)": "world:dem",
+  "Ministry of Irrigation and Water Resources (Sudan)": "world:dem",
+  "Hessisches Landesamt für Umwelt und Geologie (Germany)": "world:dem",
+  "Secretaria de Recursos Hídricos e Ambiente Urbano (Brasil)": "world:dem",
+  "International groundwater resources assessment centre (IGRAC)": "world:dem",
+  "Nile IWRM-Net (Sudan)": "world:dem",
+  "French Geological Survey BRGM (France)": "world:dem",
+  "Instituto Mexicano de Tecnología del Agua (Mexico)": "world:dem",
+  "Secretaria del Ambiente de Paraguay (Paraguay)": "world:dem",
+  "Ministry of Water and Irrigation (Kenya)": "world:dem",
+  "African Minister Council on Water - Secretariat (Nigeria)": "world:dem",
+  "Regional centre for groundwater management for LAC (Uruguay)": "world:dem",
+  "Ministry of Natural Resources and Agriculture (Belize)": "world:dem",
+  "Department of Water Resources (Somalia)": "world:dem",
+  "Instituto de Hidrología, Meteorología y Estudios Ambientales (Colombia))": "world:dem",
+  "Geological Survey of Ethiopia (Ethiopia)": "world:dem",
+  "ARA-SUL, Resources Management (Mozambique)": "world:dem",
+  "Instituto Nacional de Meteorología e Hidrología (Ecuador)": "world:dem",
+  "U.S. Geological Survey (United States)": "world:dem",
+  "Swiss Federal Office for the Environment FOEN (Switzerland)": "world:dem",
+  "Databank Ondergrond Vlaanderen (Belgium)": "world:dem",
+  "Kenya Water Institute (Kenya)": "world:dem",
+  "Western Cape University (South Africa)": "world:dem",
+  "Servicio Geologico do Brasil (Brasil)": "world:dem",
+  "Observatoire du Sahara et du Sahel (Tunisia)": "world:dem",
+  "Ministry of Agriculture, Water and Forestry, Department of Water Affairs and Forestry, Division Water Environment (Namibia)": "world:dem",
+  "Ministry of Water &amp; Environment (Uganda)": "world:dem",
+  "Ministry of Water, Groundwater Unit (Tanzania)": "world:dem",
+  "Norwegian Water Resources and Energy Directorate NVE (Norway)": "world:dem",
+  "Agência Nacional de Águas (Brasil)": "world:dem",
+  "CHR Water Consultants (Namibia)": "world:dem",
+  "Instituto Nacional de Sismología, Vulcanología, Meteorología e Hidrología (Guatemala)": "world:dem",
+  "Ministry of Natural Resources, Department of Water Affairs (Lesotho)": "world:dem",
+  "Ministry of Water and Energy (Ethiopia)": "world:dem",
+  "Ministerio del ambiente y los Recursos Naturales (Nicaragua)": "world:dem",
+  "Zimbabwe National Water Authority (ZINWA) (Zimbabwe)": "world:dem",
+  "Autoridad Nacional del Agua (Peru)": "world:dem",
+  "Geological Survey Canada (Canada)": "world:dem",
+  "Autoridad Nacional del Ambiente de Panama (Panama)": "world:dem",
+  "UNESCO IRBM Centre (Nigeria)": "world:dem",
+  "Secretaría de Recursos Naturales y Ambiente (Honduras)": "world:dem",
+  "Sistema Nacional de Información Hídrica (Argentina)": "world:dem",
+  "Ministry of Irrigation and Water Resources (South Sudan)": "world:dem",
+  "SADC Secretariat - Water Division (Botswana)": "world:dem",
+  "Ministerio de Vivienda, Ordenamiento Territorial y Medio Ambiente (Uruguay)": "world:dem",
+  "Department of Water Affairs, Divison Geohydrology (Namibia)": "world:dem"
+};
+
+
 function loadLegend(data){
   var dataMin = window.map_.min || 0;
   var dataMax = window.map_.max || 1;
@@ -275,7 +328,7 @@ function spinnerClear(){
 
 
 function resetInterpolation(){
-  var layers = 'world:dem';
+  var layers = window.map_.organisationWMSLayers[$('.organisation').text().trim()];
   var bbox = window.map_.map.getBounds().toBBoxString();
   console.log(bbox, 'should look like: 2.804441731588852,51.1097471300875,' +
     '7.69580509387341,53.039276641988344');

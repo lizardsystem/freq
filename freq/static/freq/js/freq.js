@@ -390,9 +390,11 @@ function loadMap() {
         styles: "dem-world",
         effects: "shade:0:0.9"
       });
+
+    var layers = window.map_.organisationWMSLayers[$('.organisation').text().trim()];
     window.map_.interpolationLayer = L.tileLayer.betterWms(
       'https://raster.lizard.net/wms', {
-        layers: 'world:dem',
+        layers: layers,
         maxZoom: 17,
         tooltip: true,
         format: 'image/png',
