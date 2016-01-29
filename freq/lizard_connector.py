@@ -109,7 +109,6 @@ class Base(object):
                                if isinstance(value, list) else str(value))
                                for key, value in queries.items())
         url = self.base_url + query
-        print(url)
         self.fetch(url)
         try:
             print('Number found {} : {} with URL: {}'.format(
@@ -614,40 +613,69 @@ class GroundwaterTimeSeriesAndLocations(object):
     #   ")&srs=EPSG:4326&raster_names=" + layerName;
 
 
-class RasterAggregates(Base):
+class RasterFeatureInfo(Base):
     data_type = 'raster-aggregates'
 
     def wms(self, lat, lng, layername):
-        self.get(
-            agg='curve',
-            geom='POINT(' + lng + '+' + lat + ')',
-            srs='EPSG:4326',
-            raster_names=layername,
-            count=False
-        )
+        print("FEATUREINFO", lat, lng, layername)
+        if 'igrac' in layername:
+            self.base_url = "https://raster.staging.lizard.net/wms"
+            print(lat, lng)
+            lat_f = float(lat)
+            lng_f = float(lng)
+            self.get(request="getfeatureinfo",
+                     layers=layername,
+                     width=1,
+                     height=1,
+                     i=0,
+                     j=0,
+                     srs="epsg:4326",
+                     bbox=','.join([lng, lat, str(lng_f+0.00001), str(lat_f+0.00001)]),
+                     index="world"
+                     )
+            try:
+                self.results = {"data": [self.results[1]]}
+            except IndexError:
+                self.results = {"data": ['null']}
+        else:
+            self.get(
+                agg='curve',
+                geom='POINT(' + lng + '+' + lat + ')',
+                srs='EPSG:4326',
+                raster_names=layername,
+                count=False
+            )
+        print(self.results)
         return self.results
 
     def parse(self):
         self.results = self.json
 
 
-class RasterWMS(Base):
+class RasterLimits(Base):
     data_type = 'wms'
 
-    def __init__(self, base="https://raster.lizard.net", use_header=False):
+    def __init__(self, base="https://raster.lizard.net",
+                 use_header=False):
         super().__init__(base, use_header)
         self.base_url = join_urls(base, self.data_type)
         self.max_results = None
 
-    def get_limits(self, layers, bbox):
-        return self.get(
-            request='getlimits',
-            layers=layers,
-            bbox=bbox,
-            width=16,
-            height=16,
-            srs='epsg:4326'
-        )
+    def get_limits(self, layername, bbox):
+        if 'igrac' in layername:
+            print("RASTERLIMITS", layername, bbox)
+            self.base_url = "https://raster.staging.lizard.net/wms"
+        try:
+            return self.get(
+                request='getlimits',
+                layers=layername,
+                bbox=bbox,
+                width=16,
+                height=16,
+                srs='epsg:4326'
+            )
+        except urllib.error.HTTPError:
+            return [[-1000, 1000]]
 
     def parse(self):
         self.results = self.json
