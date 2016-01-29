@@ -293,10 +293,9 @@ function extraUpdate(data){
       var startDate =  timeseries.dates.start || datePickerDates['start'];
       var endDate = timeseries.dates.end || datePickerDates['end'];
       console.log(timeseries.dates.startString, datePickerDates['start']);
-      setDate(startDate, endDate);
+      //setDate(startDate, endDate);
     }
     drawLocationsBoundingBox(window.map_.map, window.map_.locationsLayer)(data);
-    resetInterpolation()
   }
   spinnerClear();
 }
@@ -327,7 +326,18 @@ function spinnerClear(){
 }
 
 
-function resetInterpolation(){
+function resetInterpolation(event){
+  if (!event)
+      event = window.event;
+
+    //IE9 & Other Browsers
+    if (event.stopPropagation) {
+      event.stopPropagation();
+    }
+    //IE8 and Lower
+    else {
+      event.cancelBubble = true;
+    }
   var layers = window.map_.organisationWMSLayers[$('.organisation').text().trim()];
   var bbox = window.map_.map.getBounds().toBBoxString();
   console.log(bbox, 'should look like: 2.804441731588852,51.1097471300875,' +

@@ -208,3 +208,30 @@ h5 {
     color: #e7ffe9;
     margin: -17pt 0 0 -10pt;
 }
+#rescale-button:hover {
+    background: #16a085;
+}
+div.leaflet-control-layers {
+    background: #1abc9c;
+    color: #fff;
+}
+#rescale-button {
+    background: #1abc9c;
+    width: 36px;
+    height: 36px;
+    box-shadow: 0 0 5px #777;
+}
+.glyphicon-resize-full {
+    font-size: 2em;
+    color: #fff;
+    margin-left: -5px;
+}
+
+.leaflet-bar a {
+    color: #fff !important;
+    background: #1abc9c !important;
+}
+
+.leaflet-bar a:hover {
+    background: #16a085!important;
+}

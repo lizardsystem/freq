@@ -6,7 +6,7 @@
     <div class="row">
       {% include 'freq/include/dropdown.html' with dropdown=view.dropdowns %}
       {% include 'freq/include/datepicker.html' %}
-      <div class="col-sm-6">
+      <div class="col-md-6">
         <h5>Legend</h5>
         <div id="legend" onselectstart="return false"></div>
       </div>
@@ -19,6 +19,7 @@
       <div class="colorpick-min pull-right">
       </div>
       <div id="map" class="full-page-map"></div>
+
       <div id="wait-spinner" class="hidden">
         <i class="fa fa-cog fa-spin spin-dark"></i>
         <i class="fa fa-cog fa-spin spin-light"></i>

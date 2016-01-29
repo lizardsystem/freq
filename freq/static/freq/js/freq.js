@@ -380,16 +380,6 @@ function loadMap() {
         styles: "dem-world",
         effects: "shade:0:0.9"
       });
-    var DEM = L.tileLayer.betterWms(
-      'https://raster.lizard.net/wms', {
-        layers: 'world:dem',
-        maxZoom: 17,
-        tooltip: true,
-        format: 'image/png',
-        transparent: true,
-        styles: "dem-world",
-        effects: "shade:0:0.9"
-      });
 
     var layers = window.map_.organisationWMSLayers[$('.organisation').text().trim()];
     window.map_.interpolationLayer = L.tileLayer.betterWms(
@@ -424,8 +414,23 @@ function loadMap() {
       "interpolation": window.map_.interpolationLayer
     };
 
+    // create the control
+    var rescaleControl = L.control({position: 'topright'});
+
     window.map_.controlLayers = L.control.layers(baseMaps, overlayMaps);
     window.map_.controlLayers.addTo(window.map_.map);
+
+    rescaleControl.onAdd = function (map) {
+        var div = L.DomUtil.create('div', 'rescale-control');
+
+        div.innerHTML = '<button id="rescale-button"' +
+          ' onclick="resetInterpolation();" title="rescale interpolation"' +
+          ' class="btn btn-sm"> <div class="glyphicon' +
+          ' glyphicon-resize-full"></div></button>';
+        return div;
+    };
+    rescaleControl.addTo(window.map_.map);
+
   } else {
     window.map_.map = L.map('map').fitBounds(window.map_.bounds);
     L.tileLayer(
