@@ -411,16 +411,21 @@ function loadMap() {
       'landcover': landcover,
       "soil": soil,
       "DEM": DEM,
-      "interpolation": window.map_.interpolationLayer
     };
 
+    var organisation = $('.organisation').text().trim()
+    if (organisation !== 'Public'){
+      overlayMaps.interpolation = window.map_.interpolationLayer
+    }
+
     // create the control
-    var rescaleControl = L.control({position: 'topright'});
 
     window.map_.controlLayers = L.control.layers(baseMaps, overlayMaps);
     window.map_.controlLayers.addTo(window.map_.map);
 
-    rescaleControl.onAdd = function (map) {
+    if (organisation !== 'Public') {
+      var rescaleControl = L.control({position: 'topright'});
+      rescaleControl.onAdd = function (map) {
         var div = L.DomUtil.create('div', 'rescale-control');
 
         div.innerHTML = '<button id="rescale-button"' +
@@ -428,9 +433,9 @@ function loadMap() {
           ' class="btn btn-sm"> <div class="glyphicon' +
           ' glyphicon-resize-full"></div></button>';
         return div;
-    };
-    rescaleControl.addTo(window.map_.map);
-
+      };
+      rescaleControl.addTo(window.map_.map);
+    }
   } else {
     window.map_.map = L.map('map').fitBounds(window.map_.bounds);
     L.tileLayer(
