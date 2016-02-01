@@ -54,7 +54,11 @@ function changeGraphs(buttonType, altValue, changeTabs){
 
 window.charts = [];
 
-function extraUpdate(data){};
+function extraUpdate(data){
+  window.map_.locationsLayer.clearLayers();
+  drawLocations();
+}
+
 function lastUpdate(data){};
 
 function updateGraphs(data){
