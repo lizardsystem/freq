@@ -118,6 +118,7 @@ class BaseViewMixin(object):
         self.request.session['session_is_set'] = True
         default = copy.deepcopy(DEFAULT_STATE)
         self.request.session.update(default)
+        self.request.session.modified = True
 
     def set_session_value(self, state, key, value):
         if self.is_default_type(state, key, value):
@@ -342,7 +343,7 @@ class BaseViewMixin(object):
     def _organisations(self, identifier="unique_id"):
         if self.logged_in:
             orgs = get_organisations_with_role(self.user, 'access')
-            return list(set([getattr(org, identifier) for org in orgs]))
+            return sorted(list(set([getattr(org, identifier) for org in orgs])))
         else:
             return []
 
@@ -1058,3 +1059,9 @@ class InterpolationLimits(APIView):
             response = [[-1000, 1000]]
         return RestResponse(response)
 
+
+class MapRestartView(MapView):
+
+    def get(self, request, *args, **kwargs):
+        self.instantiate_session()
+        return super().get(request, *args, **kwargs)

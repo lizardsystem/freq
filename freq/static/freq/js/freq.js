@@ -314,9 +314,12 @@ function clickColor(event) {
 function loadMap() {
   function drawLocations () {
     var bounds = window.map_.map.getBounds();
+    var url = window.active === 'map_' ?
+      '/map__data/?' :
+      '/map__data/?datatypes=locations';
 
     loadData(
-      '/map__data/?datatypes=locations',
+      url,
       drawLocationsBoundingBox(
         window.map_.map,
         window.map_.locationsLayer
