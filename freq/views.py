@@ -274,9 +274,12 @@ class BaseViewMixin(object):
         return jsdt.today()
 
     @property
-    def time_window(self):
-        page = self.request.GET.get('active', 'startpage')
+    def datepicker_page(self):
+        return "map_" if self.active == "map_" else "startpage"
 
+    @property
+    def time_window(self):
+        page = self.datepicker_page
         start = jsdt.datetime_to_js(dt.datetime.strptime(
             self.request.session[page]['datepicker']['start'], '%d-%m-%Y'
         ))
@@ -313,7 +316,7 @@ class BaseViewMixin(object):
 
     @cached_property
     def datepicker_start(self):
-        page = self.request.GET.get('active', 'startpage')
+        page = self.datepicker_page
         start = self.request.session[page]['datepicker']['start']
         if isinstance(start, str) and '-' in start:
             return [int(x) for x in start.split('-')]
@@ -322,7 +325,7 @@ class BaseViewMixin(object):
 
     @cached_property
     def datepicker_end(self):
-        page = self.request.GET.get('active', 'startpage')
+        page = self.datepicker_page
         end = self.request.session[page]['datepicker']['end']
         if isinstance(end, str) and '-' in end:
             return [int(x) for x in end.split('-')]
@@ -636,7 +639,7 @@ class BaseApiView(BaseViewMixin, APIView):
 
     def get(self, request, *args, **kwargs):
         if self.button == 'datepicker':
-            page = "map_" if self.active == "map_" else "startpage"
+            page = self.datepicker_page
             self.set_session_value(
                 page, 'datepicker',
                 json.loads(self.request.GET.get('value', self.request.session[
