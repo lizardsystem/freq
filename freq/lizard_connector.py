@@ -170,6 +170,9 @@ class Base(object):
                     self.fetch(next_url)
                 else:
                     break
+            except KeyError:
+                self.results += [self.json]
+                break
             except IndexError:
                 break
 
@@ -329,8 +332,11 @@ class TimeSeries(Base):
         """
         if not end:
             end = jsdt.now_iso()
+        old_base_url = self.base_url
+        self.base_url += ts_uuid + "/"
         org_query = self.organisation_query(organisation)
-        self.get(uuid=ts_uuid, start=start, end=end, **org_query)
+        self.get(start=start, end=end, **org_query)
+        self.base_url = old_base_url
 
 
     def bbox(self, south_west, north_east, statistic=None,
@@ -613,10 +619,8 @@ class RasterFeatureInfo(Base):
     data_type = 'raster-aggregates'
 
     def wms(self, lat, lng, layername):
-        print("FEATUREINFO", lat, lng, layername)
         if 'igrac' in layername:
             self.base_url = "https://raster.staging.lizard.net/wms"
-            print(lat, lng)
             lat_f = float(lat)
             lng_f = float(lng)
             self.get(request="getfeatureinfo",
@@ -641,7 +645,6 @@ class RasterFeatureInfo(Base):
                 raster_names=layername,
                 count=False
             )
-        print(self.results)
         return self.results
 
     def parse(self):
@@ -659,7 +662,6 @@ class RasterLimits(Base):
 
     def get_limits(self, layername, bbox):
         if 'igrac' in layername:
-            print("RASTERLIMITS", layername, bbox)
             self.base_url = "https://raster.staging.lizard.net/wms"
         try:
             return self.get(
