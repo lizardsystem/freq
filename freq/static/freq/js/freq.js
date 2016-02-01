@@ -390,6 +390,7 @@ function loadMap() {
       });
 
     var layers = window.map_.organisationWMSLayers[$('.organisation').text().trim()];
+    console.log(layers);
     window.map_.interpolationLayer = L.tileLayer.betterWms(
       'https://raster.staging.lizard.net/wms', {
         layers: layers,
@@ -436,8 +437,8 @@ function loadMap() {
       rescaleControl.onAdd = function (map) {
         var div = L.DomUtil.create('div', 'rescale-control');
 
-        div.innerHTML = '<button id="rescale-button"' +
-          ' onclick="resetInterpolation();" title="rescale interpolation"' +
+        div.innerHTML = '<button id="rescale-button" ' +
+          'onclick="resetInterpolation(event);" title="rescale interpolation"' +
           ' class="btn btn-sm"> <div class="glyphicon' +
           ' glyphicon-resize-full"></div></button>';
         return div;
