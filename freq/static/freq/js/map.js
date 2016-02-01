@@ -259,10 +259,11 @@ function loadTimeseries(event) {
 
 function spinnerShow(){
   var map = $('#map');
-  var height = map.height() * -0.55 + "px";
+  var height = map.height() * -0.55;
   var width = map.width() * 0.49 + "px";
   $('#wait-spinner')
-    .css('margin-top', height)
+    .css('margin-top', height + "px")
+    .css('margin-bottom', -1 * height + 10 + "px")
     .css('margin-left', width)
     .removeClass('hidden');
 }
