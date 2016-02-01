@@ -311,8 +311,7 @@ function clickColor(event) {
 }
 
 
-function loadMap() {
-  function drawLocations () {
+function drawLocations () {
     var bounds = window.map_.map.getBounds();
     var url = window.active === 'map_' ?
       '/map__data/?' :
@@ -329,6 +328,7 @@ function loadMap() {
     );
   }
 
+function loadMap() {
   if(window.active === "map_"){
     var topography = L.tileLayer('https://{s}.tiles.mapbox.com/v3/nelenschuurmans.iaa98k8k/{z}/{x}/{y}.png ', {
       maxZoom: 17,
