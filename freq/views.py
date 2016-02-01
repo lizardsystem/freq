@@ -238,13 +238,14 @@ class BaseViewMixin(object):
     def timeseries(self):
         ts = GroundwaterTimeSeries(use_header=self.logged_in)
         page = self.request.GET.get('active', 'startpage')
-        ts.uuid(ts_uuid=self.request.session[page]['uuid'],
-                organisation=self.selected_organisation_id, **self.time_window)
-        if len(ts.results):
-            data = [{'y': x['max'], 'x': x['timestamp']}
-                             for x in ts.results[0]['events']]
-        else:
-            data = []
+        uuid = self.request.session[page]['uuid']
+        data = []
+        if uuid != "EMPTY":
+            ts.uuid(ts_uuid=self.request.session[page]['uuid'],
+                    organisation=self.selected_organisation_id, **self.time_window)
+            if len(ts.results):
+                data = [{'y': x['max'], 'x': x['timestamp']}
+                                 for x in ts.results[0]['events']]
 
         self.data = {
             'values': data,
@@ -503,8 +504,8 @@ class TimeSeriesByLocationUUIDView(StartPageBaseView):
             self.request.session.modified = True
             self.set_session_value('trend_detection', 'active', True)
             self.set_session_value('periodic_fluctuations', 'active', True)
-            self.set_session_value('startpage', 'start_js', result['first_value_timestamp'])
-            self.set_session_value('startpage', 'end_js', result['last_value_timestamp'])
+            # self.set_session_value('startpage', 'start_js', result['first_value_timestamp'])
+            # self.set_session_value('startpage', 'end_js', result['last_value_timestamp'])
             self.set_session_value('startpage', 'uuid', result['uuid'])
         return []
 
@@ -635,9 +636,9 @@ class BaseApiView(BaseViewMixin, APIView):
 
     def get(self, request, *args, **kwargs):
         if self.button == 'datepicker':
-            page = self.request.GET.get('active', 'startpage')
+            page = "map_" if self.active == "map_" else "startpage"
             self.set_session_value(
-                page, self.button,
+                page, 'datepicker',
                 json.loads(self.request.GET.get('value', self.request.session[
                     page]['datepicker']))
             )
@@ -888,12 +889,12 @@ class MapDataView(BaseApiView):
                                                'datepicker']['end']),
             date_time='str'
         )
-        try:
-            if result['dates']['start'] and result['dates']['end']:
-                self.request.session['map_']['datepicker'] = result['dates']
-                self.request.session.modified = True
-        except KeyError:
-            pass
+        # try:
+        #     if result['dates']['start'] and result['dates']['end']:
+        #         self.request.session['map_']['datepicker'] = result['dates']
+        #         self.request.session.modified = True
+        # except KeyError:
+        #     pass
         return result
 
     @cached_property
@@ -1054,7 +1055,6 @@ class InterpolationLimits(APIView):
             layername=request.GET.get('layers'),
             bbox=request.GET.get('bbox')
         )
-        print(response)
         if response == [[None, None]]:
             response = [[-1000, 1000]]
         return RestResponse(response)
