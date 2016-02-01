@@ -557,7 +557,7 @@ class GroundwaterLocations(Locations):
     @property
     def extra_queries(self):
         return {
-            "object_type\__model": "GroundwaterStation",
+            "object_type__id": 107,
         }
 
 
@@ -570,7 +570,7 @@ class GroundwaterTimeSeries(TimeSeries):
     @property
     def extra_queries(self):
         return {
-            "location\__object_type\__model": "GroundwaterStation",
+            "location__object_type__id": 107,
         }
 
 
@@ -607,10 +607,6 @@ class GroundwaterTimeSeriesAndLocations(object):
         self.locs_to_dict()
         self.ts.ts_to_dict(values=self.values)
         return self.ts.response
-
-    # var url = "https://demo.lizard.net/api/v2/raster-aggregates/" +
-    #   "?agg=curve&geom=POINT(" + evt.latlng.lng + "+" + evt.latlng.lat +
-    #   ")&srs=EPSG:4326&raster_names=" + layerName;
 
 
 class RasterFeatureInfo(Base):
