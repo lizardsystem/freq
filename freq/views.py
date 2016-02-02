@@ -337,27 +337,29 @@ class BaseViewMixin(object):
         return DropDown(
             heading="Organisation",
             title="Choose ",
-            options=self.organisations,
             id_=999
         )
 
     # ------------------------------------------------------------------------ #
     ### Login related:
-
-    def _organisations(self, identifier="unique_id"):
+    @cached_property
+    def organisations_id_name(self):
         if self.logged_in:
             orgs = get_organisations_with_role(self.user, 'access')
-            return sorted(list(set([getattr(org, identifier) for org in orgs])))
+            return sorted(list(set(
+                [(getattr(org, "name"), getattr(org, "unique_id")) for org in
+                 orgs]
+            )))
         else:
             return []
 
     @cached_property
     def organisations_id(self):
-        return self._organisations('unique_id')
+        return [x[1] for x in self.organisations_id_name]
 
     @cached_property
     def organisations(self):
-        return self._organisations('name')
+        return [x[0] for x in self.organisations_id_name]
 
     def _selected_organisation(self, organisations, ext=''):
         if self.logged_in:
@@ -452,13 +454,6 @@ class StartPageView(StartPageBaseView):
     def dispatch(self, *args, **kwargs):
         if not self.request.session.get('session_is_set', False):
             self.instantiate_session()
-        return super().dispatch(*args, **kwargs)
-
-
-class ReStartPageView(StartPageView):
-
-    def dispatch(self, *args, **kwargs):
-        self.instantiate_session()
         return super().dispatch(*args, **kwargs)
 
 
@@ -645,13 +640,6 @@ class BaseApiView(BaseViewMixin, APIView):
                 json.loads(self.request.GET.get('value', self.request.session[
                     page]['datepicker']))
             )
-        elif self.button == 'dropdown_999':
-            self.request.session['login']['selected_organisation'] = \
-                self.value['value']
-            self.request.session['login']['selected_organisation_id'] = \
-                Organisation.objects.filter(
-                    name=self.value['value']).values('unique_id')[0][
-                      'unique_id']
         elif self.button and self.button != 'undefined':
             next_tab = {
                 'trend_detection': 'periodic_fluctuations',
@@ -1063,8 +1051,24 @@ class InterpolationLimits(APIView):
         return RestResponse(response)
 
 
-class MapRestartView(MapView):
+class RestartMixin(object):
 
     def get(self, request, *args, **kwargs):
+        bounds = request.session['map_']['bounds']
         self.instantiate_session()
+        org_name = request.GET.get('name', False)
+        org_uuid = request.GET.get('uuid', False)
+        if org_name and org_uuid:
+            request.session['map_']['bounds'] = bounds
+            self.request.session['login']['selected_organisation'] = org_name
+            self.request.session['login']['selected_organisation_id'] = org_uuid
+            self.request.session.modified = True
         return super().get(request, *args, **kwargs)
+
+
+class MapRestartView(RestartMixin, MapView):
+    pass
+
+
+class ReStartPageView(RestartMixin, StartPageView):
+    pass

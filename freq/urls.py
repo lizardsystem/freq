@@ -44,6 +44,6 @@ urlpatterns = patterns(
     url(r'^startpage/restart/$', views.ReStartPageView.as_view(),
         name='restart'),
     url(r'^startpage/$', views.StartPageView.as_view(), name='startpage'),
-    url(r'^map/restart/$', views.MapRestartView.as_view(), name='flush'),
+    url(r'^map/restart/$', views.MapRestartView.as_view(), name='map_restart'),
     url(r'^$', views.MapView.as_view(), name='map_')
     ) + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
