@@ -12,17 +12,17 @@
       {{ dropdown.heading }}
       <span class="caret"></span>
     </a>
-    <ul class="dropdown-menu" style="z-index: 10000;">
+    <ul class="dropdown-menu" style="z-index: 1510;">
       {% for org_name, org_id in view.organisations_id_name  %}
         <li>
           {% if view.active == "map_" %}
             <a href="{% url "map_restart" %}?name={{ org_name }}&uuid={{ org_id }}"
-               id="dropdown_option" style="z-index: 10000;">
+               id="dropdown_option" style="z-index: 1510!important;">
               {{ org_name }}
             </a>
           {% else %}
             <a href="{% url "restart" %}?name={{ org_name }}&uuid={{ org_id }}"
-               id="dropdown_option" style="z-index: 10000;">
+               id="dropdown_option" style="z-index: 1510!important;">
               {{ org_name }}
             </a>
           {% endif %}

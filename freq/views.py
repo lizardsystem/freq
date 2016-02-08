@@ -611,8 +611,8 @@ class AutoRegressiveView(BaseView):
             title="Number of lags used for the correlogram computation",
         ),
         Spinner(
-            heading='Number of periods',
-            title="Number of periods used in the training of the autoregressive " \
+            heading='Order of Autoregressive model (p)',
+            title="Order of Autoregressive model (p) used in the training of the autoregressive " \
                    "model",
             min_=1,
             number=1
@@ -1002,7 +1002,7 @@ class RegressiveDataView(BaseApiView):
             self.series_to_js(
                 npseries=self.correllogram,
                 index=[],
-                key='Correllogram',
+                key='Correlogram',
                 dates=False
             )
         ], [

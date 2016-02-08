@@ -35,8 +35,9 @@
   background-color:#1abc9c;
   border-radius: 0;
 }
-#logo {
+.logo {
   margin: -8px 20px 0 0;
+  max-height: 50px;
 }
 ul.navbar-nav > li > a {
     color:#fff ;
@@ -234,4 +235,11 @@ div.leaflet-control-layers {
 
 .leaflet-bar a:hover {
     background: #16a085!important;
+}
+#dropdown_option {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    -o-text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 400px;
 }
