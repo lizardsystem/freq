@@ -489,6 +489,7 @@ class TimeSeries(Base):
             except ValueError:
                 timestamps = [np.nan, np.nan]
             except TypeError:
+                # int(None)
                 timestamps = [np.nan, np.nan]
             if not len(result['events']):
                 y = 2 if statistic == 'difference (mean last - first year)' \
