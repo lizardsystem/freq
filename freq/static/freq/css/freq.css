@@ -243,3 +243,7 @@ div.leaflet-control-layers {
     white-space: nowrap;
     max-width: 400px;
 }
+.lizard {
+    width: 100%;
+    border: 0;
+}

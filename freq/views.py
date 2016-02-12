@@ -219,7 +219,7 @@ class BaseViewMixin(object):
 
     @property
     def freq_icon_size(self):
-        if self.active == 'map_':
+        if self.active == 'map_' or self.active == 'lizard':
             return "glyphicon-sm"
         else:
             return ""
@@ -230,6 +230,12 @@ class BaseViewMixin(object):
             return "glyphicon-sm"
         else:
             return ""
+
+    @property
+    def lizard_icon_size(self):
+        if self.active != 'lizard':
+            return "glyphicon-sm"
+        return ""
 
     # ------------------------------------------------------------------------ #
     ### Data handling
@@ -402,6 +408,13 @@ class FreqTemplateView(TemplateView):
 
 class BaseView(BaseViewMixin, FreqTemplateView):
     pass
+
+
+class LizardIframeView(BaseView):
+    active = 'lizard'
+    lizard_active = 'active'
+    template_name = 'freq/lizard_iframe.html'
+    menu_items = []
 
 
 class MapView(BaseView):

@@ -77,6 +77,14 @@
                     </span>
                   </a>
                 </li>
+                <li class="{{ view.lizard_active }}">
+                  <a href="{% url "lizard_iframe" %}">
+                    Public
+                    <span class="glyphicon {{ view.lizard_icon_size }}
+                    glyphicon-map-marker">
+                    </span>
+                  </a>
+                </li>
                 <li class="{{ view.freq_active }}">
                   <a href="{% url 'startpage' %}">
                     Freq
@@ -89,13 +97,6 @@
                   <a href="https://ggmn.un-igrac.org/import" target="_blank">
                     Import
                     <span class="glyphicon glyphicon-upload">
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <a href="https://ggmn.un-igrac.org/" target="_blank">
-                    Lizard
-                    <span class="glyphicon glyphicon-sm glyphicon-new-window">
                     </span>
                   </a>
                 </li>
