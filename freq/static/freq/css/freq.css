@@ -108,7 +108,7 @@ html, body {
 }
 .graph-height {
     height: 250px;
-    margin-left: -15px;
+    margin-left: -5px;
 }
 .form-control .input-number {
     min-width: 50px;

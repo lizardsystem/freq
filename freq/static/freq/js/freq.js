@@ -101,8 +101,10 @@ L.TileLayer.BetterWMS = L.TileLayer.WMS.extend({
   },
 
   getFeatureInfo: function (evt) {
-    var popUp = function(data){
-      if(layerName!=='world_dem' && layerName.indexOf('igrac') == -1){
+    var popUp = function(data) {
+      if(layerName === 'tbamap_2015ggis') {
+        var value = data.data
+      } else if((layerName!=='world_dem' && layerName.indexOf('igrac') == -1)){
         var value = colorMap[layerName].legend[data.data[0]]
       } else {
         var value = data.data[0] + " (m)"
@@ -130,9 +132,35 @@ L.TileLayer.BetterWMS = L.TileLayer.WMS.extend({
     if (layerName!=="tbamap_2015ggis"){
       var url = "/map/feature_info/?lng=" + evt.latlng.lng + "&lat=" +
         evt.latlng.lat + "&layername=" + layerName;
-      loadData(url, popUp);
+    } else {
+      var url = this.getFeatureInfoUrl(evt.latlng);
+      console.log(url);
     }
+    loadData(url, popUp);
+  },
+
+  getFeatureInfoUrl: function (latlng) {
+    // Construct a GetFeatureInfo request URL given a point
+    var point = this._map.latLngToContainerPoint(latlng, this._map.getZoom()),
+      size = this._map.getSize(),
+
+      params = {
+        version: this.wmsParams.version,
+        format: this.wmsParams.format,
+        bbox: this._map.getBounds().toBBoxString(),
+        height: size.y,
+        width: size.x,
+        layers: this.wmsParams.layers,
+        query_layers: this.wmsParams.layers,
+      };
+
+    params[params.version === '1.3.0' ? 'i' : 'x'] = point.x;
+    params[params.version === '1.3.0' ? 'j' : 'y'] = point.y;
+
+    return "/map/feature_info/" +
+      L.Util.getParamString(params, this._url, true);
   }
+
 });
 
 
@@ -266,13 +294,15 @@ function drawLocationsBoundingBox(map, locationsLayer){
 function nvGraph(i){
   nv.addGraph(function() {
       var chart = nv.models.lineChart()
-        .useInteractiveGuideline(true);
+        .useInteractiveGuideline(true)
+        .margin({top: 20, right: 30, bottom: 30, left: 100});
       chart.xAxis
         .tickFormat(function(d) {
             return d3.time.format('%x')(new Date(d))
         });
 
       chart.yAxis
+        .axisLabel('Groundwaterlevel ' + window.chart.reference + ' (m)')
         .tickFormat(d3.format('.02f'));
 
       chart.legend
@@ -351,6 +381,7 @@ function loadMap() {
         format: 'image/png',
         transparent: true,
       });
+
     var landcover = L.tileLayer.betterWms(
       'https://raster.lizard.net/wms', {
         layers: 'world:cover',
@@ -390,7 +421,7 @@ function loadMap() {
       });
 
     var layers = window.map_.organisationWMSLayers[$('.organisation').text().trim()];
-    console.log(layers);
+
     window.map_.interpolationLayer = L.tileLayer.betterWms(
       'https://raster.staging.lizard.net/wms', {
         layers: layers,
@@ -424,7 +455,7 @@ function loadMap() {
 
     var organisation = $('.organisation').text().trim()
     if (organisation !== 'Public'){
-      overlayMaps.interpolation = window.map_.interpolationLayer
+      overlayMaps['interpolation BGS'] = window.map_.interpolationLayer
     }
 
     // create the control

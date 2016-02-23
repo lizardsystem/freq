@@ -37,8 +37,8 @@ DEFAULT_STATE = {
     },
     'map_': {
         'bounds': [
-            [48.0, -6.8],
-            [56.2, 18.9]
+            [15, 90],
+            [5, 110]
         ],
         'datepicker': {'start': '1-1-1930', 'end': jsdt.today()},
         'dropdown_0': {'value': 'GWmBGS | mean'},
@@ -396,6 +396,19 @@ class BaseViewMixin(object):
     def user(self):
         return self.request.user
 
+    @cached_property
+    def reference(self):
+        if self.active == 'map_':
+            ref_value = self.request.session['map_']['dropdown_0']['value']
+        else:
+            ref_value = self.request.session['startpage']['measurement_point']
+        if 'BGS' in ref_value:
+            return 'BGS'
+        if 'MSL' in ref_value:
+            return 'MSL'
+        return ''
+
+
 class FreqTemplateView(TemplateView):
 
     def get(self, request, *args, **kwargs):
@@ -404,7 +417,6 @@ class FreqTemplateView(TemplateView):
         elif request.GET.get('redo', False):
             self.redo()
         return super().get(request, *args, **kwargs)
-
 
 class BaseView(BaseViewMixin, FreqTemplateView):
     pass
@@ -980,7 +992,7 @@ class FluctuationsDataView(BaseApiView):
     def additional_response(self):
         return [[
             self.series_to_js(
-                npseries=self.harmonic[4],
+                npseries=self.harmonic[3],
                 index=[],
                 key='Accumulated power spectrum',
                 dates=False
@@ -1043,9 +1055,23 @@ class MapFeatureInfoView(APIView):
 
     def get(self, request, *args, **kwargs):
         feature_info = RasterFeatureInfo()
+        layername = request.GET.get('layername')
+        if layername:
+            extra_params = None
+        else:
+            extra_params = {
+                param: request.GET.get(param.upper()) for param in (
+                    "version", "format", "bbox", "height", "width", "layers",
+                    "query_layers", 'x', 'y'
+                )
+            }
+            layername = 'aquifers'
+
         response = feature_info.wms(lat=request.GET.get('lat'),
                                   lng=request.GET.get('lng'),
-                                  layername=request.GET.get('layername'))
+                                  layername=layername,
+                                  extra_params=extra_params)
+        pprint(response)
         return RestResponse(response)
 
 # TODO: 'location__name__startswith!=GGMN_CUSTOM'
