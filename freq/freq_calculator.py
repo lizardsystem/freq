@@ -336,6 +336,10 @@ def autoregressive(data, per):
         Trend that was removed from the original serie
     param : list
         Object containing the autoregressive model parameters
+    aic_model : float
+         Akaike Information Criterion of the autoregressive model
+    std_error : float
+         Standard deviation of the innovation (error) term
     '''    
     # Input validation
     if len(data) < MIN_SAMPLES:
@@ -350,6 +354,8 @@ def autoregressive(data, per):
                         {0}'.format(int(0.3*len(data))))
                         
     ar_model = sts.tsa.AR(data).fit(per)
+    aic_model = ar_model.aic
+    std_error = np.sqrt(ar_model.sigma2)
     
     #Model Run
     trend = np.zeros(len(data))
@@ -362,7 +368,7 @@ def autoregressive(data, per):
     #Parameter vector
     param = ar_model.params
     
-    return det_serie, trend, param
+    return det_serie, trend, param, aic_model, std_error
 
 
 def test():
