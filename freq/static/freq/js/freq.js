@@ -46,18 +46,18 @@ var colorMap = {
   },
   "whymap": {
     "legend": {
-     11:  "11 - BGR - very low recharge (<2 mm year)",
-     12:  "12 - BGR - low recharge (2-20 mm/year)",
-     13:  "13 - BGR - medium recharge (20-100 mm/year)",
-     14:  "14 - BGR - high recharge (100-300 mm/year)",
-     15:  "15 - BGR - very high recharge (>300 mm/year)",
-     22:  "22 - BGR - low-very low recharge (<20 mm/year)",
-     23:  "23 - BGR - medium recharge (20-100 mm/year)",
-     24:  "24 - BGR - high recharge (100-300 mm/year)",
-     25:  "25 - BGR - very high recharge (>300 mm/year)",
-     33:  "33 - BGR - very low recharge (<100 mm/year)",
-     34:  "34 - BGR - high recharge (>100 mm/year)",
-     88:  "88 - BGR - Continuous Ice Sheet"
+      11: "Major Groundwater basin: very low recharge",
+      12: "Major Groundwater basin: low recharge",
+      13: "Major Groundwater basin: medium recharge",
+      14: "Major Groundwater basin: high recharge",
+      15: "Major Groundwater basin: very high recharge",
+      22: "Complex hydrogeological structure: low recharge",
+      23: "Complex hydrogeological structure: medium recharge",
+      24: "Complex hydrogeological structure: high recharge",
+      25: "Complex hydrogeological struct: very high recharge",
+      33: "Local and shallow aquifers: very low recharge",
+      34: "Local and shallow aquifers: high recharge",
+      88: "Contineous Ice sheet"
     }
   },
   "landcover_world": {
