@@ -11,7 +11,7 @@
         <div id="legend" onselectstart="return false"></div>
       </div>
     </div>
-  </br>
+    <br>
     <div class="row full-page-map">
       <div id="error-well" class="well well-sm hidden">
         {{ error_message }}
@@ -24,10 +24,23 @@
         <i class="fa fa-cog fa-spin spin-dark"></i>
         <i class="fa fa-cog fa-spin spin-light"></i>
       </div>
-      <h2 id="measurement_point" class="hidden"></h2>
-      <div id="chart_0" class="graph-height hidden">
-        <svg class="graph-height"></svg>
-        <svg class="graph-height"></svg>
+    </div>
+    <div class="row">
+      <div class="col-md-9">
+        <h2 id="measurement_point" class="hidden"></h2>
+        <div id="chart_0" class="graph-height hidden">
+          <svg class="graph-height"></svg>
+          <svg class="graph-height"></svg>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="panel panel-default">
+          <div class="panel panel-heading">
+            Metadata
+          </div>
+          <div class="panel panel-body">
+          </div>
+        </div>
       </div>
     </div>
   </div>

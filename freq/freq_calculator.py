@@ -21,6 +21,9 @@ import statsmodels.api as sts
 MIN_SAMPLES = 40
 
 
+class CalculatorSampleAmountError(Exception):
+    pass
+
 def load(data=None, data_path=None, init_date=None, end_date=None, 
          frequency='M', interpolation_method='linear', delimiter=';'):
     '''
@@ -111,17 +114,18 @@ def step(data, bp, alpha, detrend_anyway=True):
     '''
     # Input validation
     if alpha > 1.0 or alpha < 0.0:
-        raise NameError('Alpha value has to be between 0 and 1')
+        raise ValueError('Alpha value has to be between 0 and 1')
     if not isinstance(bp, int):
-        raise NameError('The breaking point has to be an integer')
+        raise ValueError('The breaking point has to be an integer')
     if bp < 0 or bp > len(data):
-        raise NameError('The breaking point has to be between 0 and {0}'\
+        raise ValueError('The breaking point has to be between 0 and {0}'\
                         .format(len(data)))
     if not isinstance(detrend_anyway, bool):
-        raise NameError('detrend_anyway has to be boolean')
+        raise ValueError('detrend_anyway has to be boolean')
     if len(data) < MIN_SAMPLES:
-        raise NameError('Too little data, dataset has to be larger than {0}'\
-                        .format(MIN_SAMPLES))
+        raise CalculatorSampleAmountError(
+            'Too little data, dataset has to be larger than {0}'.format(
+                MIN_SAMPLES))
     
     # get means before (a) and after (b) the breaking point
     mean_a = np.average(data[:bp])
@@ -181,11 +185,12 @@ def linear(data, alpha, detrend_anyway=True):
     '''
     # Input validation
     if alpha > 1.0 or alpha < 0.0:
-        raise NameError('Alpha value has to be between 0 and 1')
+        raise ValueError('Alpha value has to be between 0 and 1')
     if not isinstance(detrend_anyway, bool):
-        raise NameError('detrend_anyway has to be boolean')
+        raise ValueError('detrend_anyway has to be boolean')
     if len(data) < MIN_SAMPLES:
-        raise NameError('Too little data, dataset has to be larger than {0}'\
+        raise CalculatorSampleAmountError(
+            'Too little data, dataset has to be larger than {0}'\
                         .format(MIN_SAMPLES))
                         
     ## Make linear regression
@@ -231,10 +236,11 @@ def correlogram(data, n_lags):
     '''
     # Input validation
     if len(data) < MIN_SAMPLES:
-        raise NameError('Too little data ({0}), dataset has to be larger than '
+        raise CalculatorSampleAmountError(
+            'Too little data ({0}), dataset has to be larger than '
                         '{1}'.format(len(data), MIN_SAMPLES))
     if not isinstance(n_lags, int) or n_lags < 0:
-        raise NameError('n_lags has to be a positive integer')
+        raise ValueError('n_lags has to be a positive integer')
         
     z = np.zeros((len(data)-n_lags+1, n_lags))
     for i in range(n_lags):
@@ -269,14 +275,15 @@ def harmonic(data, n_harmonics):
     '''
     # Input validation
     if len(data) < MIN_SAMPLES:
-        raise NameError('Too little data ({0}), dataset has to be larger than '
+        raise CalculatorSampleAmountError(
+            'Too little data ({0}), dataset has to be larger than '
                         '{1}'.format(len(data), MIN_SAMPLES))
                         
     if not isinstance(n_harmonics, int) or n_harmonics < 0:
-        raise NameError('n_harmonics has to be a positive integer')    
+        raise ValueError('n_harmonics has to be a positive integer')
     
     if n_harmonics > len(data)/2:
-        raise NameError('Too many harmonics, maximum number of harmonics is \
+        raise ValueError('Too many harmonics, maximum number of harmonics is \
                         {0}'.format(int(len(data)/2)))
     
     data = data - np.mean(data)
@@ -339,15 +346,16 @@ def autoregressive(data, per):
     '''    
     # Input validation
     if len(data) < MIN_SAMPLES:
-        raise NameError('Too little data ({0}), dataset has to be larger than '
+        raise CalculatorSampleAmountError(
+            'Too little data ({0}), dataset has to be larger than '
                         '{1}'.format(len(data), MIN_SAMPLES))
                         
     if not isinstance(per, int) or per < 0:
-        raise NameError('n_harmonics has to be a positive integer')    
+        raise ValueError('n_harmonics has to be a positive integer')
     
     if per > 0.3*len(data):
-        raise NameError('Too many periods, maximum number of periods is \
-                        {0}'.format(int(0.3*len(data))))
+        raise ValueError('Too many periods, maximum number of periods is '
+                         '{0}'.format(int(0.3*len(data))))
                         
     ar_model = sts.tsa.AR(data).fit(per)
     

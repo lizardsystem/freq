@@ -109,12 +109,12 @@ class Base(object):
                                for key, value in queries.items())
         url = self.base_url + query
         self.fetch(url)
-        try:
-            print('Number found {} : {} with URL: {}'.format(
-                self.data_type, self.json.get('count', 0), url))
-        except (KeyError, AttributeError):
-            print('Got results from {} with URL: {}'.format(
-                self.data_type, url))
+        # try:
+        #     print('Number found {} : {} with URL: {}'.format(
+        #         self.data_type, self.json.get('count', 0), url))
+        # except (KeyError, AttributeError):
+        #     print('Got results from {} with URL: {}'.format(
+        #         self.data_type, url))
         self.parse()
         return self.results
 
@@ -134,7 +134,6 @@ class Base(object):
             encoding = resp.headers.get_content_charset()
             encoding = encoding if encoding else 'UTF-8'
             content = resp.read().decode(encoding)
-            print(url)
             self.json = json.loads(content)
 
         return self.json
@@ -471,7 +470,7 @@ class TimeSeries(Base):
             try:
                 timestamps = [int(result['first_value_timestamp']),
                               int(result['last_value_timestamp'])]
-            except ValueError:
+            except (ValueError, TypeError):
                 timestamps = [np.nan, np.nan]
             if not len(result['events']):
                 y = 2 if statistic == 'difference (mean last - first year)' \
@@ -610,17 +609,18 @@ class RasterFeatureInfo(Base):
             self.base_url = "https://raster.staging.lizard.net/wms"
             lat_f = float(lat)
             lng_f = float(lng)
-            self.get(request="getfeatureinfo",
-                     layers=layername,
-                     width=1,
-                     height=1,
-                     i=0,
-                     j=0,
-                     srs="epsg:4326",
-                     bbox=','.join(
-                         [lng, lat, str(lng_f+0.00001), str(lat_f+0.00001)]),
-                     index="world"
-                     )
+            self.get(
+                request="getfeatureinfo",
+                layers=layername,
+                width=1,
+                height=1,
+                i=0,
+                j=0,
+                srs="epsg:4326",
+                bbox=','.join(
+                    [lng, lat, str(lng_f+0.00001), str(lat_f+0.00001)]),
+                index="world"
+            )
             try:
                 self.results = {"data": [self.results[1]]}
             except IndexError:
@@ -634,8 +634,6 @@ class RasterFeatureInfo(Base):
                 'info_format': 'application/json'
             })
             self.get(**extra_params)
-            del self.results['features'][0]['geometry']
-            pprint(self.results)
             self.results = {
                 'data': self.results['features'][0]['properties']['aq_name']}
         else:

@@ -166,7 +166,7 @@
     {% endblock header %}
 
     {% block body %}
-      </br>
+      <br>
       <div class="container">
         <div class="row">
           <div class="col-md-8">
@@ -214,7 +214,8 @@
                 </div>
               {% endif %}
               <div id="map" class="pull-down"></div>
-              <div id="error-well" class="well well-sm {{ view.show_error }}">
+              <div id="error-well"
+                   class="well well-sm {{ view.show_error }} error-well">
                   {{ view.error_message }}
               </div><!-- /error-well -->
             </div><!-- /row -->
@@ -222,6 +223,12 @@
         </div><!-- /row -->
         <div class="row graph-height">
             {% block content %}
+              <div class="row">
+              <div class="col-md-8">
+                <div id="graph-error-well"
+                     class="well well-sm hidden error-well"></div>
+              </div>
+              </div>
               {% block chart_controls %}
               {% endblock chart_controls %}
               {% block chart %}
