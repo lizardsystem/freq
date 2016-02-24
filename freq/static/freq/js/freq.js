@@ -84,6 +84,78 @@ var colorMap = {
 };
 
 
+L.Control.OpacityLayers = L.Control.Layers.extend({
+
+	_addItem: function (obj) {
+		var label = document.createElement('label'),
+		    input,
+		    checked = this._map.hasLayer(obj.layer);
+
+		if (obj.overlay) {
+			input = document.createElement('input');
+			input.type = 'checkbox';
+			input.className = 'leaflet-control-layers-selector';
+			input.defaultChecked = checked;
+
+      if(obj.name!=='groundwater') {
+        /*
+          Following code is taken from:
+          Leaflet.OpacityControls, a plugin for adjusting the opacity of a Leaflet map.
+          (c) 2013, Jared Dominguez
+          (c) 2013, LizardTech
+          https://github.com/lizardtechblog/Leaflet.OpacityControls
+        */
+        var opacity_slider_div = L.DomUtil.create('div', 'opacity_slider_control');
+
+        $(opacity_slider_div)
+          .slider({
+            range: "min",
+            min: 0,
+            max: 100,
+            value: 60,
+            step: 10,
+            start: function (event, ui) {
+              console.log(event);
+              //When moving the slider, disable panning.
+              window.map_.map.dragging.disable();
+              window.map_.map.once('mousedown', function (e) {
+                window.map_.map.dragging.enable();
+              });
+            },
+            slide: function (event, ui) {
+              var slider_value = ui.value / 100;
+              obj.layer.setOpacity(slider_value);
+            }
+          });
+      }
+		} else {
+			input = this._createRadioElement('leaflet-base-layers', checked);
+		}
+
+		input.layerId = L.stamp(obj.layer);
+
+		L.DomEvent.on(input, 'click', this._onInputClick, this);
+
+		var name = document.createElement('span');
+		name.innerHTML = ' ' + obj.name;
+
+		label.appendChild(input);
+		label.appendChild(name);
+    if (obj.overlay && obj.name!=='groundwater') {
+      label.appendChild(opacity_slider_div);
+    }
+		var container = obj.overlay ? this._overlaysList : this._baseLayersList;
+		container.appendChild(label);
+
+		return label;
+	}
+});
+
+L.control.opacityLayers = function (baseLayers, overlays, options) {
+	return new L.Control.OpacityLayers(baseLayers, overlays, options);
+};
+
+
 L.TileLayer.BetterWMS = L.TileLayer.WMS.extend({
 
   onAdd: function (map) {
@@ -290,7 +362,6 @@ function drawLocationsBoundingBox(map, locationsLayer){
   };
 }
 
-
 function nvGraph(i){
   nv.addGraph(function() {
       var chart = nv.models.lineChart()
@@ -460,7 +531,7 @@ function loadMap() {
 
     // create the control
 
-    window.map_.controlLayers = L.control.layers(baseMaps, overlayMaps);
+    window.map_.controlLayers = L.control.opacityLayers(baseMaps, overlayMaps);
     window.map_.controlLayers.addTo(window.map_.map);
 
     if (organisation !== 'Public') {
