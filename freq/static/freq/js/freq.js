@@ -54,7 +54,7 @@ var colorMap = {
       22: "Complex hydrogeological structure: low recharge",
       23: "Complex hydrogeological structure: medium recharge",
       24: "Complex hydrogeological structure: high recharge",
-      25: "Complex hydrogeological struct: very high recharge",
+      25: "Complex hydrogeological structure: very high recharge",
       33: "Local and shallow aquifers: very low recharge",
       34: "Local and shallow aquifers: high recharge",
       88: "Contineous Ice sheet"
@@ -366,10 +366,10 @@ function nvGraph(i){
   nv.addGraph(function() {
       var chart = nv.models.lineChart()
         .useInteractiveGuideline(true)
-        .margin({top: 20, right: 30, bottom: 30, left: 100});
+        .margin({top: 20, right: 35, bottom: 30, left: 70});
       chart.xAxis
         .tickFormat(function(d) {
-            return d3.time.format('%x')(new Date(d))
+            return d3.time.format('%d-%m-%Y')(new Date(d))
         });
 
       chart.yAxis
