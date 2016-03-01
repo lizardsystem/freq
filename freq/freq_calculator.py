@@ -89,7 +89,8 @@ def step(data, bp, alpha, detrend_anyway=True):
     data : array_like
         Time serries for which the step trend is to be removed
     bp : int
-        Step in which the series is going to split
+        Step in which the series is going to split. If zero is selected, means
+        no trend selection, and only centering the data.
     alpha : float
         significance of the t-test for changes in the mean (0-1)
     detrend_anyway : bool
@@ -123,31 +124,44 @@ def step(data, bp, alpha, detrend_anyway=True):
         raise NameError('Too little data, dataset has to be larger than {0}'\
                         .format(MIN_SAMPLES))
     
-    # get means before (a) and after (b) the breaking point
-    mean_a = np.average(data[:bp])
-    mean_b = np.average(data[bp:])
-    
-    #Trend
-    trend = np.concatenate((mean_a*np.ones(bp),
-                               mean_b*np.ones(len(data)-bp)))     
-    
-    ## make t test
-    t_test_val, pval = st.ttest_ind(data[:bp],data[bp:])
-    
-    det_serie = np.concatenate((data[:bp] - np.average(data[:bp]),
-                                  data[bp:] - np.average(data[bp:])))     
-    
-    # Using the t-test
-    if alpha <= pval:
-        text_output = 'There is no significant difference at a {0} level of \
-                       confidence\np-value = {1}\nt-test value {2}'.format(
-                                                       alpha, pval, t_test_val)
-        if not detrend_anyway:
-            det_serie = data
+    if bp == 0:
+        # In case no trend is selected
+        mean_a = np.average(data)
+        mean_b = mean_a
+        
+        pval = ERROR_CODE
+        t_test_val = ERROR_CODE
+        text_output = 'No trend was selected'
+        trend = mean_a*np.ones(len(data))
+        det_serie = np.array(data) - mean_a
+        
     else:
-        text_output = 'There is a significant difference at a {0} level of \
-                       confidence\np-value = {1}\nt-test value {2}'.format(
-                                                       alpha, pval, t_test_val)
+    
+        # get means before (a) and after (b) the breaking point
+        mean_a = np.average(data[:bp])
+        mean_b = np.average(data[bp:])
+        
+        #Trend
+        trend = np.concatenate((mean_a*np.ones(bp),
+                                   mean_b*np.ones(len(data)-bp)))     
+        
+        ## make t test
+        t_test_val, pval = st.ttest_ind(data[:bp],data[bp:])
+        
+        det_serie = np.concatenate((data[:bp] - np.average(data[:bp]),
+                                      data[bp:] - np.average(data[bp:])))     
+        
+        # Using the t-test
+        if alpha <= pval:
+            text_output = 'There is no significant difference at a {0} \
+                           level of confidence\np-value = {1}\nt-test value \
+                           {2}'.format(alpha, pval, t_test_val)
+            if not detrend_anyway:
+                det_serie = data
+        else:
+            text_output = 'There is a significant difference at a {0} level \
+                           of confidence\np-value = {1}\nt-test value \
+                           {2}'.format(alpha, pval, t_test_val)
        
     param = mean_a, mean_b, pval, t_test_val        
     
