@@ -32,8 +32,8 @@ logger = logging.getLogger(__name__)
 TIMESERIES_MEASUREMENT_FREQUENCY = 'M'
 DEFAULT_STATE = {
     'login': {
-        'selected_organisation': '',
-        'selected_organisation_id': '',
+        'selected_organisation': 'Western Cape',
+        'selected_organisation_id': 'f757d2eb6f4841b1a92d57d7e72f450c',
     },
     'map_': {
         'bounds': [
@@ -75,11 +75,19 @@ DEFAULT_STATE = {
         'spinner_1': {'value': 1},
         'graph': {'x': 0, 'y': 0, 'series': 0},
     },
+    'additive': {
+        'graph': {'x': 0, 'y': 0, 'series': 0},
+    },
+    'frequency': {
+        'graph': {'x': 0, 'y': 0, 'series': 0},
+    },
     'disabled': {
-            'startpage': 'enabled',
-            'trend_detection': 'disabled',
-            'periodic_fluctuations': 'disabled',
-            'autoregressive': 'disabled',
+        'startpage': 'enabled',
+        'trend_detection': 'disabled',
+        'periodic_fluctuations': 'disabled',
+        'autoregressive': 'disabled',
+        'additive': 'disabled',
+        'frequency': 'disabled'
     },
 }
 
@@ -97,8 +105,10 @@ class BaseViewMixin(object):
             'analysis', 'periodic_fluctuations'),
         ('Autoregressive Model', 'Analyse the resulting, now stationary, time '
             'series with an autoregressive model (ARM)', 'autoregressive'),
-        # ('Sampling Frequency', 'Analysis and design of sampling frequency',
-        #     'sampling'),
+        ('Additive Model', 'Analysis of model results',
+            'additive'),
+        ('Sampling Frequency', 'Analysis and design of sampling frequency',
+            'frequency'),
     ]
     active = ''
     tab_order = ['startpage', 'trend_detection', 'periodic_fluctuations',
@@ -354,6 +364,9 @@ class BaseViewMixin(object):
     ### Login related:
     @cached_property
     def organisations_id_name(self):
+        return [(
+        'Western Cape', 'f757d2eb6f4841b1a92d57d7e72f450c',
+    )]
         if self.logged_in:
             orgs = get_organisations_with_role(self.user, 'access')
             return sorted(list(set(
@@ -394,7 +407,7 @@ class BaseViewMixin(object):
 
     @cached_property
     def logged_in(self):
-        return self.request.user.is_authenticated()
+        return True  #self.request.user.is_authenticated()
 
     @cached_property
     def user(self):
@@ -608,7 +621,8 @@ class TrendDetectionView(BaseView):
         options=[
             "Both trends",
             "Linear trend",
-            "Step trend"
+            "Step trend",
+            "No trend"
         ]
     )
     spinner_max = 0.99
@@ -658,6 +672,18 @@ class AutoRegressiveView(BaseView):
         return int(0.3 * self.length)
 
 
+class AdditiveView(BaseView):
+    freq_active = 'active'
+    active = 'additive'
+    template_name = 'freq/additive.html'
+
+
+class FrequencyView(BaseView):
+    freq_active = 'active'
+    active = 'frequency'
+    template_name = 'freq/frequency.html'
+
+
 class BaseApiView(BaseViewMixin, APIView):
     statistics = []
 
@@ -670,12 +696,13 @@ class BaseApiView(BaseViewMixin, APIView):
                     page]['datepicker']))
             )
         elif self.button and self.button != 'undefined':
-            next_tab = {
-                'trend_detection': 'periodic_fluctuations',
-                'periodic_fluctuations': 'autoregressive'
-            }.get(self.active, False)
-            if next_tab:
-                self.set_session_value('disabled', next_tab, 'enabled')
+            next_tabs = {
+                'trend_detection': ('periodic_fluctuations', ),
+                'periodic_fluctuations': ('autoregressive', ),
+                'autoregressive': ('additive', 'frequency')
+            }.get(self.active, ())
+            for tab in next_tabs:
+                self.set_session_value('disabled', tab, 'enabled')
             self.set_session_value(self.active, self.button, self.value)
             self.request.session.modified = True
         try:
@@ -747,6 +774,18 @@ class BaseApiView(BaseViewMixin, APIView):
         except KeyError:
             return
 
+    def no_trend(self):
+        try:
+            return [calculator.step(
+                data=self.pandas_timeseries,
+                bp=0,
+                alpha=float(self.request.session[
+                                'trend_detection']['spinner_0']['value']),
+                detrend_anyway=True
+            )]
+        except KeyError:
+            return
+
     def both_trends(self):
         try:
             step = self.step_trend()[0]
@@ -772,6 +811,8 @@ class BaseApiView(BaseViewMixin, APIView):
             return self.linear_trend()
         elif 'Step' in selected_trend_type:
             return self.step_trend()
+        elif 'No trend' in selected_trend_type:
+            return self.no_trend()
         elif 'Both' in selected_trend_type:
             return self.both_trends()
         raise ValueError('Trend type unknown: ' + str(selected_trend_type))
@@ -997,7 +1038,7 @@ class FluctuationsDataView(BaseApiView):
         return [[
             self.series_to_js(
                 npseries=self.harmonic[3],
-                index=[],
+                index=self.harmonic[4],
                 key='Accumulated power spectrum',
                 dates=False
             )
@@ -1052,6 +1093,42 @@ class RegressiveDataView(BaseApiView):
                 key='Removed trend',
                 color='#f39c12'
             ),
+        ]]
+
+
+class AdditiveDataView(BaseApiView):
+    active = 'additive'
+
+    @cached_property
+    def additional_response(self):
+        return [[
+            self.timeseries,
+            self.series_to_js(
+                npseries=self.pandas_timeseries - self.autoregressive[0],
+                index=self.pandas_timeseries.index,
+                key='Modelled time series analysis (m)'
+            ),
+            self.series_to_js(
+                npseries=self.autoregressive[0],
+                index=self.pandas_timeseries.index,
+                key='Autoregressive model result (m)',
+                color='#f39c12'
+            ),
+        ]]
+
+
+class FrequencyDataView(BaseApiView):
+    active = 'frequency'
+
+    @cached_property
+    def additional_response(self):
+        return [[
+            self.series_to_js(
+                npseries=self.harmonic[3],
+                index=self.harmonic[4],
+                key='Accumulated power spectrum',
+                dates=False
+            )
         ]]
 
 

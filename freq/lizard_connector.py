@@ -109,12 +109,12 @@ class Base(object):
                                for key, value in queries.items())
         url = self.base_url + query
         self.fetch(url)
-        # try:
-        #     print('Number found {} : {} with URL: {}'.format(
-        #         self.data_type, self.json.get('count', 0), url))
-        # except (KeyError, AttributeError):
-        #     print('Got results from {} with URL: {}'.format(
-        #         self.data_type, url))
+        try:
+            print('Number found {} : {} with URL: {}'.format(
+                self.data_type, self.json.get('count', 0), url))
+        except (KeyError, AttributeError):
+            print('Got results from {} with URL: {}'.format(
+                self.data_type, url))
         self.parse()
         return self.results
 

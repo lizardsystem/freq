@@ -19,7 +19,7 @@ import statsmodels.api as sts
 
 
 MIN_SAMPLES = 40
-
+ERROR_CODE = -9999
 
 class CalculatorSampleAmountError(Exception):
     pass
