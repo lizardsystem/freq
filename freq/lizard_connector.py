@@ -1,5 +1,3 @@
-__author__ = 'roel.vandenberg@nelen-schuurmans.nl'
-
 import datetime as dt
 import json
 from pprint import pprint  # left here for debugging purposes
@@ -21,14 +19,15 @@ except django.core.exceptions.ImproperlyConfigured:
     try:
         from freq.secretsettings import USR, PWD
     except ImportError:
-        print('WARNING: no secretsettings.py is found. USR and PWD should have been set '
-              'beforehand')
+        print('WARNING: no secretsettings.py is found. USR and PWD should have'
+              'been set beforehand')
         USR = None
         PWD = None
 
-## When you use this script stand alone, please set your login information here:
+# When you use this script stand alone, please set your login information here:
 # USR = ******  # Replace the stars with your user name.
 # PWD = ******  # Replace the stars with your password.
+
 
 def join_urls(*args):
     return '/'.join(args)
@@ -62,14 +61,14 @@ class Base(object):
         """
         return {}
 
-    def organisation_query(self, organisation, added_query_string='location__'):
+    def organisation_query(self, organisation, add_query_string='location__'):
         org_query = {}
         if isinstance(organisation, str):
-            org_query.update({added_query_string + "organisation__unique_id":
-            organisation})
+            org_query.update({add_query_string + "organisation__unique_id":
+                              organisation})
         elif organisation:
             org_query.update({
-                added_query_string + "organisation__unique_id": ','.join(
+                add_query_string + "organisation__unique_id": ','.join(
                     org for org in organisation)
             })
         if org_query:
@@ -88,8 +87,8 @@ class Base(object):
         if base.startswith('http'):
             self.base = base
         else:
-            self.base = join_urls('https:/', base)  # without extra '/', this is
-                                                    # added in join_urls
+            self.base = join_urls('https:/', base)
+            # without extra '/' ^^, this is added in join_urls
         self.base_url = join_urls(self.base, 'api/v2', self.data_type) + '/'
 
     def get(self, count=True, **queries):
@@ -110,12 +109,12 @@ class Base(object):
                                for key, value in queries.items())
         url = self.base_url + query
         self.fetch(url)
-        try:
-            print('Number found {} : {} with URL: {}'.format(
-                self.data_type, self.json.get('count', 0), url))
-        except (KeyError, AttributeError):
-            print('Got results from {} with URL: {}'.format(
-                self.data_type, url))
+        # try:
+        #     print('Number found {} : {} with URL: {}'.format(
+        #         self.data_type, self.json.get('count', 0), url))
+        # except (KeyError, AttributeError):
+        #     print('Got results from {} with URL: {}'.format(
+        #         self.data_type, url))
         self.parse()
         return self.results
 
@@ -139,19 +138,6 @@ class Base(object):
 
         return self.json
 
-    # def post(self, UUID, data):
-    #     """
-    #     POST data to the api.
-    #     :param UUID: UUID of the object in the database you wish to store
-    #                  data to.
-    #     :param data: Dictionary with the data to post to the api
-    #     """
-    #     post_url = join_urls(self.base_url, UUID, 'data')
-    #     if self.use_header:
-    #         requests.post(post_url, data=json.dumps(data), headers=self.header)
-    #     else:
-    #         requests.post(post_url, data=json.dumps(data))
-
     def parse(self):
         """
         Parse the json attribute and store it to the results attribute.
@@ -161,9 +147,10 @@ class Base(object):
         while True:
             try:
                 if self.json['count'] > self.max_results:
-                    raise LizardApiError('Too many results: {} found, while max {} '
-                                   'are accepted'.format(
-                        self.json['count'], self.max_results))
+                    raise LizardApiError(
+                        'Too many results: {} found, while max {} are '
+                        'accepted'.format(self.json['count'], self.max_results)
+                    )
                 self.results += self.json['results']
                 next_url = self.json.get('next')
                 if next_url:
@@ -264,7 +251,7 @@ class Locations(Base):
 
     def coord_uuid_name(self):
         """
-        Filters out the coordinates UUIDs and names of the locations in results.
+        Filters out the coordinates UUIDs and names of locations in results.
         Use after a query is made.
         :return: a dictionary with coordinates, UUIDs and names
         """
@@ -338,9 +325,8 @@ class TimeSeries(Base):
         self.get(start=start, end=end, **org_query)
         self.base_url = old_base_url
 
-
     def bbox(self, south_west, north_east, statistic=None,
-                  start='0001-01-01T00:00:00Z', end=None, organisation=None):
+             start='0001-01-01T00:00:00Z', end=None, organisation=None):
         """
         Find all timeseries within a certain bounding box.
         Returns records within bounding box using Bounding Box format (min Lon,
@@ -348,7 +334,7 @@ class TimeSeries(Base):
         geometry.
         :param south_west: lattitude and longtitude of the south-western point
         :param north_east: lattitude and longtitude of the north-eastern point
-        :param start: start timestamp in ISO 8601 format
+        :param start_: start timestamp in ISO 8601 format
         :param end: end timestamp in ISO 8601 format
         :return: a dictionary of the api-response.
         """
@@ -425,8 +411,8 @@ class TimeSeries(Base):
                         first_year[
                             r['location']['uuid']]['first_value_timestamp']
                 except IndexError:
-                    r['events'] = [{'difference (mean last - first year)':
-                                       np.nan}]
+                    r['events'] = [{
+                        'difference (mean last - first year)': np.nan}]
                     r['first_value_timestamp'] = np.nan
                     r['last_value_timestamp'] = np.nan
             return
@@ -439,7 +425,6 @@ class TimeSeries(Base):
             location__geom_within=geom_within,
             **org_query
         )
-
 
     def ts_to_dict(self, statistic=None, values=None,
                    start_date=None, end_date=None, date_time='js'):
@@ -468,9 +453,9 @@ class TimeSeries(Base):
                 (2, 'mean'),
                 (3, 'range (max - min)'),
                 (4, 'difference (last - first)'),
-                (5, 'difference (mean last - first year)')  #TODO: update code above
+                (5, 'difference (mean last - first year)')
             )
-            start_index, end_index = 6, 7
+            start_index = 6
         else:
             if statistic == 'mean':
                 stats1 = ('sum', 'count')
@@ -480,13 +465,12 @@ class TimeSeries(Base):
                 stats1 = (statistic, )
             stats2 = ((0, statistic), )
             start_index = int(statistic == 'mean') + 1
-            end_index = start_index + 1
         ts = []
         for result in self.results:
             try:
                 timestamps = [int(result['first_value_timestamp']),
                               int(result['last_value_timestamp'])]
-            except ValueError:
+            except (ValueError, TypeError):
                 timestamps = [np.nan, np.nan]
             except TypeError:
                 # int(None)
@@ -494,7 +478,8 @@ class TimeSeries(Base):
             if not len(result['events']):
                 y = 2 if statistic == 'difference (mean last - first year)' \
                     else 0
-                ts.append([np.nan for _ in range(len(stats1) + y)] + timestamps)
+                ts.append(
+                    [np.nan for _ in range(len(stats1) + y)] + timestamps)
             else:
                 ts.append([float(result['events'][0][s]) for s in stats1] +
                           timestamps)
@@ -508,7 +493,8 @@ class TimeSeries(Base):
                 stat = (npts[:, 1] - npts[:, 0]).reshape(-1, 1)
             else:
                 stat = npts[:, 0].reshape(-1, 1)
-            npts_calculated = np.hstack((stat, npts[:, slice(start_index, -1)]))
+            npts_calculated = np.hstack(
+                (stat, npts[:, slice(start_index, -1)]))
         else:
             npts_calculated = np.hstack((
                 npts[:, 0:2],
@@ -530,7 +516,7 @@ class TimeSeries(Base):
         extremes = {
             stat: {
                 'min': npts_min[i] if not np.isnan(npts_min[i]) else 0,
-                'max': npts_max[i] if not np.isnan(npts_max[i])  else 0
+                'max': npts_max[i] if not np.isnan(npts_max[i]) else 0
             } for i, stat in stats2
         }
         dt_conversion = {
@@ -599,8 +585,8 @@ class GroundwaterTimeSeriesAndLocations(object):
         self.start = start
         self.ts.queries = {"name": groundwater_type}
         self.locs.bbox(south_west, north_east)
-        self.ts.bbox(south_west=south_west, north_east=north_east, start=start,
-                     end=self.end)
+        self.ts.bbox(south_west=south_west, north_east=north_east,
+                     start=start, end=self.end)
 
     def locs_to_dict(self, values=None):
         if values:
@@ -621,25 +607,38 @@ class GroundwaterTimeSeriesAndLocations(object):
 class RasterFeatureInfo(Base):
     data_type = 'raster-aggregates'
 
-    def wms(self, lat, lng, layername):
+    def wms(self, lat, lng, layername, extra_params=None):
         if 'igrac' in layername:
             self.base_url = "https://raster.staging.lizard.net/wms"
             lat_f = float(lat)
             lng_f = float(lng)
-            self.get(request="getfeatureinfo",
-                     layers=layername,
-                     width=1,
-                     height=1,
-                     i=0,
-                     j=0,
-                     srs="epsg:4326",
-                     bbox=','.join([lng, lat, str(lng_f+0.00001), str(lat_f+0.00001)]),
-                     index="world"
-                     )
+            self.get(
+                request="getfeatureinfo",
+                layers=layername,
+                width=1,
+                height=1,
+                i=0,
+                j=0,
+                srs="epsg:4326",
+                bbox=','.join(
+                    [lng, lat, str(lng_f+0.00001), str(lat_f+0.00001)]),
+                index="world"
+            )
             try:
                 self.results = {"data": [self.results[1]]}
             except IndexError:
                 self.results = {"data": ['null']}
+        elif layername == 'aquifers':
+            self.base_url = "https://ggis.un-igrac.org/geoserver/tbamap2015/wms"
+            extra_params.update({
+                'request': 'GetFeatureInfo',
+                'service': 'WMS',
+                'srs': 'EPSG:4326',
+                'info_format': 'application/json'
+            })
+            self.get(**extra_params)
+            self.results = {
+                'data': self.results['features'][0]['properties']['aq_name']}
         else:
             self.get(
                 agg='curve',
@@ -683,8 +682,8 @@ class RasterLimits(Base):
 
 
 if __name__ == '__main__':
-    end="1452470400000"
-    start="-2208988800000"
+    end = "1452470400000"
+    start = "-2208988800000"
     start_time = time()
     GWinfo = GroundwaterTimeSeriesAndLocations()
     GWinfo.bbox(south_west=[-65.80277639340238, -223.9453125], north_east=[

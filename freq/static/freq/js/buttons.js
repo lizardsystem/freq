@@ -17,6 +17,7 @@ function spinnerValue(i) {
     };
 }
 
+
 function nextTabActive(){
     var nextTab = {
         trend_detection: 'periodic_fluctuations',
@@ -47,10 +48,17 @@ function changeGraphs(buttonType, altValue, changeTabs){
 
 window.charts = [];
 
+
 function extraUpdate(data){
+  if(data.error !== undefined){
+    $("#graph-error-well")
+      .removeClass('hidden')
+      .text(data.error);
+  }
   window.map_.locationsLayer.clearLayers();
   drawLocations();
 }
+
 
 function lastUpdate(data){};
 

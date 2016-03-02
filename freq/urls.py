@@ -27,6 +27,8 @@ urlpatterns = patterns(
         name='fluctuations_data'),
     url(r'^autoregressive_data/$', views.RegressiveDataView.as_view(),
         name='regressive_data'),
+    url(r'^public/$',
+        views.LizardIframeView.as_view(), name='lizard_iframe'),
     url(r'^map/interpolation_limits/$',
         views.InterpolationLimits.as_view(), name='feature_info'),
     url(r'^map/feature_info/$',

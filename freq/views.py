@@ -37,8 +37,8 @@ DEFAULT_STATE = {
     },
     'map_': {
         'bounds': [
-            [48.0, -6.8],
-            [56.2, 18.9]
+            [15, 90],
+            [5, 110]
         ],
         'datepicker': {'start': '1-1-1930', 'end': jsdt.today()},
         'dropdown_0': {'value': 'GWmBGS | mean'},
@@ -133,7 +133,8 @@ class BaseViewMixin(object):
             if not skip:
                 self.request.session[state][key] = value
                 self.request.session.modified = True
-                print('\nupdated {} with old value {} with new value {'
+                logger.debug('updated {} with old value {} with new '
+                                 'value {'
                       '}'.format(
                     key, old_value, value))
         else:
@@ -188,9 +189,12 @@ class BaseViewMixin(object):
         ]
 
     @cached_property
+    def error_message(self):
+        return self.request.GET.get('error_message', '')
+
+    @cached_property
     def show_error(self):
-        if not 'error_message' in self.kwargs:
-            self.error_message = ''
+        if not self.error_message:
             return 'hidden'
         return ''
 
@@ -219,7 +223,7 @@ class BaseViewMixin(object):
 
     @property
     def freq_icon_size(self):
-        if self.active == 'map_':
+        if self.active == 'map_' or self.active == 'lizard':
             return "glyphicon-sm"
         else:
             return ""
@@ -230,6 +234,12 @@ class BaseViewMixin(object):
             return "glyphicon-sm"
         else:
             return ""
+
+    @property
+    def lizard_icon_size(self):
+        if self.active != 'lizard':
+            return "glyphicon-sm"
+        return ""
 
     # ------------------------------------------------------------------------ #
     ### Data handling
@@ -390,6 +400,19 @@ class BaseViewMixin(object):
     def user(self):
         return self.request.user
 
+    @cached_property
+    def reference(self):
+        if self.active == 'map_':
+            ref_value = self.request.session['map_']['dropdown_0']['value']
+        else:
+            ref_value = self.request.session['startpage']['measurement_point']
+        if 'BGS' in ref_value:
+            return 'BGS'
+        if 'MSL' in ref_value:
+            return 'MSL'
+        return ''
+
+
 class FreqTemplateView(TemplateView):
 
     def get(self, request, *args, **kwargs):
@@ -399,9 +422,15 @@ class FreqTemplateView(TemplateView):
             self.redo()
         return super().get(request, *args, **kwargs)
 
-
 class BaseView(BaseViewMixin, FreqTemplateView):
     pass
+
+
+class LizardIframeView(BaseView):
+    active = 'lizard'
+    lizard_active = 'active'
+    template_name = 'freq/lizard_iframe.html'
+    menu_items = []
 
 
 class MapView(BaseView):
@@ -475,7 +504,7 @@ class TimeSeriesByLocationUUIDView(StartPageBaseView):
     def error_message(self):
         if self.multiple_timeseries:
             return 'Multiple time series found for this location, please ' \
-                   'select one below.'
+                   'select one above.'
         elif len(self.timeseries) == 1:
             return 'No time series found for this location, please select ' \
                    'another.'
@@ -649,7 +678,13 @@ class BaseApiView(BaseViewMixin, APIView):
                 self.set_session_value('disabled', next_tab, 'enabled')
             self.set_session_value(self.active, self.button, self.value)
             self.request.session.modified = True
-        return RestResponse(self.base_response)
+        try:
+            return RestResponse(self.base_response)
+        except calculator.CalculatorSampleAmountError:
+            return RestResponse({
+                'error': 'Too little data points to calculate.'})
+        except ValueError:
+            return RestResponse({'error': 'Value out of range.'})
 
     def pd_timeseries_from_json(self, json_data, name=''):
         # store results in a numpy array
@@ -880,12 +915,6 @@ class MapDataView(BaseApiView):
                                                'datepicker']['end']),
             date_time='str'
         )
-        # try:
-        #     if result['dates']['start'] and result['dates']['end']:
-        #         self.request.session['map_']['datepicker'] = result['dates']
-        #         self.request.session.modified = True
-        # except KeyError:
-        #     pass
         return result
 
     @cached_property
@@ -967,7 +996,7 @@ class FluctuationsDataView(BaseApiView):
     def additional_response(self):
         return [[
             self.series_to_js(
-                npseries=self.harmonic[4],
+                npseries=self.harmonic[3],
                 index=[],
                 key='Accumulated power spectrum',
                 dates=False
@@ -1030,12 +1059,23 @@ class MapFeatureInfoView(APIView):
 
     def get(self, request, *args, **kwargs):
         feature_info = RasterFeatureInfo()
+        layername = request.GET.get('layername')
+        if layername:
+            extra_params = None
+        else:
+            extra_params = {
+                param: request.GET.get(param.upper()) for param in (
+                    "version", "format", "bbox", "height", "width", "layers",
+                    "query_layers", 'x', 'y'
+                )
+            }
+            layername = 'aquifers'
+
         response = feature_info.wms(lat=request.GET.get('lat'),
                                   lng=request.GET.get('lng'),
-                                  layername=request.GET.get('layername'))
+                                  layername=layername,
+                                  extra_params=extra_params)
         return RestResponse(response)
-
-# TODO: 'location__name__startswith!=GGMN_CUSTOM'
 
 
 class InterpolationLimits(APIView):

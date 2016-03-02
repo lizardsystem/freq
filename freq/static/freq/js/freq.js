@@ -46,18 +46,18 @@ var colorMap = {
   },
   "whymap": {
     "legend": {
-     11:  "11 - BGR - very low recharge (<2 mm year)",
-     12:  "12 - BGR - low recharge (2-20 mm/year)",
-     13:  "13 - BGR - medium recharge (20-100 mm/year)",
-     14:  "14 - BGR - high recharge (100-300 mm/year)",
-     15:  "15 - BGR - very high recharge (>300 mm/year)",
-     22:  "22 - BGR - low-very low recharge (<20 mm/year)",
-     23:  "23 - BGR - medium recharge (20-100 mm/year)",
-     24:  "24 - BGR - high recharge (100-300 mm/year)",
-     25:  "25 - BGR - very high recharge (>300 mm/year)",
-     33:  "33 - BGR - very low recharge (<100 mm/year)",
-     34:  "34 - BGR - high recharge (>100 mm/year)",
-     88:  "88 - BGR - Continuous Ice Sheet"
+      11: "Major Groundwater basin: very low recharge",
+      12: "Major Groundwater basin: low recharge",
+      13: "Major Groundwater basin: medium recharge",
+      14: "Major Groundwater basin: high recharge",
+      15: "Major Groundwater basin: very high recharge",
+      22: "Complex hydrogeological structure: low recharge",
+      23: "Complex hydrogeological structure: medium recharge",
+      24: "Complex hydrogeological structure: high recharge",
+      25: "Complex hydrogeological structure: very high recharge",
+      33: "Local and shallow aquifers: very low recharge",
+      34: "Local and shallow aquifers: high recharge",
+      88: "Contineous Ice sheet"
     }
   },
   "landcover_world": {
@@ -84,6 +84,78 @@ var colorMap = {
 };
 
 
+L.Control.OpacityLayers = L.Control.Layers.extend({
+
+	_addItem: function (obj) {
+		var label = document.createElement('label'),
+		    input,
+		    checked = this._map.hasLayer(obj.layer);
+
+		if (obj.overlay) {
+			input = document.createElement('input');
+			input.type = 'checkbox';
+			input.className = 'leaflet-control-layers-selector';
+			input.defaultChecked = checked;
+
+      if(obj.name!=='groundwater') {
+        /*
+          Following code is taken from:
+          Leaflet.OpacityControls, a plugin for adjusting the opacity of a Leaflet map.
+          (c) 2013, Jared Dominguez
+          (c) 2013, LizardTech
+          https://github.com/lizardtechblog/Leaflet.OpacityControls
+        */
+        var opacity_slider_div = L.DomUtil.create('div', 'opacity_slider_control');
+
+        $(opacity_slider_div)
+          .slider({
+            range: "min",
+            min: 0,
+            max: 100,
+            value: 60,
+            step: 10,
+            start: function (event, ui) {
+              console.log(event);
+              //When moving the slider, disable panning.
+              window.map_.map.dragging.disable();
+              window.map_.map.once('mousedown', function (e) {
+                window.map_.map.dragging.enable();
+              });
+            },
+            slide: function (event, ui) {
+              var slider_value = ui.value / 100;
+              obj.layer.setOpacity(slider_value);
+            }
+          });
+      }
+		} else {
+			input = this._createRadioElement('leaflet-base-layers', checked);
+		}
+
+		input.layerId = L.stamp(obj.layer);
+
+		L.DomEvent.on(input, 'click', this._onInputClick, this);
+
+		var name = document.createElement('span');
+		name.innerHTML = ' ' + obj.name;
+
+		label.appendChild(input);
+		label.appendChild(name);
+    if (obj.overlay && obj.name!=='groundwater') {
+      label.appendChild(opacity_slider_div);
+    }
+		var container = obj.overlay ? this._overlaysList : this._baseLayersList;
+		container.appendChild(label);
+
+		return label;
+	}
+});
+
+L.control.opacityLayers = function (baseLayers, overlays, options) {
+	return new L.Control.OpacityLayers(baseLayers, overlays, options);
+};
+
+
 L.TileLayer.BetterWMS = L.TileLayer.WMS.extend({
 
   onAdd: function (map) {
@@ -101,8 +173,10 @@ L.TileLayer.BetterWMS = L.TileLayer.WMS.extend({
   },
 
   getFeatureInfo: function (evt) {
-    var popUp = function(data){
-      if(layerName!=='world_dem' && layerName.indexOf('igrac') == -1){
+    var popUp = function(data) {
+      if(layerName === 'tbamap_2015ggis') {
+        var value = data.data
+      } else if((layerName!=='world_dem' && layerName.indexOf('igrac') == -1)){
         var value = colorMap[layerName].legend[data.data[0]]
       } else {
         var value = data.data[0] + " (m)"
@@ -130,9 +204,35 @@ L.TileLayer.BetterWMS = L.TileLayer.WMS.extend({
     if (layerName!=="tbamap_2015ggis"){
       var url = "/map/feature_info/?lng=" + evt.latlng.lng + "&lat=" +
         evt.latlng.lat + "&layername=" + layerName;
-      loadData(url, popUp);
+    } else {
+      var url = this.getFeatureInfoUrl(evt.latlng);
+      console.log(url);
     }
+    loadData(url, popUp);
+  },
+
+  getFeatureInfoUrl: function (latlng) {
+    // Construct a GetFeatureInfo request URL given a point
+    var point = this._map.latLngToContainerPoint(latlng, this._map.getZoom()),
+      size = this._map.getSize(),
+
+      params = {
+        version: this.wmsParams.version,
+        format: this.wmsParams.format,
+        bbox: this._map.getBounds().toBBoxString(),
+        height: size.y,
+        width: size.x,
+        layers: this.wmsParams.layers,
+        query_layers: this.wmsParams.layers,
+      };
+
+    params[params.version === '1.3.0' ? 'i' : 'x'] = point.x;
+    params[params.version === '1.3.0' ? 'j' : 'y'] = point.y;
+
+    return "/map/feature_info/" +
+      L.Util.getParamString(params, this._url, true);
   }
+
 });
 
 
@@ -262,17 +362,18 @@ function drawLocationsBoundingBox(map, locationsLayer){
   };
 }
 
-
 function nvGraph(i){
   nv.addGraph(function() {
       var chart = nv.models.lineChart()
-        .useInteractiveGuideline(true);
+        .useInteractiveGuideline(true)
+        .margin({top: 20, right: 35, bottom: 30, left: 70});
       chart.xAxis
         .tickFormat(function(d) {
-            return d3.time.format('%x')(new Date(d))
+            return d3.time.format('%d-%m-%Y')(new Date(d))
         });
 
       chart.yAxis
+        .axisLabel('Groundwaterlevel ' + window.chart.reference + ' (m)')
         .tickFormat(d3.format('.02f'));
 
       chart.legend
@@ -351,6 +452,7 @@ function loadMap() {
         format: 'image/png',
         transparent: true,
       });
+
     var landcover = L.tileLayer.betterWms(
       'https://raster.lizard.net/wms', {
         layers: 'world:cover',
@@ -390,7 +492,7 @@ function loadMap() {
       });
 
     var layers = window.map_.organisationWMSLayers[$('.organisation').text().trim()];
-    console.log(layers);
+
     window.map_.interpolationLayer = L.tileLayer.betterWms(
       'https://raster.staging.lizard.net/wms', {
         layers: layers,
@@ -424,12 +526,12 @@ function loadMap() {
 
     var organisation = $('.organisation').text().trim()
     if (organisation !== 'Public'){
-      overlayMaps.interpolation = window.map_.interpolationLayer
+      overlayMaps['interpolation BGS'] = window.map_.interpolationLayer
     }
 
     // create the control
 
-    window.map_.controlLayers = L.control.layers(baseMaps, overlayMaps);
+    window.map_.controlLayers = L.control.opacityLayers(baseMaps, overlayMaps);
     window.map_.controlLayers.addTo(window.map_.map);
 
     if (organisation !== 'Public') {
