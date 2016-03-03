@@ -325,6 +325,44 @@ class TimeSeries(Base):
         self.get(start=start, end=end, **org_query)
         self.base_url = old_base_url
 
+    def all_to_csv(self, start='0001-01-01T00:00:00Z', end=None,
+               organisation=None):
+        if not end:
+            end = jsdt.now_iso()
+        if isinstance(start, int):
+            start -= 10000
+        if isinstance(end, int):
+            end += 10000
+        org_query = self.organisation_query(organisation)
+        self.get(
+                start=start,
+                end=end,
+                **org_query
+            )
+
+        csv = (
+            [r['name'], r['uuid'], e['timestamp'], e['max']] for r
+            in self.results for e in r['events']
+        )
+        loc = Locations(use_header=self.use_header)
+        extra_queries = {key if not key.startswith("locations__bla") else
+                             key[11:] : value for key, value in
+                             self.extra_queries.items()}
+        org_query=self.organisation_query(organisation, '')
+        extra_queries.update(**org_query)
+        loc.get(**extra_queries)
+        coords = loc.coord_uuid_name()
+        print(coords)
+        headers = (
+            [
+                r['uuid'], r['name'], coords[r['uuid']]['name'],
+                coords[r['uuid']]['coordinates'][0],
+                coords[r['uuid']]['coordinates'][1]
+            ]
+            for r in self.results
+        )
+        return headers, csv
+
     def bbox(self, south_west, north_east, statistic=None,
              start='0001-01-01T00:00:00Z', end=None, organisation=None):
         """

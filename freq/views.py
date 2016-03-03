@@ -1,14 +1,17 @@
 # (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.rst.
 # -*- coding: utf-8 -*-
 import copy
+import csv
 import datetime as dt
 import json
 import logging
+import re
 from pprint import pprint  # left here for debugging purposes
 
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 from django.views.generic.base import TemplateView
+from django.http import HttpResponse
 
 import numpy as np
 import pandas as pd
@@ -32,8 +35,8 @@ logger = logging.getLogger(__name__)
 TIMESERIES_MEASUREMENT_FREQUENCY = 'M'
 DEFAULT_STATE = {
     'login': {
-        'selected_organisation': 'Western Cape',
-        'selected_organisation_id': 'f757d2eb6f4841b1a92d57d7e72f450c',
+        'selected_organisation': '',
+        'selected_organisation_id': '',
     },
     'map_': {
         'bounds': [
@@ -364,9 +367,6 @@ class BaseViewMixin(object):
     ### Login related:
     @cached_property
     def organisations_id_name(self):
-        return [(
-        'Western Cape', 'f757d2eb6f4841b1a92d57d7e72f450c',
-    )]
         if self.logged_in:
             orgs = get_organisations_with_role(self.user, 'access')
             return sorted(list(set(
@@ -407,7 +407,7 @@ class BaseViewMixin(object):
 
     @cached_property
     def logged_in(self):
-        return True  #self.request.user.is_authenticated()
+        self.request.user.is_authenticated()
 
     @cached_property
     def user(self):
@@ -1130,6 +1130,42 @@ class FrequencyDataView(BaseApiView):
                 dates=False
             )
         ]]
+
+
+def convert_to_filename(name, check_ext=True):
+    f = re.sub('''[\\\n\t\s;:\'\"!@#$%\*\(\)=\+<>\?\|\{\}~`\^\[\]]''', '', name)
+    if len(f) > 80:
+        ext = f.split('.')[-1]
+        if len(ext) < 6 and check_ext:
+            f = f[:80] + ext
+        else:
+            f = f[:80]
+    return f
+
+
+class DownloadAllView(BaseApiView):
+
+    def get(self, request, *args, **kwargs):
+        ts = GroundwaterTimeSeries(use_header=self.logged_in)
+        header, csv_ = ts.all_to_csv(
+            organisation=self.selected_organisation_id)
+        response = HttpResponse(content_type='text/csv')
+        filename = convert_to_filename(
+            self.selected_organisation.replace(" ", "") +
+            "_ggmn_timeseries.csv"
+        )
+        response['Content-Disposition'] = 'attachment; filename="' + \
+                                          filename + '"'
+
+        writer = csv.writer(response)
+        writer.writerow(['uuid', 'name', 'location_name', 'x', 'y'])
+        for row in header:
+            writer.writerow(row)
+        writer.writerow([])
+        writer.writerow(['name', 'uuid', 'timestamp', 'value'])
+        for row in csv_:
+            writer.writerow(row)
+        return response
 
 
 class MapFeatureInfoView(APIView):
