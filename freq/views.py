@@ -407,7 +407,7 @@ class BaseViewMixin(object):
 
     @cached_property
     def logged_in(self):
-        self.request.user.is_authenticated()
+        return self.request.user.is_authenticated()
 
     @cached_property
     def user(self):
