@@ -35,8 +35,6 @@ urlpatterns = patterns(
         name='additive_data'),
     url(r'^frequency_data/$', views.FrequencyDataView.as_view(),
         name='frequency_data'),
-    url(r'^public/$',
-        views.LizardIframeView.as_view(), name='lizard_iframe'),
     url(r'^map/interpolation_limits/$',
         views.InterpolationLimits.as_view(), name='feature_info'),
     url(r'^map/feature_info/$',
@@ -55,5 +53,6 @@ urlpatterns = patterns(
         name='restart'),
     url(r'^startpage/$', views.StartPageView.as_view(), name='startpage'),
     url(r'^map/restart/$', views.MapRestartView.as_view(), name='map_restart'),
-    url(r'^$', views.MapView.as_view(), name='map_')
+    url(r'^map/$', views.MapView.as_view(), name='map_'),
+    url(r'^$', views.LizardIframeView.as_view(), name='lizard_iframe')
     ) + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

@@ -77,7 +77,6 @@
                     </span>
                   </a>
                 </li>
-                {% if view.logged_in %}
                   <li class="{{ view.map_active }}">
                     <a href="{% url 'map_' %}" >
                       Regional
@@ -86,10 +85,9 @@
                       </span>
                     </a>
                   </li>
-                {% endif %}
                 <li class="{{ view.freq_active }}">
                   <a href="{% url 'startpage' %}">
-                    Freq
+                    Time series analysis
                     <span class="glyphicon {{ view.freq_icon_size }}
                                  glyphicon-scale"> {# glyphicon-map-marker #}
                     </span>
