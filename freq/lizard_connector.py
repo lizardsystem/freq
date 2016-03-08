@@ -1,3 +1,4 @@
+import copy
 import datetime as dt
 import json
 from pprint import pprint  # left here for debugging purposes
@@ -76,7 +77,7 @@ class Base(object):
         else:
             return {}
 
-    def __init__(self, base="https://ggmn.un-igrac.org", use_header=False):
+    def __init__(self, base="https://ggmn.lizard.net", use_header=False):
         """
         :param base: the site one wishes to connect to. Defaults to the
                      Lizard staging site.
@@ -130,11 +131,15 @@ class Base(object):
             request_obj = urllib.request.Request(url, headers=self.header)
         else:
             request_obj = urllib.request.Request(url)
-        with urllib.request.urlopen(request_obj) as resp:
-            encoding = resp.headers.get_content_charset()
-            encoding = encoding if encoding else 'UTF-8'
-            content = resp.read().decode(encoding)
-            self.json = json.loads(content)
+        try:
+            with urllib.request.urlopen(request_obj) as resp:
+                encoding = resp.headers.get_content_charset()
+                encoding = encoding if encoding else 'UTF-8'
+                content = resp.read().decode(encoding)
+                self.json = json.loads(content)
+        except Exception as e:
+            print("got error", e, "from:", url)
+            raise
 
         return self.json
 
@@ -209,7 +214,7 @@ class Locations(Base):
     Makes a connection to the locations endpoint of the lizard api.
     """
 
-    def __init__(self, base="https://ggmn.un-igrac.org", use_header=False):
+    def __init__(self, base="https://ggmn.lizard.net", use_header=False):
         self.data_type = 'locations'
         self.uuids = []
         super().__init__(base, use_header)
@@ -271,7 +276,7 @@ class TimeSeries(Base):
     Makes a connection to the timeseries endpoint of the lizard api.
     """
 
-    def __init__(self, base="https://ggmn.un-igrac.org", use_header=False):
+    def __init__(self, base="https://ggmn.lizard.net", use_header=False):
         self.data_type = 'timeseries'
         self.uuids = []
         self.statistic = None
@@ -345,19 +350,20 @@ class TimeSeries(Base):
             in self.results for e in r['events']
         )
         loc = Locations(use_header=self.use_header)
-        extra_queries = {key if not key.startswith("locations__bla") else
-                             key[11:] : value for key, value in
-                             self.extra_queries.items()}
-        org_query=self.organisation_query(organisation, '')
+        extra_queries_ts = copy.deepcopy(self.extra_queries).items()
+        extra_queries = {
+            key if not key.startswith("location__") else key[10:]: value
+            for key, value in extra_queries_ts
+        }
+        org_query = self.organisation_query(organisation, '')
         extra_queries.update(**org_query)
         loc.get(**extra_queries)
         coords = loc.coord_uuid_name()
-        print(coords)
         headers = (
             [
-                r['uuid'], r['name'], coords[r['uuid']]['name'],
-                coords[r['uuid']]['coordinates'][0],
-                coords[r['uuid']]['coordinates'][1]
+                r['uuid'], r['name'], coords[r['location']['uuid']]['name'],
+                coords[r['location']['uuid']]['coordinates'][0],
+                coords[r['location']['uuid']]['coordinates'][1]
             ]
             for r in self.results
         )

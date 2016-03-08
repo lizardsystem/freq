@@ -15,7 +15,7 @@ urlpatterns = patterns(
     '',
     url(r'^', include('lizard_auth_client.urls')),
     url(r'^admin/', include(admin.site.urls)),
-    # url(r'^download/$', views.DownloadAllView.as_view(), name='download'),
+    url(r'^download/$', views.DownloadAllView.as_view(), name='download'),
     url(r'^trend_detection/$', views.TrendDetectionView.as_view(), name='trend_detection'),
     url(r'^periodic_fluctuations/$', views.PeriodicFluctuationsView.as_view(),
         name='periodic_fluctuations'),
