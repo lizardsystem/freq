@@ -372,8 +372,14 @@ function nvGraph(i){
             return d3.time.format('%d-%m-%Y')(new Date(d))
         });
 
+
+      var yAxis = window.active === "periodic_fluctuations" && i === 0
+        || window.active === "frequency" ? 'Accumulated power' :
+          window.active === "autoregressive" && i === 0 ? "Correlogram" :
+          'Groundwaterlevel ' + window.chart.reference + ' (m)';
+
       chart.yAxis
-        .axisLabel('Groundwaterlevel ' + window.chart.reference + ' (m)')
+        .axisLabel(yAxis)
         .tickFormat(d3.format('.02f'));
 
       chart.legend

@@ -1135,13 +1135,7 @@ class AdditiveDataView(BaseApiView):
                 npseries=self.pandas_timeseries - self.autoregressive[0],
                 index=self.pandas_timeseries.index,
                 key='Modelled time series analysis (m)'
-            ),
-            self.series_to_js(
-                npseries=self.autoregressive[0],
-                index=self.pandas_timeseries.index,
-                key='Autoregressive model result (m)',
-                color='#f39c12'
-            ),
+            )
         ]]
 
 
