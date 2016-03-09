@@ -282,25 +282,41 @@
         <script src="{% static 'nvd3/nv.d3.min.js' %}"></script>
         <script type="text/javascript">
           {% autoescape off %}
-          window['startpage'] = {};
-          window['map_'] = {};
-          window['chart'] = {};
-            {% if view.active == 'map_' %}
-              window.map_.dropdown_0 = "{{ view.dropdown_selected }}";
-            {% endif %}
-          window.chart.reference = "{{ view.reference }}";
-          window.active = "{{ view.active }}";
-          window.map_.bounds = {{ view.bounds }};
-          window.map_.center = {{ view.center }};
-          window.startpage.coordsSelected = {{ view.selected_coords }};
-          window.spinnersLength = {{ view.spinners | length }};
-          var startDate = {{ view.datepicker_start }};
-          var endDate = {{ view.datepicker_end }};
-          window.startpage.startDate = new Date(startDate[2], startDate[1]-1,
-              startDate[0]);
-          window.startpage.endDate = new Date(endDate[2], endDate[1]-1,
-              endDate[0]);
+            window['startpage'] = {};
+            window['map_'] = {};
+            window['chart'] = {};
+              {% if view.active == 'map_' %}
+                window.map_.dropdown_0 = "{{ view.dropdown_selected }}";
+              {% endif %}
+            window.chart.reference = "{{ view.reference }}";
+            window.active = "{{ view.active }}";
+            window.map_.bounds = {{ view.bounds }};
+            window.map_.center = {{ view.center }};
+            window.startpage.coordsSelected = {{ view.selected_coords }};
+            window.spinnersLength = {{ view.spinners | length }};
+            var startDate = {{ view.datepicker_start }};
+            var endDate = {{ view.datepicker_end }};
+            window.startpage.startDate = new Date(startDate[2], startDate[1]-1,
+                startDate[0]);
+            window.startpage.endDate = new Date(endDate[2], endDate[1]-1,
+                endDate[0]);
           {% endautoescape %}
+          {% if view.no_debug %}
+            {% autoescape off %}
+              var _gauges = _gauges || [];
+              (function() {
+               var t   = document.createElement('script');
+               t.type  = 'text/javascript';
+               t.async = true;
+               t.id    = 'gauges-tracker';
+               t.setAttribute('data-site-id', '56ded50dbb922a528c003437');
+               t.setAttribute('data-track-path', 'https://track.gaug.es/track.gif');
+               t.src = 'https://d36ee2fcip1434.cloudfront.net/track.js';
+               var s = document.getElementsByTagName('script')[0];
+               s.parentNode.insertBefore(t, s);
+              })();
+            {% endautoescape %}
+          {% endif %}
         </script>
 
         {% block extra_javascript_before %}

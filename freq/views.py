@@ -12,6 +12,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 from django.views.generic.base import TemplateView
 from django.http import HttpResponse
+from django.conf import settings
 
 import numpy as np
 import pandas as pd
@@ -193,6 +194,11 @@ class BaseViewMixin(object):
 
     # ------------------------------------------------------------------------ #
     ### Page properties
+
+    @cached_property
+    def no_debug(self):
+        return not settings.DEBUG
+
     @cached_property
     def menu(self):
         return [

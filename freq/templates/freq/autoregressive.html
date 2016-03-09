@@ -8,14 +8,15 @@
 {% endblock extra_css %}
 {% block well %}
   <p>
-    After subtracting  trend and periodic components from the time series the
-    residual should show stationarity. A stationary time series has the property
-    that the mean, variance and autocorrelation structure do not change over
-    time. Stationarity can be check by the autocorrelation analysis. If the
-    values of the autocorrelation coefficient are placed within certain boundary
-    (confidence limit -95%) the conclusion can be drawn that a seasonal
-    component and trend have been successfully fitted and removed from a time
-    series.
+    After subtracting trend and periodic components from the time series the
+    residual series should be stationary. A stationary time series has the
+    property that the mean, variance and autocorrelation structure do not
+    change over time. Stationarity can be check by the autocorrelation
+    analysis. If the values of the autocorrelation coefficient are placed
+    within certain boundary (confidence limit -95%) the conclusion can be drawn
+    that a seasonal component and trend have been successfully fitted and
+    removed from a time series. The stationary series can be fitted with an
+    autoregression model.
   </p>
 {% endblock well %}
 {% block chart_controls %}
