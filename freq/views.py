@@ -754,9 +754,13 @@ class BaseApiView(BaseViewMixin, APIView):
         )
 
     def series_to_js(self, npseries, index, key, color='#2980b9', dates=True):
-        values = [{'x': jsdt.datetime_to_js(index[i]) if dates else i,
+        try:
+            values = [{'x': jsdt.datetime_to_js(index[i]) if dates else index[i],
                    'y': float(value)}
                 for i, value in enumerate(npseries)]
+        except IndexError:
+            values = [{'x': i, 'y': float(value)} for i, value in enumerate(
+                npseries)]
         return {
             'values': values,
             'key': key,
