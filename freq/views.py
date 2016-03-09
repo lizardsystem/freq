@@ -441,6 +441,7 @@ class FreqTemplateView(TemplateView):
             self.redo()
         return super().get(request, *args, **kwargs)
 
+
 class BaseView(BaseViewMixin, FreqTemplateView):
     pass
 
@@ -450,6 +451,11 @@ class LizardIframeView(BaseView):
     lizard_active = 'active'
     template_name = 'freq/lizard_iframe.html'
     menu_items = []
+
+    def dispatch(self, *args, **kwargs):
+        if not self.request.session.get('session_is_set', False):
+            self.instantiate_session()
+        return super().dispatch(*args, **kwargs)
 
 
 class MapView(BaseView):
@@ -464,17 +470,14 @@ class MapView(BaseView):
             "GWmBGS | max",
             "GWmBGS | mean",
             "GWmBGS | range (max - min)",
-            # "GWmBGS | difference (last - first)",
             "GWmBGS | difference (mean last - first year)",
             "GWmMSL | min",
             "GWmMSL | max",
             "GWmMSL | mean",
             "GWmMSL | range (max - min)",
-            # "GWmMSL | difference (last - first)",
             "GWmMSL | difference (mean last - first year)"
         ]
     )
-
 
     def dispatch(self, *args, **kwargs):
         if not self.request.session.get('session_is_set', False):
@@ -487,6 +490,7 @@ class MapView(BaseView):
             org.name: "extern:igrac:" + org.unique_id for
             org in Organisation.objects.all()
             }
+
 
 class StartPageBaseView(BaseView):
     active = 'startpage'
@@ -541,18 +545,6 @@ class TimeSeriesByLocationUUIDView(StartPageBaseView):
                 )
                 for x in self.timeseries
             ]
-        elif len(self.timeseries) == 1:  # TODO: FIX: raise error or
-        # TODO: self.multiple timeseries.
-            result = self.timeseries[0]
-            self.set_session_value('startpage', 'measurement_point',
-                "Groundwater well: " + result['name'])
-            self.set_session_value('disabled', 'trend_detection', 'enabled')
-            self.request.session.modified = True
-            self.set_session_value('trend_detection', 'active', True)
-            self.set_session_value('periodic_fluctuations', 'active', True)
-            # self.set_session_value('startpage', 'start_js', result['first_value_timestamp'])
-            # self.set_session_value('startpage', 'end_js', result['last_value_timestamp'])
-            self.set_session_value('startpage', 'uuid', result['uuid'])
         return []
 
     @cached_property
@@ -574,6 +566,24 @@ class TimeSeriesByLocationUUIDView(StartPageBaseView):
         page = self.request.GET.get('active', 'startpage')
         self.request.session[page]['selected_coords'] = self.coordinates
         self.request.session['map_']['bounds'] = self.bounds
+        if len(self.timeseries) == 1:
+            x = self.timeseries[0]
+            self.set_session_value('startpage', 'measurement_point',
+                                   "Groundwater well: " + x['location']['name']
+                                   + ' - ' + x['name'])
+            self.set_session_value('startpage', 'datepicker', {
+                'start': jsdt.js_to_datetime(
+                    int(x['first_value_timestamp'])).strftime('%d-%m-%Y'),
+                'end': jsdt.js_to_datetime(
+                    int(x['last_value_timestamp'])).strftime('%d-%m-%Y')
+            })
+            self.set_session_value('startpage', 'start_js', x[
+                'first_value_timestamp'])
+            self.set_session_value('startpage', 'end_js', x[
+                'last_value_timestamp'])
+            self.set_session_value('startpage', 'uuid', x['uuid'])
+            self.request.session['disabled']['trend_detection'] = 'enabled'
+            self.set_session_value('trend_detection', 'active', True)
         self.request.session.modified = True
         return super().get(request, *args, **kwargs)
 
@@ -1139,7 +1149,8 @@ class FrequencyDataView(BaseApiView):
 
 
 def convert_to_filename(name, check_ext=True):
-    f = re.sub('''[\\\n\t\s;:\'\"!@#$%\*\(\)=\+<>\?\|\{\}~`\^\[\]]''', '', name)
+    f = re.sub('''[\\\n\t\s;:\'\"!@#$%\*\(\)=\+<>\?\|\{\},~`\^\[\]]''', '',
+               name)
     if len(f) > 80:
         ext = f.split('.')[-1]
         if len(ext) < 6 and check_ext:
