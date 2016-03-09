@@ -231,6 +231,12 @@ function extraUpdate(data){
     $("#measurement_point")
       .removeClass('hidden')
       .text(graphs[0].measurement_point);
+    var metadata = data.metadata || [];
+    console.log(data);
+    for(var i = 0; i < metadata.length; i++){
+      $('#metadata-' + metadata[i].name).text(metadata[i].value || "-")
+    }
+    $("#metadata").removeClass('hidden')
   }
   var result = data.result;
   if(result !== undefined){

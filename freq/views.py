@@ -895,7 +895,15 @@ class BaseApiView(BaseViewMixin, APIView):
 
         return {
             'graphs': response,
-            'statistics': self.statistics
+            'statistics': self.statistics,
+            'metadata': [
+                {"name": "organisation",
+                 "value": self.selected_organisation},
+                {"name": "lithology", "value": "-"},
+                {"name": "surface-level", "value": "-"},
+                {"name": "top-level", "value": "-"},
+                {"name": "bottom-level", "value": "-"}
+            ]
         }
 
 
