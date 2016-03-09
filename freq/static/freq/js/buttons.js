@@ -20,12 +20,15 @@ function spinnerValue(i) {
 
 function nextTabActive(){
     var nextTab = {
-        trend_detection: 'periodic_fluctuations',
-        periodic_fluctuations: 'autoregressive'
+        trend_detection: ['periodic_fluctuations'],
+        periodic_fluctuations: ['autoregressive'],
+        autoregressive: ['additive', 'frequency']
     }[window.active];
     if(nextTab != undefined){
-        $('[aria-controls="' + nextTab + '"]').removeClass('disabled');
-        $('[aria-controls="' + nextTab + '"] > a').attr('href', '/' + nextTab);
+      for(var i = 0; i < nextTab.length; i++){
+        $('[aria-controls="' + nextTab[i] + '"]').removeClass('disabled');
+        $('[aria-controls="' + nextTab[i] + '"] > a').attr('href', '/' + nextTab[i]);
+      }
     }
 }
 

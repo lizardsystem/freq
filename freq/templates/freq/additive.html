@@ -1,0 +1,16 @@
+{% extends "freq/base.html" %}
+{% block extra_css %}
+  <style>
+    .graph-margin {
+        margin-top: 50px;
+    }
+  </style>
+{% endblock extra_css %}
+{% block well %}
+  <p>
+    The additive model for a non-stationary groundwater time series consists of
+    a (step or linear) trend, a harmonic series (for periodic fluctuation) and
+    a AR(p) model (for stochastic component). The graph shows the original time
+    series together with the additive model.
+  </p>
+{% endblock well %}

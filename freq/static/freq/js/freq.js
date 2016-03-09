@@ -506,7 +506,8 @@ function loadMap() {
     window.map_.locationsLayer = L.layerGroup();
 
     window.map_.map = L.map('map', {
-        layers: [topography, window.map_.locationsLayer]
+      layers: [topography, window.map_.locationsLayer],
+      minZoom: 6
     }).fitBounds(window.map_.bounds);
 
     var baseMaps = {

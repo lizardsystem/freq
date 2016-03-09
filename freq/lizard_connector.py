@@ -1,3 +1,4 @@
+import copy
 import datetime as dt
 import json
 from pprint import pprint  # left here for debugging purposes
@@ -76,7 +77,7 @@ class Base(object):
         else:
             return {}
 
-    def __init__(self, base="https://ggmn.un-igrac.org", use_header=False):
+    def __init__(self, base="https://ggmn.lizard.net", use_header=False):
         """
         :param base: the site one wishes to connect to. Defaults to the
                      Lizard staging site.
@@ -109,12 +110,12 @@ class Base(object):
                                for key, value in queries.items())
         url = self.base_url + query
         self.fetch(url)
-        # try:
-        #     print('Number found {} : {} with URL: {}'.format(
-        #         self.data_type, self.json.get('count', 0), url))
-        # except (KeyError, AttributeError):
-        #     print('Got results from {} with URL: {}'.format(
-        #         self.data_type, url))
+        try:
+            print('Number found {} : {} with URL: {}'.format(
+                self.data_type, self.json.get('count', 0), url))
+        except (KeyError, AttributeError):
+            print('Got results from {} with URL: {}'.format(
+                self.data_type, url))
         self.parse()
         return self.results
 
@@ -130,11 +131,15 @@ class Base(object):
             request_obj = urllib.request.Request(url, headers=self.header)
         else:
             request_obj = urllib.request.Request(url)
-        with urllib.request.urlopen(request_obj) as resp:
-            encoding = resp.headers.get_content_charset()
-            encoding = encoding if encoding else 'UTF-8'
-            content = resp.read().decode(encoding)
-            self.json = json.loads(content)
+        try:
+            with urllib.request.urlopen(request_obj) as resp:
+                encoding = resp.headers.get_content_charset()
+                encoding = encoding if encoding else 'UTF-8'
+                content = resp.read().decode(encoding)
+                self.json = json.loads(content)
+        except Exception as e:
+            print("got error", e, "from:", url)
+            raise
 
         return self.json
 
@@ -209,7 +214,7 @@ class Locations(Base):
     Makes a connection to the locations endpoint of the lizard api.
     """
 
-    def __init__(self, base="https://ggmn.un-igrac.org", use_header=False):
+    def __init__(self, base="https://ggmn.lizard.net", use_header=False):
         self.data_type = 'locations'
         self.uuids = []
         super().__init__(base, use_header)
@@ -271,7 +276,7 @@ class TimeSeries(Base):
     Makes a connection to the timeseries endpoint of the lizard api.
     """
 
-    def __init__(self, base="https://ggmn.un-igrac.org", use_header=False):
+    def __init__(self, base="https://ggmn.lizard.net", use_header=False):
         self.data_type = 'timeseries'
         self.uuids = []
         self.statistic = None
@@ -324,6 +329,45 @@ class TimeSeries(Base):
         org_query = self.organisation_query(organisation)
         self.get(start=start, end=end, **org_query)
         self.base_url = old_base_url
+
+    def all_to_csv(self, start='0001-01-01T00:00:00Z', end=None,
+               organisation=None):
+        if not end:
+            end = jsdt.now_iso()
+        if isinstance(start, int):
+            start -= 10000
+        if isinstance(end, int):
+            end += 10000
+        org_query = self.organisation_query(organisation)
+        self.get(
+                start=start,
+                end=end,
+                **org_query
+            )
+
+        csv = (
+            [r['name'], r['uuid'], e['timestamp'], e['max']] for r
+            in self.results for e in r['events']
+        )
+        loc = Locations(use_header=self.use_header)
+        extra_queries_ts = copy.deepcopy(self.extra_queries).items()
+        extra_queries = {
+            key if not key.startswith("location__") else key[10:]: value
+            for key, value in extra_queries_ts
+        }
+        org_query = self.organisation_query(organisation, '')
+        extra_queries.update(**org_query)
+        loc.get(**extra_queries)
+        coords = loc.coord_uuid_name()
+        headers = (
+            [
+                r['uuid'], r['name'], coords[r['location']['uuid']]['name'],
+                coords[r['location']['uuid']]['coordinates'][0],
+                coords[r['location']['uuid']]['coordinates'][1]
+            ]
+            for r in self.results
+        )
+        return headers, csv
 
     def bbox(self, south_west, north_east, statistic=None,
              start='0001-01-01T00:00:00Z', end=None, organisation=None):

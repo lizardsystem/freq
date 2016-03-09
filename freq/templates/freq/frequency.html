@@ -1,0 +1,23 @@
+{% extends "freq/base.html" %}
+{% block extra_css %}
+  <style>
+    .graph-margin {
+        margin-top: 50px;
+    }
+  </style>
+{% endblock extra_css %}
+{% block well %}
+  <p>
+    For the purpose of trend detection, the power (probability) of the trend
+    detection is used as a criterion for selecting an optimal monitoring
+    frequency. A curve of power of trend detection is plotted against
+    monitoring frequency or number of observations in a trend detection period.
+    Figure below shows a power curve for the analyzed time series. A step trend
+    can be detected with 100% power (probability) using current observation
+    frequency of 48 observations in 2 years (2 times per month). However, the
+    same trend can also be detected with more than 95% power using 24
+    observations in 2 years (one observation per month). Therefore, monitoring
+    frequency can be reduced from 2 observations per month to one observation
+    per month.
+  </p>
+{% endblock well %}
