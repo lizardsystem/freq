@@ -1098,6 +1098,10 @@ class RegressiveDataView(BaseApiView):
 
     @cached_property
     def additional_response(self):
+        self.statistics = ["Akaike Information Criterion of the autoregressive "
+                           "model is {:.2f}. Standard deviation of the "
+                           "innovation (error) term is {:.2f}".format(
+            self.autoregressive[3], self.autoregressive[4])]
         return [[
             self.series_to_js(
                 npseries=self.correllogram,
@@ -1150,7 +1154,7 @@ class FrequencyDataView(BaseApiView):
             self.series_to_js(
                 npseries=self.harmonic[3],
                 index=self.harmonic[4],
-                key='Accumulated power spectrum',
+                key='Monitoring Frequency',
                 dates=False
             )
         ]]
