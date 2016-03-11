@@ -670,7 +670,7 @@ class AutoRegressiveView(BaseView):
             title="Number of lags used for the correlogram computation",
         ),
         Spinner(
-            heading='Order of Autoregressive model (p)',
+            heading='Order of AR model (p)',
             title="Order of Autoregressive model (p) used in the training of the autoregressive " \
                    "model",
             min_=1,
@@ -755,9 +755,11 @@ class BaseApiView(BaseViewMixin, APIView):
 
     def series_to_js(self, npseries, index, key, color='#2980b9', dates=True):
         try:
-            values = [{'x': jsdt.datetime_to_js(index[i]) if dates else index[i],
-                   'y': float(value)}
-                for i, value in enumerate(npseries)]
+            values = [
+                {'x': jsdt.datetime_to_js(index[i]) if dates else float(
+                    index[i]), 'y': float(value)} for i, value in
+                enumerate(npseries)
+            ]
         except IndexError:
             values = [{'x': i, 'y': float(value)} for i, value in enumerate(
                 npseries)]
@@ -1066,7 +1068,7 @@ class FluctuationsDataView(BaseApiView):
         return [[
             self.series_to_js(
                 npseries=self.harmonic[3],
-                index=self.harmonic[4],
+                index=[],
                 key='Accumulated power spectrum',
                 dates=False
             )

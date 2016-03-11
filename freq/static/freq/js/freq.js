@@ -381,7 +381,8 @@ function nvGraph(i){
         .margin({top: 20, right: 35, bottom: 30, left: 70});
       chart.xAxis
         .tickFormat(function(d) {
-            return d3.time.format('%d-%m-%Y')(new Date(d))
+          if(window.active !== "frequency"){
+            return d3.time.format('%d-%m-%Y')(new Date(d))} else {return d}
         });
 
 
