@@ -26,6 +26,11 @@
   /*border-radius: 0 !important;*/
 /*}*/
 
+.logos{
+    position: absolute;
+    height: 300px;
+    width: 100px;
+}
 #page-title {
   color: #fff;
   font-size: 1.5em;
@@ -36,8 +41,10 @@
   border-radius: 0;
 }
 .logo {
-  margin: -8px 20px 0 0;
   max-height: 50px;
+  max-width: 100px;
+  position: absolute;
+  margin-left:10px;
 }
 ul.navbar-nav > li > a {
     color:#fff ;

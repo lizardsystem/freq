@@ -387,7 +387,7 @@ function nvGraph(i){
 
 
       var yAxis = window.active === "periodic_fluctuations" && i === 0
-        || window.active === "frequency" ? 'Accumulated power' :
+        || window.active === "frequency" ? 'Cumulative periodogram' :
           window.active === "autoregressive" && i === 0 ? "Correlogram" :
           'Groundwaterlevel ' + window.chart.reference + ' (m)';
 
@@ -546,7 +546,7 @@ function loadMap() {
 
     var organisation = $('.organisation').text().trim()
     if (organisation !== 'Public'){
-      overlayMaps['interpolation BGS'] = window.map_.interpolationLayer
+      overlayMaps['interpolation MSL'] = window.map_.interpolationLayer
     }
 
     // create the control

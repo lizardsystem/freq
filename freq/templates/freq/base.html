@@ -52,16 +52,6 @@
     {% block header %}
       <header>
         <div id="logo-row" class="navbar">
-          <div class="navbar-brand" id="logo">
-            {% block logo %}
-              {% spaceless %}
-                <a href="/" title='Back to homepage'>
-                    <img class="logo" src="{% static 'freq/logo.png' %}"
-                         alt="Lizard" />
-                </a>
-              {% endspaceless %}
-            {% endblock logo %}
-          </div>
           <div class="container">
             <div class="row">
               <div class="navbar-header">
@@ -162,7 +152,21 @@
       {% endblock nav %}
 
     {% endblock header %}
+    {% block logo %}
+      {% spaceless %}
+                <a href="/" title='Back to homepage' class="logos">
+                    <img class="logo" src="{% static 'freq/logo.png' %}"
+                         alt="Home" />
+  <img class="logo" src="{% static 'freq/unesco-ihplogo.jpg' %}"
+       alt="Lizard" style="top: 50px; left: 10px"
+       title="unesco-ihe"/>
+  <img class="logo" src="{% static 'freq/WMOlogo.jpg' %}"
+       alt="Lizard" style="top: 110px;left:35px;" title="WMO"/>
+                </a>
 
+
+              {% endspaceless %}
+            {% endblock logo %}
     {% block body %}
       <br>
       <div class="container">

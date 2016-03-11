@@ -1069,7 +1069,7 @@ class FluctuationsDataView(BaseApiView):
             self.series_to_js(
                 npseries=self.harmonic[3],
                 index=[],
-                key='Accumulated power spectrum',
+                key='Cumulative periodogram',
                 dates=False
             )
         ], [
