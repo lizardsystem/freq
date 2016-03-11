@@ -280,6 +280,18 @@ function drawLocationsBoundingBox(map, locationsLayer){
   return function(data, textStatus, jqXHR){
     var locs = data.result.locations;
     var ts = data.result.timeseries;
+    var err = data.error;
+    var errorWell = $("#error-well");
+
+    if(err){
+      errorWell
+        .removeClass("hidden")
+        .text(err);
+    } else {
+      errorWell
+        .addClass("hidden")
+        .text("");
+    }
     var col = false;
     if(ts){
       try {
