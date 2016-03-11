@@ -313,6 +313,7 @@ def harmonic(data, n_harmonics):
     
     # get the accumulated ps for half the ps
     ps = ps[:int(len(ps)/2)]
+    ps = np.sort(ps)[::-1]
     ac_ps = np.cumsum(ps/np.max(np.cumsum(ps)))
     
     # get detrended serie
