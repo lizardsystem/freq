@@ -301,34 +301,29 @@ def harmonic(data, n_harmonics):
                         {0}'.format(int(len(data)/2)))
     
     data = data - np.mean(data)
-    x_values = np.array(range(len(data)))
     fft_vec = np.fft.fft(data)
-    af = np.real(fft_vec)/len(data)
-    bf = np.imag(fft_vec)/len(data)
-    ps = 2.0*(np.power(af,2)/2.0 + np.power(bf,2)/2.0)
-    ps = ps[:len(data)/2]
-    ps[-1] = ps[-1]/2.0
-    ps2 = ps/np.max(np.cumsum(ps))
-    ac_ps = np.cumsum(ps2)
-    #VC = ps/(2*Sa**2)
-    #IF = heapq.nlargest(n_harmonics,ps)
+    ps = np.abs(fft_vec)**2
     
-    i_indx = ps.argsort()
-    i_indx = i_indx[::-1]
+    # get the value of the nth harmonic
+    ps_lim = np.sort(ps)[-n_harmonics*2]
     
-    trend = np.zeros(len(data))
-    a_param = []
-    b_param = []
-    sigma_param = []
-    for i in range(n_harmonics):
-        NewPeriod = af[i_indx[i]]*np.cos(2*np.pi*(i_indx[i])*x_values/len(data))\
-                    + bf[i_indx[i]]*np.sin(2*np.pi*i_indx[i]*x_values/len(data))
-        trend = trend + NewPeriod
-        a_param.append(af[i_indx[i]])
-        b_param.append(bf[i_indx[i]])
-        sigma_param.append(ps[i_indx[i]])
-        
+    # Turn everything below that harmonic equal to 0
+    clean_fft_vec = np.array([fft_vec[i] if ps[i] <= ps_lim else 0 for i in xrange(len(fft_vec))])
     
+    # Do the inverse fft
+    trend = data - np.real(np.fft.ifft(clean_fft_vec))
+
+    #get the parameters
+    a_param = np.array([np.real(fft_vec[i]) for i in xrange(len(fft_vec)) if ps[i] <= ps_lim ])
+    b_param = np.array([np.imag(fft_vec[i]) for i in xrange(len(fft_vec)) if ps[i] <= ps_lim ])
+    sigma_param = np.array([np.abs(fft_vec[i])**2 for i in xrange(len(fft_vec)) if ps[i] <= ps_lim ])
+    
+    # get the accumulated ps for half the ps
+    ps = ps[:int(len(ps)/2)]
+    ps = np.sort(ps)[::-1]
+    ac_ps = np.cumsum(ps/np.max(np.cumsum(ps)))
+    
+    # get detrended serie
     det_serie = data - trend
     param = a_param, b_param, sigma_param
     
