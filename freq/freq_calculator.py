@@ -304,14 +304,14 @@ def harmonic(data, n_harmonics):
     clean_fft_vec = np.array([fft_vec[i] if ps[i] <= ps_lim else 0 for i in xrange(len(fft_vec))])
     
     # Do the inverse fft
-    trend = np.real(np.fft.ifft(clean_fft_vec))
+    trend = data - np.real(np.fft.ifft(clean_fft_vec))
 
     #get the parameters
     a_param = np.array([np.real(fft_vec[i]) for i in xrange(len(fft_vec)) if ps[i] <= ps_lim ])
     b_param = np.array([np.imag(fft_vec[i]) for i in xrange(len(fft_vec)) if ps[i] <= ps_lim ])
     sigma_param = np.array([np.abs(fft_vec[i])**2 for i in xrange(len(fft_vec)) if ps[i] <= ps_lim ])
     
-    # get the accumulated ps for half the vector lenght
+    # get the accumulated ps for half the ps
     ps = ps[:int(len(ps)/2)]
     ac_ps = np.cumsum(ps/np.max(np.cumsum(ps)))
     
