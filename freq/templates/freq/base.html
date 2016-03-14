@@ -150,27 +150,29 @@
           </div>
         </div>
       {% endblock nav %}
-
     {% endblock header %}
-    {% block logo %}
-      {% spaceless %}
-                <a href="/" title='Back to homepage' class="logos">
-                    <img class="logo" src="{% static 'freq/logo.png' %}"
-                         alt="Home" />
-  <img class="logo" src="{% static 'freq/unesco-ihplogo.jpg' %}"
-       alt="Lizard" style="top: 50px; left: 10px"
-       title="unesco-ihe"/>
-  <img class="logo" src="{% static 'freq/WMOlogo.jpg' %}"
-       alt="Lizard" style="top: 110px;left:35px;" title="WMO"/>
-                </a>
-
-
-              {% endspaceless %}
-            {% endblock logo %}
     {% block body %}
       <br>
       <div class="container">
         <div class="row">
+          {% block logo %}
+            {% spaceless %}
+              <a href="/" title='Back to homepage' class="logos">
+                <img class="logo hidden-sm hidden-md hidden-xs"
+                     src="{% static 'freq/logo.png' %}"
+                     alt="Home" />
+                <img class="logo hidden-sm hidden-md hidden-xs"
+                     src="{% static 'freq/unesco-ihplogo.jpg' %}"
+                     alt="Lizard" style="top: 50px; left: 17px"
+                     title="unesco-ihe"/>
+                <img class="logo hidden-sm hidden-md hidden-xs"
+                     src="{% static 'freq/WMOlogo.jpg' %}"
+                     alt="Lizard"
+                     style="top: 110px;left:53px;"
+                     title="WMO"/>
+              </a>
+            {% endspaceless %}
+          {% endblock logo %}
           <div class="col-md-8">
             <div class="row" >
               <h2 id="measurement_point">{{ view.measurement_point }}

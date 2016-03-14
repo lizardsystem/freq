@@ -40,6 +40,10 @@
   background-color:#1abc9c;
   border-radius: 0;
 }
+.logos {
+    z-index: -10;
+    margin-left: -135px;
+}
 .logo {
   max-height: 50px;
   max-width: 100px;
