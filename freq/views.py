@@ -1087,7 +1087,7 @@ class FluctuationsDataView(BaseApiView):
             self.series_to_js(
                 npseries=self.harmonic[1],
                 index=self.pandas_timeseries.index,
-                key='Removed periodic fluctuations (m)',
+                key='Harmonic series (m)',
                 color='#f39c12'
             ),
         ]]
@@ -1119,12 +1119,12 @@ class RegressiveDataView(BaseApiView):
             self.series_to_js(
                 npseries=self.autoregressive[0],
                 index=self.pandas_timeseries.index,
-                key='Autoregressive model result (m)'
+                key='Residuals (m)'
             ),
             self.series_to_js(
                 npseries=self.autoregressive[1],
                 index=self.pandas_timeseries.index,
-                key='Removed trend',
+                key='AR (model)',
                 color='#f39c12'
             ),
         ]]

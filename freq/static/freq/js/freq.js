@@ -378,18 +378,21 @@ function nvGraph(i){
   nv.addGraph(function() {
       var chart = nv.models.lineChart()
         .useInteractiveGuideline(true)
-        .margin({top: 20, right: 35, bottom: 30, left: 70});
+        .margin({top: 20, right: 35, bottom: window.active === "frequency" ? 50 : 30, left: 70});
       chart.xAxis
+        .axisLabel(window.active === "frequency" ? "Observation frequency" +
+          " once every x-months" : "")
         .tickFormat(function(d) {
           if(window.active !== "frequency"){
             return d3.time.format('%d-%m-%Y')(new Date(d))} else {return d}
         });
 
 
-      var yAxis = window.active === "periodic_fluctuations" && i === 0
-        || window.active === "frequency" ? 'Cumulative periodogram' :
-          window.active === "autoregressive" && i === 0 ? "Correlogram" :
-          'Groundwaterlevel ' + window.chart.reference + ' (m)';
+      var yAxis = window.active === "periodic_fluctuations" && i === 0 ?
+        'Cumulative periodogram' : window.active === "frequency" ?
+        'Accumulated power spectrum' : window.active === "autoregressive" &&
+        i === 0 ? "Correlogram" : 'Groundwaterlevel ' + window.chart.reference
+        + ' (m)';
 
       chart.yAxis
         .axisLabel(yAxis)
