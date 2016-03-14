@@ -27,9 +27,11 @@
 /*}*/
 
 .logos{
-    position: absolute;
+    /*position: absolute;*/
     height: 300px;
     width: 100px;
+    margin-right: 10px;
+    margin-top:15px;
 }
 #page-title {
   color: #fff;
@@ -42,13 +44,12 @@
 }
 .logos {
     z-index: -10;
-    margin-left: -135px;
+    margin-bottom: -315px;
 }
 .logo {
   max-height: 50px;
   max-width: 100px;
-  position: absolute;
-  margin-left:10px;
+    margin-top:10px;
 }
 ul.navbar-nav > li > a {
     color:#fff ;

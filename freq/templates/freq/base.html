@@ -150,29 +150,30 @@
           </div>
         </div>
       {% endblock nav %}
-    {% endblock header %}
-    {% block body %}
-      <br>
-      <div class="container">
-        <div class="row">
-          {% block logo %}
+      <div class="container-fluid">
+        {% block logo %}
             {% spaceless %}
-              <a href="/" title='Back to homepage' class="logos">
+              <a href="/" title='Back to homepage' class="logos pull-right">
                 <img class="logo hidden-sm hidden-md hidden-xs"
                      src="{% static 'freq/logo.png' %}"
                      alt="Home" />
                 <img class="logo hidden-sm hidden-md hidden-xs"
                      src="{% static 'freq/unesco-ihplogo.jpg' %}"
-                     alt="Lizard" style="top: 50px; left: 17px"
+                     alt="Lizard"
                      title="unesco-ihe"/>
                 <img class="logo hidden-sm hidden-md hidden-xs"
                      src="{% static 'freq/WMOlogo.jpg' %}"
                      alt="Lizard"
-                     style="top: 110px;left:53px;"
                      title="WMO"/>
               </a>
             {% endspaceless %}
           {% endblock logo %}
+      </div>
+    {% endblock header %}
+    {% block body %}
+      <br>
+      <div class="container">
+        <div class="row">
           <div class="col-md-8">
             <div class="row" >
               <h2 id="measurement_point">{{ view.measurement_point }}
