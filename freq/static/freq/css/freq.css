@@ -26,6 +26,13 @@
   /*border-radius: 0 !important;*/
 /*}*/
 
+.logos{
+    /*position: absolute;*/
+    height: 300px;
+    width: 100px;
+    margin-right: 10px;
+    margin-top:15px;
+}
 #page-title {
   color: #fff;
   font-size: 1.5em;
@@ -35,9 +42,14 @@
   background-color:#1abc9c;
   border-radius: 0;
 }
+.logos {
+    z-index: -10;
+    margin-bottom: -315px;
+}
 .logo {
-  margin: -8px 20px 0 0;
   max-height: 50px;
+  max-width: 100px;
+    margin-top:10px;
 }
 ul.navbar-nav > li > a {
     color:#fff ;
@@ -73,7 +85,7 @@ ul.nav-tabs > li.disabled > a:hover {
     background-color: #e7ffe9;
     border: 0;
 }
-.error-well {
+#error-well {
    background-color: #fff8af;
    color: #d35400;
 }

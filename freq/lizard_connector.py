@@ -112,7 +112,10 @@ class Base(object):
                                if isinstance(value, list) else str(value))
                                for key, value in queries.items())
         url = self.base_url + query
-        self.fetch(url)
+        try:
+            self.fetch(url)
+        except urllib.error.HTTPError:  # TODO remove hack to prevent 420 error
+            self.json = {'results': [], 'count': 0}
         try:
             logger.debug('Number found %s : %s with URL: %s', self.data_type,
                          self.json.get('count', 0), url)

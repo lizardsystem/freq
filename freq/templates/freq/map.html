@@ -1,4 +1,5 @@
 {% extends "freq/base.html" %}
+{% load static %}
 
 {% block body %}
   <br>
@@ -34,11 +35,16 @@
         </div>
       </div>
       <div class="col-md-3">
-        <div class="panel panel-default">
+        <div id="metadata" class="panel hidden">
           <div class="panel panel-heading">
             Metadata
           </div>
           <div class="panel panel-body">
+            <p><h5>Organisation: </h5><span id="metadata-organisation">-</span></p>
+            <p><h5>Lithology: </h5><span id="metadata-lithology">-</span></p>
+            <p><h5>Surface level: </h5><span id="metadata-surface-level">-</span></p>
+            <p><h5>Top level: </h5><span id="metadata-top-level">-</span></p>
+            <p><h5>Bottom level: </h5><span id="metadata-bottom-level">-</span></p>
           </div>
         </div>
       </div>
