@@ -1,6 +1,7 @@
 import copy
 import datetime as dt
 import json
+import logging
 from pprint import pprint  # left here for debugging purposes
 from time import time
 import urllib
@@ -12,14 +13,13 @@ try:
     import jsdatetime as jsdt
 except ImportError:
     import freq.jsdatetime as jsdt
-
 try:
-    from django.conf import settings
-    USR, PWD = settings.USR, settings.PWD
-except django.core.exceptions.ImproperlyConfigured:
+    from freq.secretsettings import USR, PWD
+except ImportError:
     try:
-        from freq.secretsettings import USR, PWD
-    except ImportError:
+        from django.conf import settings
+        USR, PWD = settings.USR, settings.PWD
+    except django.core.exceptions.ImproperlyConfigured:
         print('WARNING: no secretsettings.py is found. USR and PWD should have'
               'been set beforehand')
         USR = None
@@ -28,6 +28,9 @@ except django.core.exceptions.ImproperlyConfigured:
 # When you use this script stand alone, please set your login information here:
 # USR = ******  # Replace the stars with your user name.
 # PWD = ******  # Replace the stars with your password.
+
+
+logger = logging.getLogger(__name__)
 
 
 def join_urls(*args):
@@ -114,11 +117,11 @@ class Base(object):
         except urllib.error.HTTPError:  # TODO remove hack to prevent 420 error
             self.json = {'results': [], 'count': 0}
         try:
-            print('Number found {} : {} with URL: {}'.format(
-                self.data_type, self.json.get('count', 0), url))
+            logger.debug('Number found %s : %s with URL: %s', self.data_type,
+                         self.json.get('count', 0), url)
         except (KeyError, AttributeError):
-            print('Got results from {} with URL: {}'.format(
-                self.data_type, url))
+            logger.debug('Got results from %s with URL: %s',
+                         self.data_type, url)
         self.parse()
         return self.results
 
@@ -140,8 +143,8 @@ class Base(object):
                 encoding = encoding if encoding else 'UTF-8'
                 content = resp.read().decode(encoding)
                 self.json = json.loads(content)
-        except Exception as e:
-            print("got error", e, "from:", url)
+        except Exception:
+            logger.exception("got error from: %s", url)
             raise
 
         return self.json
@@ -349,7 +352,7 @@ class TimeSeries(Base):
             )
 
         csv = (
-            [r['name'], r['uuid'], e['timestamp'], e['max']] for r
+            [r['name'], r['uuid'], jsdt.js_to_datestring(e['timestamp']), e['max']] for r
             in self.results for e in r['events']
         )
         loc = Locations(use_header=self.use_header)

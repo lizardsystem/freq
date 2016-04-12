@@ -12,10 +12,15 @@ Contains the modules for monitoring of groundwater networks
 V 0.0 - Implementation in single file of complete FREQ library.
 
 """
+import logging
+
 import numpy as np
 import pandas as pd
 import scipy.stats as st
 import statsmodels.api as sts
+
+
+logger = logging.getLogger(__name__)
 
 
 MIN_SAMPLES = 40
@@ -423,13 +428,13 @@ def test():
             error_field = 'Error in ar'
             autoregressive(harmonic_t, per=2)
             
-            print('Everything working fine for {0}'.format(samp_file))
+            logger.debug('Everything working fine for %s', samp_file)
         except:
-            print('{0}. Moving forward'.format(error_field))
+            logger.debug('%s. Moving forward', error_field)
         
-    print ('003 and 006 are expected to fail as only 3 data points are available')
+    logger.debug ('003 and 006 are expected to fail as only 3 data points are available')
     return
 
 if __name__ == '__main__':
-    print('Running test')    
+    logger.debug('Running test')
     test()

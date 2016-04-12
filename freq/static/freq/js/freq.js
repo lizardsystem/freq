@@ -115,7 +115,6 @@ L.Control.OpacityLayers = L.Control.Layers.extend({
             value: 60,
             step: 10,
             start: function (event, ui) {
-              console.log(event);
               //When moving the slider, disable panning.
               window.map_.map.dragging.disable();
               window.map_.map.once('mousedown', function (e) {
@@ -199,14 +198,12 @@ L.TileLayer.BetterWMS = L.TileLayer.WMS.extend({
     layerMapping[orgCode] = orgCode;
     // Make an AJAX request to the server and hope for the best
     var layerName = layerMapping[this.wmsParams.layers];
-    console.log(orgCode, layerName, layerMapping, this.wmsParams.layers);
 
     if (layerName!=="tbamap_2015ggis"){
       var url = "/map/feature_info/?lng=" + evt.latlng.lng + "&lat=" +
         evt.latlng.lat + "&layername=" + layerName;
     } else {
       var url = this.getFeatureInfoUrl(evt.latlng);
-      console.log(url);
     }
     loadData(url, popUp);
   },
@@ -374,6 +371,14 @@ function drawLocationsBoundingBox(map, locationsLayer){
   };
 }
 
+function graphYAxis(i){
+  return window.active === "periodic_fluctuations" && i === 0 ?
+        'Cumulative periodogram' : window.active === "frequency" ?
+        'Accumulated power spectrum' : window.active === "autoregressive" &&
+        i === 0 ? "Correlogram" : 'Groundwaterlevel ' + window.chart.reference
+        + ' (m)';
+}
+
 function nvGraph(i){
   nv.addGraph(function() {
       var chart = nv.models.lineChart()
@@ -388,11 +393,7 @@ function nvGraph(i){
         });
 
 
-      var yAxis = window.active === "periodic_fluctuations" && i === 0 ?
-        'Cumulative periodogram' : window.active === "frequency" ?
-        'Accumulated power spectrum' : window.active === "autoregressive" &&
-        i === 0 ? "Correlogram" : 'Groundwaterlevel ' + window.chart.reference
-        + ' (m)';
+      var yAxis = graphYAxis(i);
 
       chart.yAxis
         .axisLabel(yAxis)

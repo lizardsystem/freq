@@ -20,6 +20,11 @@
                id="dropdown_option" style="z-index: 1510!important;">
               {{ org_name }}
             </a>
+          {% elif view.active == "lizard" %}
+            <a href="{% url "lizard_restart" %}?name={{ org_name }}&uuid={{ org_id }}"
+               id="dropdown_option" style="z-index: 1510!important;">
+              {{ org_name }}
+            </a>
           {% else %}
             <a href="{% url "restart" %}?name={{ org_name }}&uuid={{ org_id }}"
                id="dropdown_option" style="z-index: 1510!important;">

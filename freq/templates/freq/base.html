@@ -98,6 +98,13 @@
                       </span>
                     </a>
                   </li>
+                  <li class="pull-right">
+                    <a href="{% url "download" %}" target="_blank">
+                      Download
+                      <span class="glyphicon glyphicon-download">
+                      </span>
+                    </a>
+                  </li>
                   {% include 'freq/include/dropdown_nav_edit.html' with dropdown=view.nav_dropdown %}
                 {% else %}
                   <li>

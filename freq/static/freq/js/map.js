@@ -232,7 +232,6 @@ function extraUpdate(data){
       .removeClass('hidden')
       .text(graphs[0].measurement_point);
     var metadata = data.metadata || [];
-    console.log(data);
     for(var i = 0; i < metadata.length; i++){
       $('#metadata-' + metadata[i].name).text(metadata[i].value || "-")
     }
@@ -280,7 +279,6 @@ function spinnerClear(){
 
 
 function resetInterpolation(event){
-  console.log(event, window.event);
   if (event === undefined){
       event = window.event;
   }
