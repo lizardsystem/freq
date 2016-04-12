@@ -2,6 +2,12 @@ Changelog of freq
 ===================================================
 
 
+0.2 (unreleased)
+----------------
+
+- Nothing changed yet.
+
+
 0.1 (2016-04-12)
 ----------------
 - Added correllogram to autoregressive model.
