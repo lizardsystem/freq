@@ -349,7 +349,7 @@ class TimeSeries(Base):
             )
 
         csv = (
-            [r['name'], r['uuid'], e['timestamp'], e['max']] for r
+            [r['name'], r['uuid'], jsdt.js_to_datestring(e['timestamp']), e['max']] for r
             in self.results for e in r['events']
         )
         loc = Locations(use_header=self.use_header)
