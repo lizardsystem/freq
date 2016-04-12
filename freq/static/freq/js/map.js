@@ -231,6 +231,11 @@ function extraUpdate(data){
     $("#measurement_point")
       .removeClass('hidden')
       .text(graphs[0].measurement_point);
+    var metadata = data.metadata || [];
+    for(var i = 0; i < metadata.length; i++){
+      $('#metadata-' + metadata[i].name).text(metadata[i].value || "-")
+    }
+    $("#metadata").removeClass('hidden')
   }
   var result = data.result;
   if(result !== undefined){
@@ -274,7 +279,6 @@ function spinnerClear(){
 
 
 function resetInterpolation(event){
-  console.log(event, window.event);
   if (event === undefined){
       event = window.event;
   }

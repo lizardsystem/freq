@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import copy
 import csv
-import datetime as dt
+import datetime
 import json
 import logging
 import re
@@ -309,10 +309,10 @@ class BaseViewMixin(object):
     @property
     def time_window(self):
         page = self.datepicker_page
-        start = jsdt.datetime_to_js(dt.datetime.strptime(
+        start = jsdt.datetime_to_js(datetime.datetime.strptime(
             self.request.session[page]['datepicker']['start'], '%d-%m-%Y'
         ))
-        end = jsdt.datetime_to_js(dt.datetime.strptime(
+        end = jsdt.datetime_to_js(datetime.datetime.strptime(
             self.request.session[page]['datepicker']['end'], '%d-%m-%Y'
         ))
         return {
@@ -446,7 +446,7 @@ class BaseView(BaseViewMixin, FreqTemplateView):
     pass
 
 
-class LizardIframeView(BaseView):
+class GlobalView(BaseView):
     active = 'lizard'
     lizard_active = 'active'
     template_name = 'freq/lizard_iframe.html'
@@ -457,8 +457,13 @@ class LizardIframeView(BaseView):
             self.instantiate_session()
         return super().dispatch(*args, **kwargs)
 
+    @property
+    def iframe_url(self):
+        today=datetime.datetime.today().strftime("%b,%d,%Y")
+        return "https://ggmn.lizard.net/en/map/topography,gwwaterchain,dataavailability/point@27.7613,-38.1445,3/Jan,01,1940-{today}".format(today=today)
 
-class MapView(BaseView):
+
+class RegionalMapView(BaseView):
     active = 'map_'
     template_name = 'freq/map.html'
     menu_items = []
@@ -1236,9 +1241,13 @@ class RestartMixin(object):
         return super().get(request, *args, **kwargs)
 
 
-class MapRestartView(RestartMixin, MapView):
+class RegionalMapRestartView(RestartMixin, RegionalMapView):
     pass
 
 
 class ReStartPageView(RestartMixin, StartPageView):
+    pass
+
+
+class GlobalRestartView(RestartMixin, GlobalView):
     pass
