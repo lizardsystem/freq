@@ -1,6 +1,7 @@
 import copy
 import datetime as dt
 import json
+import logging
 from pprint import pprint  # left here for debugging purposes
 from time import time
 import urllib
@@ -28,6 +29,9 @@ except django.core.exceptions.ImproperlyConfigured:
 # When you use this script stand alone, please set your login information here:
 # USR = ******  # Replace the stars with your user name.
 # PWD = ******  # Replace the stars with your password.
+
+
+logger = logging.getLogger(__name__)
 
 
 def join_urls(*args):
@@ -111,11 +115,11 @@ class Base(object):
         url = self.base_url + query
         self.fetch(url)
         try:
-            print('Number found {} : {} with URL: {}'.format(
-                self.data_type, self.json.get('count', 0), url))
+            logger.debug('Number found %s : %s with URL: %s', self.data_type,
+                         self.json.get('count', 0), url)
         except (KeyError, AttributeError):
-            print('Got results from {} with URL: {}'.format(
-                self.data_type, url))
+            logger.debug('Got results from %s with URL: %s',
+                         self.data_type, url)
         self.parse()
         return self.results
 
@@ -137,8 +141,8 @@ class Base(object):
                 encoding = encoding if encoding else 'UTF-8'
                 content = resp.read().decode(encoding)
                 self.json = json.loads(content)
-        except Exception as e:
-            print("got error", e, "from:", url)
+        except Exception:
+            logger.exception("got error from: %s", url)
             raise
 
         return self.json

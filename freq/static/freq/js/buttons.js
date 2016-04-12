@@ -96,7 +96,11 @@ function updateGraphs(data){
     }
     for(var i=0; i < graphs.length; i++ ){
         var graph = graphs[i];
-        d3.select(graph.name).datum(graph.data).call(window.charts[i])
+        window.charts[i].yAxis
+            .axisLabel(graphYAxis(i));
+        d3.select(graph.name)
+            .datum(graph.data)
+            .call(window.charts[i]);
     }
     spinnerClear();
   }
@@ -148,6 +152,12 @@ function clickDropDown(dropdown_id, option_id){
   var oldSelected = $('#dropdown_selected_' + dropdown_id);
   var newText = $('#dropdown_' + dropdown_id + '-option-' + option_id).text();
   oldSelected.text(newText);
+  if(newText.indexOf("BGS") > -1 ){
+      window.chart.reference = "BGS";
+  } else if(newText.indexOf("MSL") > -1 ){
+      window.chart.reference = "MSL";
+  }
+
   nextTabActive();
   changeGraphs('dropdown_' + dropdown_id)({ value: $.trim(newText) }, undefined, true);
 }

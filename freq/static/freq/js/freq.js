@@ -115,7 +115,6 @@ L.Control.OpacityLayers = L.Control.Layers.extend({
             value: 60,
             step: 10,
             start: function (event, ui) {
-              console.log(event);
               //When moving the slider, disable panning.
               window.map_.map.dragging.disable();
               window.map_.map.once('mousedown', function (e) {
@@ -199,14 +198,12 @@ L.TileLayer.BetterWMS = L.TileLayer.WMS.extend({
     layerMapping[orgCode] = orgCode;
     // Make an AJAX request to the server and hope for the best
     var layerName = layerMapping[this.wmsParams.layers];
-    console.log(orgCode, layerName, layerMapping, this.wmsParams.layers);
 
     if (layerName!=="tbamap_2015ggis"){
       var url = "/map/feature_info/?lng=" + evt.latlng.lng + "&lat=" +
         evt.latlng.lat + "&layername=" + layerName;
     } else {
       var url = this.getFeatureInfoUrl(evt.latlng);
-      console.log(url);
     }
     loadData(url, popUp);
   },
@@ -280,6 +277,18 @@ function drawLocationsBoundingBox(map, locationsLayer){
   return function(data, textStatus, jqXHR){
     var locs = data.result.locations;
     var ts = data.result.timeseries;
+    var err = data.error;
+    var errorWell = $("#error-well");
+
+    if(err){
+      errorWell
+        .removeClass("hidden")
+        .text(err);
+    } else {
+      errorWell
+        .addClass("hidden")
+        .text("");
+    }
     var col = false;
     if(ts){
       try {
@@ -362,18 +371,32 @@ function drawLocationsBoundingBox(map, locationsLayer){
   };
 }
 
+function graphYAxis(i){
+  return window.active === "periodic_fluctuations" && i === 0 ?
+        'Cumulative periodogram' : window.active === "frequency" ?
+        'Accumulated power spectrum' : window.active === "autoregressive" &&
+        i === 0 ? "Correlogram" : 'Groundwaterlevel ' + window.chart.reference
+        + ' (m)';
+}
+
 function nvGraph(i){
   nv.addGraph(function() {
       var chart = nv.models.lineChart()
         .useInteractiveGuideline(true)
-        .margin({top: 20, right: 35, bottom: 30, left: 70});
+        .margin({top: 20, right: 35, bottom: window.active === "frequency" ? 50 : 30, left: 70});
       chart.xAxis
+        .axisLabel(window.active === "frequency" ? "Observation frequency" +
+          " once every x-months" : "")
         .tickFormat(function(d) {
-            return d3.time.format('%d-%m-%Y')(new Date(d))
+          if(window.active !== "frequency"){
+            return d3.time.format('%d-%m-%Y')(new Date(d))} else {return d}
         });
 
+
+      var yAxis = graphYAxis(i);
+
       chart.yAxis
-        .axisLabel('Groundwaterlevel ' + window.chart.reference + ' (m)')
+        .axisLabel(yAxis)
         .tickFormat(d3.format('.02f'));
 
       chart.legend
@@ -527,7 +550,7 @@ function loadMap() {
 
     var organisation = $('.organisation').text().trim()
     if (organisation !== 'Public'){
-      overlayMaps['interpolation BGS'] = window.map_.interpolationLayer
+      overlayMaps['interpolation MSL'] = window.map_.interpolationLayer
     }
 
     // create the control
