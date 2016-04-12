@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import copy
 import csv
-import datetime as dt
+import datetime
 import json
 import logging
 import re
@@ -309,10 +309,10 @@ class BaseViewMixin(object):
     @property
     def time_window(self):
         page = self.datepicker_page
-        start = jsdt.datetime_to_js(dt.datetime.strptime(
+        start = jsdt.datetime_to_js(datetime.datetime.strptime(
             self.request.session[page]['datepicker']['start'], '%d-%m-%Y'
         ))
-        end = jsdt.datetime_to_js(dt.datetime.strptime(
+        end = jsdt.datetime_to_js(datetime.datetime.strptime(
             self.request.session[page]['datepicker']['end'], '%d-%m-%Y'
         ))
         return {
@@ -456,6 +456,11 @@ class LizardIframeView(BaseView):
         if not self.request.session.get('session_is_set', False):
             self.instantiate_session()
         return super().dispatch(*args, **kwargs)
+
+    @property
+    def iframe_url(self):
+        today=datetime.datetime.today().strftime("%b,%d,%Y")
+        return "https://ggmn.lizard.net/en/map/topography,gwwaterchain,dataavailability/point@27.7613,-38.1445,3/Jan,01,1940-{today}".format(today=today)
 
 
 class MapView(BaseView):
