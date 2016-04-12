@@ -52,7 +52,8 @@ urlpatterns = patterns(
     url(r'^startpage/restart/$', views.ReStartPageView.as_view(),
         name='restart'),
     url(r'^startpage/$', views.StartPageView.as_view(), name='startpage'),
-    url(r'^map/restart/$', views.MapRestartView.as_view(), name='map_restart'),
-    url(r'^map/$', views.MapView.as_view(), name='map_'),
-    url(r'^$', views.LizardIframeView.as_view(), name='lizard_iframe')
+    url(r'^map/restart/$', views.RegionalMapRestartView.as_view(), name='map_restart'),
+    url(r'^global/restart/$', views.GlobalRestartView.as_view(), name='lizard_restart'),
+    url(r'^map/$', views.RegionalMapView.as_view(), name='map_'),
+    url(r'^$', views.GlobalView.as_view(), name='lizard_iframe')
     ) + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

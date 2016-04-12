@@ -446,7 +446,7 @@ class BaseView(BaseViewMixin, FreqTemplateView):
     pass
 
 
-class LizardIframeView(BaseView):
+class GlobalView(BaseView):
     active = 'lizard'
     lizard_active = 'active'
     template_name = 'freq/lizard_iframe.html'
@@ -463,7 +463,7 @@ class LizardIframeView(BaseView):
         return "https://ggmn.lizard.net/en/map/topography,gwwaterchain,dataavailability/point@27.7613,-38.1445,3/Jan,01,1940-{today}".format(today=today)
 
 
-class MapView(BaseView):
+class RegionalMapView(BaseView):
     active = 'map_'
     template_name = 'freq/map.html'
     menu_items = []
@@ -1241,9 +1241,13 @@ class RestartMixin(object):
         return super().get(request, *args, **kwargs)
 
 
-class MapRestartView(RestartMixin, MapView):
+class RegionalMapRestartView(RestartMixin, RegionalMapView):
     pass
 
 
 class ReStartPageView(RestartMixin, StartPageView):
+    pass
+
+
+class GlobalRestartView(RestartMixin, GlobalView):
     pass

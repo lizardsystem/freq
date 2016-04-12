@@ -13,14 +13,13 @@ try:
     import jsdatetime as jsdt
 except ImportError:
     import freq.jsdatetime as jsdt
-
 try:
-    from django.conf import settings
-    USR, PWD = settings.USR, settings.PWD
-except django.core.exceptions.ImproperlyConfigured:
+    from freq.secretsettings import USR, PWD
+except ImportError:
     try:
-        from freq.secretsettings import USR, PWD
-    except ImportError:
+        from django.conf import settings
+        USR, PWD = settings.USR, settings.PWD
+    except django.core.exceptions.ImproperlyConfigured:
         print('WARNING: no secretsettings.py is found. USR and PWD should have'
               'been set beforehand')
         USR = None
