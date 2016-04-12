@@ -2,7 +2,7 @@ Changelog of freq
 ===================================================
 
 
-0.1 (unreleased)
+0.1 (2016-04-12)
 ----------------
 - Added correllogram to autoregressive model.
 - All dropdowns now hover over map.
