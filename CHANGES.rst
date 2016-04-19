@@ -4,8 +4,7 @@ Changelog of freq
 
 0.2 (unreleased)
 ----------------
-
-- Nothing changed yet.
+- bugfixes
 
 
 0.1 (2016-04-12)
