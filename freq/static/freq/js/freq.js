@@ -284,10 +284,6 @@ function drawLocationsBoundingBox(map, locationsLayer){
       errorWell
         .removeClass("hidden")
         .text(err);
-    } else {
-      errorWell
-        .addClass("hidden")
-        .text("");
     }
     var col = false;
     if(ts){

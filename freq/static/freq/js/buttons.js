@@ -58,6 +58,11 @@ function extraUpdate(data){
       .removeClass('hidden')
       .text(data.error);
   }
+  if(data.graphs[0].data[0].values.length){
+    $("#error-well")
+        .addClass("hidden")
+        .text("");
+  }
   window.map_.locationsLayer.clearLayers();
   drawLocations();
 }
