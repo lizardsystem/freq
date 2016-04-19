@@ -300,7 +300,7 @@ function resetInterpolation(event){
     window.map_.controlLayers.removeLayer(window.map_.interpolationLayer);
     window.map_.map.removeLayer(window.map_.interpolationLayer);
     window.map_.interpolationLayer = L.tileLayer.betterWms(
-      'https://raster.staging.lizard.net/wms', {
+      'https://raster.lizard.net/wms', {
         layers: layers,
         maxZoom: 17,
         tooltip: true,
