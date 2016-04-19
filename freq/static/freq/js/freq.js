@@ -517,7 +517,7 @@ function loadMap() {
     var layers = window.map_.organisationWMSLayers[$('.organisation').text().trim()];
 
     window.map_.interpolationLayer = L.tileLayer.betterWms(
-      'https://raster.staging.lizard.net/wms', {
+      'https://raster.lizard.net/wms', {
         layers: layers,
         maxZoom: 17,
         tooltip: true,

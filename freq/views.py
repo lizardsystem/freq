@@ -675,7 +675,7 @@ class AutoRegressiveView(BaseView):
             title="Number of lags used for the correlogram computation",
         ),
         Spinner(
-            heading='Order of Autoregressive model (p)',
+            heading='Order of AR model (p)',
             title="Order of Autoregressive model (p) used in the training of the autoregressive " \
                    "model",
             min_=1,
@@ -759,9 +759,15 @@ class BaseApiView(BaseViewMixin, APIView):
         )
 
     def series_to_js(self, npseries, index, key, color='#2980b9', dates=True):
-        values = [{'x': jsdt.datetime_to_js(index[i]) if dates else i,
-                   'y': float(value)}
-                for i, value in enumerate(npseries)]
+        try:
+            values = [
+                {'x': jsdt.datetime_to_js(index[i]) if dates else float(
+                    index[i]), 'y': float(value)} for i, value in
+                enumerate(npseries)
+            ]
+        except IndexError:
+            values = [{'x': i, 'y': float(value)} for i, value in enumerate(
+                npseries)]
         return {
             'values': values,
             'key': key,
@@ -896,7 +902,15 @@ class BaseApiView(BaseViewMixin, APIView):
 
         return {
             'graphs': response,
-            'statistics': self.statistics
+            'statistics': self.statistics,
+            'metadata': [
+                {"name": "organisation",
+                 "value": self.selected_organisation},
+                {"name": "lithology", "value": "-"},
+                {"name": "surface-level", "value": "-"},
+                {"name": "top-level", "value": "-"},
+                {"name": "bottom-level", "value": "-"}
+            ]
         }
 
 
@@ -1059,8 +1073,8 @@ class FluctuationsDataView(BaseApiView):
         return [[
             self.series_to_js(
                 npseries=self.harmonic[3],
-                index=self.harmonic[4],
-                key='Accumulated power spectrum',
+                index=[],
+                key='Cumulative periodogram',
                 dates=False
             )
         ], [
@@ -1078,7 +1092,7 @@ class FluctuationsDataView(BaseApiView):
             self.series_to_js(
                 npseries=self.harmonic[1],
                 index=self.pandas_timeseries.index,
-                key='Removed periodic fluctuations (m)',
+                key='Harmonic series (m)',
                 color='#f39c12'
             ),
         ]]
@@ -1089,6 +1103,10 @@ class RegressiveDataView(BaseApiView):
 
     @cached_property
     def additional_response(self):
+        self.statistics = ["Akaike Information Criterion of the autoregressive "
+                           "model is {:.2f}. Standard deviation of the "
+                           "innovation (error) term is {:.2f}".format(
+            self.autoregressive[3], self.autoregressive[4])]
         return [[
             self.series_to_js(
                 npseries=self.correllogram,
@@ -1106,12 +1124,12 @@ class RegressiveDataView(BaseApiView):
             self.series_to_js(
                 npseries=self.autoregressive[0],
                 index=self.pandas_timeseries.index,
-                key='Autoregressive model result (m)'
+                key='Residuals (m)'
             ),
             self.series_to_js(
                 npseries=self.autoregressive[1],
                 index=self.pandas_timeseries.index,
-                key='Removed trend',
+                key='AR (model)',
                 color='#f39c12'
             ),
         ]]
@@ -1128,13 +1146,7 @@ class AdditiveDataView(BaseApiView):
                 npseries=self.pandas_timeseries - self.autoregressive[0],
                 index=self.pandas_timeseries.index,
                 key='Modelled time series analysis (m)'
-            ),
-            self.series_to_js(
-                npseries=self.autoregressive[0],
-                index=self.pandas_timeseries.index,
-                key='Autoregressive model result (m)',
-                color='#f39c12'
-            ),
+            )
         ]]
 
 
@@ -1147,7 +1159,7 @@ class FrequencyDataView(BaseApiView):
             self.series_to_js(
                 npseries=self.harmonic[3],
                 index=self.harmonic[4],
-                key='Accumulated power spectrum',
+                key='Monitoring Frequency',
                 dates=False
             )
         ]]
