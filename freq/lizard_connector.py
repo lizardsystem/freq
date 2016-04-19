@@ -659,7 +659,7 @@ class RasterFeatureInfo(Base):
 
     def wms(self, lat, lng, layername, extra_params=None):
         if 'igrac' in layername:
-            self.base_url = "https://raster.staging.lizard.net/wms"
+            self.base_url = "https://raster.lizard.net/wms"
             lat_f = float(lat)
             lng_f = float(lng)
             self.get(
@@ -713,8 +713,6 @@ class RasterLimits(Base):
         self.max_results = None
 
     def get_limits(self, layername, bbox):
-        if 'igrac' in layername:
-            self.base_url = "https://raster.staging.lizard.net/wms"
         try:
             return self.get(
                 request='getlimits',
