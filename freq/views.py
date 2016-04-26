@@ -915,7 +915,6 @@ class BaseApiView(BaseViewMixin, APIView):
         page = self.request.GET.get('active', 'startpage')
         uuid = self.request.session[page]['uuid']
         data = filter.from_timeseries_uuid(uuid) if uuid != "EMPTY" else {}
-        print(data)
         return {
             'metadata': [
                 {"name": "organisation",

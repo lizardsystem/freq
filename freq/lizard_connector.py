@@ -137,7 +137,6 @@ class Base(object):
                     [base_url]/api/v2/[endpoint]/?[query_key]=[query_value]&...
         :return: the JSON from the response
         """
-        print(self.use_header, url)
         if self.use_header:
             request_obj = urllib.request.Request(url, headers=self.header)
         else:
