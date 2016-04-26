@@ -555,17 +555,7 @@ function loadMap() {
     window.map_.controlLayers.addTo(window.map_.map);
 
     if (organisation !== 'Public') {
-      var rescaleControl = L.control({position: 'topright'});
-      rescaleControl.onAdd = function (map) {
-        var div = L.DomUtil.create('div', 'rescale-control');
-
-        div.innerHTML = '<button id="rescale-button" ' +
-          'onclick="resetInterpolation(event);" title="rescale interpolation"' +
-          ' class="btn btn-sm"> <div class="glyphicon' +
-          ' glyphicon-resize-full"></div></button>';
-        return div;
-      };
-      rescaleControl.addTo(window.map_.map);
+      resetInterpolation();
     }
   } else {
     window.map_.map = L.map('map').fitBounds(window.map_.bounds);
