@@ -748,8 +748,8 @@ class Filters(Base):
 
         # surface_level is stored in the extra_metadata field of a location
         try:
-            surface_level = location_data.get("extra_metadata")\
-                                .get("surface_level") + " (m)"
+            surface_level = str(location_data.get("extra_metadata")
+                                .get("surface_level")) + " (m)"
         except AttributeError:
             surface_level = None
 

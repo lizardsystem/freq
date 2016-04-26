@@ -919,13 +919,13 @@ class BaseApiView(BaseViewMixin, APIView):
             'metadata': [
                 {"name": "organisation",
                  "value": self.selected_organisation},
-                {"name": "lithology", "value": data.get('lithology', '-')},
+                {"name": "lithology", "value": str(data.get('lithology', '-'))},
                 {"name": "surface-level", "value":
                     data.get('surface_level', '-')},
                 {"name": "top-level", "value":
-                    data.get('filter_top_level', '-')},
+                    str(data.get('filter_top_level', '-'))},
                 {"name": "bottom-level", "value":
-                    data.get('filter_bottom_level', '-')}
+                    str(data.get('filter_bottom_level', '-'))}
             ]
         }
 
