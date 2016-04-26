@@ -80,11 +80,14 @@ class Base(object):
         else:
             return {}
 
-    def __init__(self, base="https://ggmn.lizard.net", use_header=False):
+    def __init__(self, base="https://ggmn.lizard.net", use_header=False,
+                 data_type=None):
         """
         :param base: the site one wishes to connect to. Defaults to the
                      Lizard staging site.
         """
+        if data_type:
+            self.data_type = data_type
         self.use_header = use_header
         self.queries = {}
         self.results = []
@@ -95,7 +98,7 @@ class Base(object):
             # without extra '/' ^^, this is added in join_urls
         self.base_url = join_urls(self.base, 'api/v2', self.data_type) + '/'
 
-    def get(self, count=True, **queries):
+    def get(self, count=True, uuid=None, **queries):
         """
         Query the api.
         For possible queries see: https://nxt.staging.lizard.net/doc/api.html
@@ -111,7 +114,8 @@ class Base(object):
                                (('&' + str(key) + '=').join(value)
                                if isinstance(value, list) else str(value))
                                for key, value in queries.items())
-        url = self.base_url + query
+        url = urllib.parse.urljoin(self.base_url, str(uuid)) if uuid else \
+            self.base_url + query
         try:
             self.fetch(url)
         except urllib.error.HTTPError:  # TODO remove hack to prevent 420 error
@@ -133,6 +137,7 @@ class Base(object):
                     [base_url]/api/v2/[endpoint]/?[query_key]=[query_value]&...
         :return: the JSON from the response
         """
+        print(self.use_header, url)
         if self.use_header:
             request_obj = urllib.request.Request(url, headers=self.header)
         else:
@@ -602,7 +607,7 @@ class GroundwaterLocations(Locations):
     @property
     def extra_queries(self):
         return {
-            "object_type__id": 107,
+            "object_type__model": 'filter'
         }
 
 
@@ -615,7 +620,7 @@ class GroundwaterTimeSeries(TimeSeries):
     @property
     def extra_queries(self):
         return {
-            "location__object_type__id": 107,
+            "location__object_type__model": 'filter'
         }
 
 
@@ -727,6 +732,45 @@ class RasterLimits(Base):
 
     def parse(self):
         self.results = self.json
+
+
+class Filters(Base):
+    data_type = "filters"
+
+    def from_timeseries_uuid(self, uuid):
+        # We know the timeseries uuid. Timeseries are connected to locations
+        # and the locations are connected to the filters that contain the
+        # relevant information.
+
+        # first get the location uuid from the timeseries.
+        ts = Base(use_header=self.use_header, data_type='timeseries')
+        location_data = ts.get(uuid=uuid)[0]['location']
+        location_uuid = location_data.get('uuid')
+
+        # surface_level is stored in the extra_metadata field of a location
+        try:
+            surface_level = location_data.get("extra_metadata")\
+                                .get("surface_level") + " (m)"
+        except AttributeError:
+            surface_level = None
+
+        # next get the location for the filter id
+        location = Base(use_header=self.use_header, data_type='locations')
+        try:
+            filter_id = location.get(uuid=location_uuid)[0].get(
+                'object').get('id')
+        except TypeError:
+            # the location doesn't connect to a filter, return empty
+            return {}
+        if filter_id:
+            # next get and return the filter metadata
+            gw_filter = Base(use_header=self.use_header, data_type='filters')
+            result = gw_filter.get(uuid=filter_id)[0]
+            result.update({
+                "surface_level": surface_level
+            })
+            return result
+        return {}
 
 
 if __name__ == '__main__':

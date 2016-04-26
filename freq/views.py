@@ -24,9 +24,10 @@ from lizard_auth_client.models import Organisation
 import freq.jsdatetime as jsdt
 from freq.buttons import *
 import freq.freq_calculator as calculator
-from freq.lizard_connector import LizardApiError
+from freq.lizard_connector import Filters
 from freq.lizard_connector import GroundwaterLocations
 from freq.lizard_connector import GroundwaterTimeSeries
+from freq.lizard_connector import LizardApiError
 from freq.lizard_connector import RasterFeatureInfo
 from freq.lizard_connector import RasterLimits
 
@@ -892,26 +893,43 @@ class BaseApiView(BaseViewMixin, APIView):
 
     @property
     def base_response(self):
-        response = []
+        graphs_response = []
         for i in range(len(self.additional_response)):
-            response.append({
+            graphs_response.append({
                 'name': '#chart_' + str(i) + ' svg',
                 'data': self.additional_response[i],
                 'measurement_point': self.measurement_point
             })
+        response = {
+            'graphs': graphs_response,
+            'statistics': self.statistics
+        }
+        if self.active == 'map_':
+            response.update(self.metadata)
 
+        return response
+
+    @cached_property
+    def metadata(self):
+        filter = Filters(use_header=self.logged_in)
+        page = self.request.GET.get('active', 'startpage')
+        uuid = self.request.session[page]['uuid']
+        data = filter.from_timeseries_uuid(uuid) if uuid != "EMPTY" else {}
+        print(data)
         return {
-            'graphs': response,
-            'statistics': self.statistics,
             'metadata': [
                 {"name": "organisation",
                  "value": self.selected_organisation},
-                {"name": "lithology", "value": "-"},
-                {"name": "surface-level", "value": "-"},
-                {"name": "top-level", "value": "-"},
-                {"name": "bottom-level", "value": "-"}
+                {"name": "lithology", "value": data.get('lithology', '-')},
+                {"name": "surface-level", "value":
+                    data.get('surface_level', '-')},
+                {"name": "top-level", "value":
+                    data.get('filter_top_level', '-')},
+                {"name": "bottom-level", "value":
+                    data.get('filter_bottom_level', '-')}
             ]
         }
+
 
 
 class TimeSeriesDataView(BaseApiView):
