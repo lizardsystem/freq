@@ -278,7 +278,18 @@ function spinnerClear(){
 }
 
 
-function resetInterpolation(){
+function resetInterpolation(event){
+  if (event === undefined){
+      event = window.event;
+  }
+  //IE9 & Other Browsers
+  if (event.stopPropagation) {
+    event.stopPropagation();
+  }
+  //IE8 and Lower
+  else {
+    event.cancelBubble = true;
+  }
   var layers = window.map_.organisationWMSLayers[$('.organisation').text().trim()];
   var bbox = window.map_.map.getBounds().toBBoxString();
   var url = "/map/interpolation_limits/?layers=" + layers + "&bbox=" + bbox;
@@ -300,6 +311,7 @@ function resetInterpolation(){
     );
     window.map_.controlLayers.addOverlay(
       window.map_.interpolationLayer, 'interpolation');
+    window.map_.interpolationLayer.addTo(window.map_.map);
   });} catch (error){console.log(error)};
 }
 
