@@ -301,10 +301,10 @@ def harmonic(data, n_harmonics):
     ps_lim = np.sort(ps)[-n_harmonics*2]
     
     # Turn everything below that harmonic equal to 0
-    clean_fft_vec = np.array([fft_vec[i] if ps[i] <= ps_lim else 0 for i in xrange(len(fft_vec))])
+    clean_fft_vec = np.array([fft_vec[i] if ps[i] >= ps_lim else 0 for i in xrange(len(fft_vec))])
     
     # Do the inverse fft
-    trend = data - np.real(np.fft.ifft(clean_fft_vec))
+    trend = np.real(np.fft.ifft(clean_fft_vec))
 
     #get the parameters
     a_param = np.array([np.real(fft_vec[i]) for i in xrange(len(fft_vec)) if ps[i] <= ps_lim ])
