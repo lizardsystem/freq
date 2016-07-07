@@ -1197,25 +1197,32 @@ def convert_to_filename(name, check_ext=True):
 class DownloadAllView(BaseApiView):
 
     def get(self, request, *args, **kwargs):
+        logger.debug('Downloading csv for %s', self.selected_organisation)
         ts = GroundwaterTimeSeries(use_header=self.logged_in)
+        logger.debug('Created timeseries connector.')
         header, csv_ = ts.all_to_csv(
             organisation=self.selected_organisation_id)
+        logger.debug('Downloaded data and created csv')
         response = HttpResponse(content_type='text/csv')
+        logger.debug('Created response')
         filename = convert_to_filename(
             self.selected_organisation.replace(" ", "") +
             "_ggmn_timeseries.csv"
         )
+        logger.debug('Filename is: %s', filename)
         response['Content-Disposition'] = 'attachment; filename="' + \
                                           filename + '"'
-
         writer = csv.writer(response)
         writer.writerow(['uuid', 'name', 'location_name', 'x', 'y'])
+        logger.debug('Added first line to response.')
         for row in header:
             writer.writerow(row)
+        logger.debug('Wrote header')
         writer.writerow([])
         writer.writerow(['name', 'uuid', 'timestamp', 'value'])
         for row in csv_:
             writer.writerow(row)
+        logger.debug('Wrote all data to response')
         return response
 
 
