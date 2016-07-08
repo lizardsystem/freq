@@ -6,10 +6,9 @@ import datetime
 import json
 import logging
 import re
-from pprint import pprint  # left here for debugging purposes
 
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext as _
+from django.utils.text import slugify
 from django.views.generic.base import TemplateView
 from django.http import HttpResponse
 from django.conf import settings
@@ -1182,18 +1181,6 @@ class FrequencyDataView(BaseApiView):
         ]]
 
 
-def convert_to_filename(name, check_ext=True):
-    f = re.sub('''[\\\n\t\s;:\'\"!@#$%\*\(\)=\+<>\?\|\{\},~`\^\[\]]''', '',
-               name)
-    if len(f) > 80:
-        ext = f.split('.')[-1]
-        if len(ext) < 6 and check_ext:
-            f = f[:80] + ext
-        else:
-            f = f[:80]
-    return f
-
-
 class DownloadAllView(BaseApiView):
 
     def get(self, request, *args, **kwargs):
@@ -1205,10 +1192,8 @@ class DownloadAllView(BaseApiView):
         logger.debug('Downloaded data and created csv')
         response = HttpResponse(content_type='text/csv')
         logger.debug('Created response')
-        filename = convert_to_filename(
-            self.selected_organisation.replace(" ", "") +
-            "_ggmn_timeseries.csv"
-        )
+        filename = slugify(self.selected_organisation)[:80] + \
+                   "_ggmn_timeseries.csv"
         logger.debug('Filename is: %s', filename)
         response['Content-Disposition'] = 'attachment; filename="' + \
                                           filename + '"'
