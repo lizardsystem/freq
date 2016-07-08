@@ -349,20 +349,15 @@ class TimeSeries(Base):
         if isinstance(end, int):
             end += 10000
         org_query = self.organisation_query(organisation)
-        logger.debug("In all_to_csv, Start: %s, End: %s, org_query: %s",
-                     start, end, str(org_query))
         self.get(
                 start=start,
                 end=end,
                 **org_query
             )
-        logger.debug('Obtained data from endpoint.')
-
         csv = (
             [r['name'], r['uuid'], jsdt.js_to_datestring(e['timestamp']), e['max']] for r
             in self.results for e in r['events']
         )
-        logger.debug('Transformed to csv writable format.')
         loc = Locations(use_header=self.use_header)
         extra_queries_ts = copy.deepcopy(self.extra_queries).items()
         extra_queries = {
@@ -371,7 +366,6 @@ class TimeSeries(Base):
         }
         org_query = self.organisation_query(organisation, '')
         extra_queries.update(**org_query)
-        logger.debug("queries for location endpoint: %s", str(extra_queries))
         loc.get(**extra_queries)
         coords = loc.coord_uuid_name()
         headers = (
@@ -382,7 +376,6 @@ class TimeSeries(Base):
             ]
             for r in self.results
         )
-        logger.debug('created headers')
         return headers, csv
 
     def bbox(self, south_west, north_east, statistic=None,
