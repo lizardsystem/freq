@@ -354,7 +354,6 @@ class TimeSeries(Base):
                 end=end,
                 **org_query
             )
-
         csv = (
             [r['name'], r['uuid'], jsdt.js_to_datestring(e['timestamp']), e['max']] for r
             in self.results for e in r['events']
