@@ -349,7 +349,7 @@ class TimeSeries(Base):
         if isinstance(end, int):
             end += 10000
         org_query = self.organisation_query(organisation)
-        logger.debug("In all_to_csv, Start: %d, End: %d, org_query: %s",
+        logger.debug("In all_to_csv, Start: %s, End: %s, org_query: %s",
                      start, end, str(org_query))
         self.get(
                 start=start,
