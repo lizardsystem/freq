@@ -12,15 +12,14 @@ Contains the modules for monitoring of groundwater networks
 V 0.0 - Implementation in single file of complete FREQ library.
 
 """
+from __future__ import division, print_function
 import numpy as np
-import pandas as pd
 import scipy.stats as st
+import pandas as pd
 import statsmodels.api as sts
 
-
 MIN_SAMPLES = 40
-
-
+ERROR_CODE = 9999
 def load(data=None, data_path=None, init_date=None, end_date=None, 
          frequency='M', interpolation_method='linear', delimiter=';'):
     '''
@@ -58,15 +57,16 @@ def load(data=None, data_path=None, init_date=None, end_date=None,
     
     if data is None:
         if data_path is None:
-            data = pd.read_csv('../../FREQ_code/freq-nov-30/testing_data/001.csv',
+            data = pd.read_csv('./testing_data/001.csv', 
                                parse_dates=['timestamp'], 
                                index_col='timestamp', sep=delimiter)
         else:
             data = pd.read_csv(data_path, parse_dates=['timestamp'], 
                                index_col='timestamp', sep=delimiter)
+    
         ## Resampling into average monthly values
         data = data.value
-
+    
     if init_date is None:
         init_date = data.index[0]
     
@@ -78,7 +78,6 @@ def load(data=None, data_path=None, init_date=None, end_date=None,
     data_mod = np.array(data_out)
     
     return data_out, data_mod
-
 
 def step(data, bp, alpha, detrend_anyway=True):
     '''
@@ -166,8 +165,8 @@ def step(data, bp, alpha, detrend_anyway=True):
     param = mean_a, mean_b, pval, t_test_val        
     
     return det_serie, trend, param, text_output
-
-
+    
+    
 def linear(data, alpha, detrend_anyway=True):
     '''
     Calculates and remove step trend
@@ -225,8 +224,7 @@ def linear(data, alpha, detrend_anyway=True):
     
     param = a, b, r, pval, t_test_val
     return det_serie, trend, param, text_output
-
-
+    
 def correlogram(data, n_lags):
     '''
     Calculates the correlogram function
@@ -234,7 +232,7 @@ def correlogram(data, n_lags):
     Parameters
     ----------
     data : array_like
-        Time series for which the step trend is to be removed
+        Time serries for which the step trend is to be removed
     n_lags : int
         Number of lags used for the correlogram computation
     
@@ -245,18 +243,17 @@ def correlogram(data, n_lags):
     '''
     # Input validation
     if len(data) < MIN_SAMPLES:
-        raise NameError('Too little data ({0}), dataset has to be larger than '
-                        '{1}'.format(len(data), MIN_SAMPLES))
+        raise NameError('Too little data, dataset has to be larger than {0}'\
+                        .format(MIN_SAMPLES))
     if not isinstance(n_lags, int) or n_lags < 0:
         raise NameError('n_lags has to be a positive integer')
         
     z = np.zeros((len(data)-n_lags+1, n_lags))
-    for i in range(n_lags):
+    for i in xrange(n_lags):
         z[:,i] = data[i:len(data) - n_lags + 1 + i]
     
     corr_vec = np.corrcoef(z, rowvar=0)[0, :]
     return corr_vec
-
 
 def harmonic(data, n_harmonics):
     '''
@@ -283,8 +280,8 @@ def harmonic(data, n_harmonics):
     '''
     # Input validation
     if len(data) < MIN_SAMPLES:
-        raise NameError('Too little data ({0}), dataset has to be larger than '
-                        '{1}'.format(len(data), MIN_SAMPLES))
+        raise NameError('Too little data, dataset has to be larger than {0}'\
+                        .format(MIN_SAMPLES))
                         
     if not isinstance(n_harmonics, int) or n_harmonics < 0:
         raise NameError('n_harmonics has to be a positive integer')    
@@ -311,9 +308,8 @@ def harmonic(data, n_harmonics):
     b_param = np.array([np.imag(fft_vec[i]) for i in xrange(len(fft_vec)) if ps[i] <= ps_lim ])
     sigma_param = np.array([np.abs(fft_vec[i])**2 for i in xrange(len(fft_vec)) if ps[i] <= ps_lim ])
     
-    # get the accumulated ps for half the ps
+    # get the accumulated ps for half the vector lenght
     ps = ps[:int(len(ps)/2)]
-    ps = np.sort(ps)[::-1]
     ac_ps = np.cumsum(ps/np.max(np.cumsum(ps)))
     
     # get detrended serie
@@ -324,8 +320,7 @@ def harmonic(data, n_harmonics):
     x_ac_ps = len(ac_ps)/np.array(range(1, len(ac_ps) + 1))
     
     return det_serie, trend, param, ac_ps, x_ac_ps
-
-
+    
 def autoregressive(data, per):
     '''
     Calculates and remove step trend
@@ -333,7 +328,7 @@ def autoregressive(data, per):
     Parameters
     ----------
     data : array_like
-        Time series for which the step trend is to be removed
+        Time serries for which the step trend is to be removed
     per : int
         Number of periods used in the training of the autoregressive model
     
@@ -345,15 +340,11 @@ def autoregressive(data, per):
         Trend that was removed from the original serie
     param : list
         Object containing the autoregressive model parameters
-    aic_model : float
-         Akaike Information Criterion of the autoregressive model
-    std_error : float
-         Standard deviation of the innovation (error) term
     '''    
     # Input validation
     if len(data) < MIN_SAMPLES:
-        raise NameError('Too little data ({0}), dataset has to be larger than '
-                        '{1}'.format(len(data), MIN_SAMPLES))
+        raise NameError('Too little data, dataset has to be larger than {0}'\
+                        .format(MIN_SAMPLES))
                         
     if not isinstance(per, int) or per < 0:
         raise NameError('n_harmonics has to be a positive integer')    
