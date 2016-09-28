@@ -2,10 +2,10 @@ Changelog of freq
 ===================================================
 
 
-0.4 (unreleased)
+0.3.1 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Fixes IFRAME_BASE_URL.
 
 
 0.3 (2016-09-28)
