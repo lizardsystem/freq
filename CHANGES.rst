@@ -2,7 +2,7 @@ Changelog of freq
 ===================================================
 
 
-0.3 (unreleased)
+0.3 (2016-09-28)
 ----------------
 
 - Makes IFRAME_BASE_URL a setting.
