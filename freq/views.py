@@ -460,7 +460,7 @@ class GlobalView(BaseView):
     @property
     def iframe_url(self):
         today=datetime.datetime.today().strftime("%b,%d,%Y")
-        return settings.IFRAME_BASE_URL + "/en/map/topography,gwwaterchain,dataavailability/point@27.7613,-38.1445,3/Jan,01,1940-{today}".format(today=today)
+        return settings.IFRAME_BASE_URL + "en/map/topography,gwwaterchain,dataavailability/point@27.7613,-38.1445,3/Jan,01,1940-{today}".format(today=today)
 
 
 class RegionalMapView(BaseView):
