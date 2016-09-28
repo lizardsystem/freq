@@ -5,7 +5,8 @@ Changelog of freq
 0.3 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Makes IFRAME_BASE_URL a setting.
+- Fixes harmonics (harmonics 1 is correct again)
 
 
 0.2 (2016-04-19)
