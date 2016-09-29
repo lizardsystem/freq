@@ -5,7 +5,8 @@ Changelog of freq
 0.4 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Fixes iframe url.
+- Fixes title for ihp logo.
 
 
 0.3.1 (2016-09-28)
