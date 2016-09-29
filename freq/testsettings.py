@@ -79,7 +79,6 @@ SECRET_KEY = 'This is not secret but that is ok.'
 INSTALLED_APPS = [
     'freq',
     'django_nose',
-    'lizard_security',
     'django_extensions',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -98,7 +97,6 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'lizard_security.middleware.SecurityMiddleware',
     'tls.TLSRequestMiddleware',
     )
 
