@@ -5,7 +5,7 @@ Changelog of freq
 0.4 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Rollback freq calculator changes.
 
 
 0.3.2 (2016-09-29)
