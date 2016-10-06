@@ -14,16 +14,13 @@ try:
 except ImportError:
     import freq.jsdatetime as jsdt
 try:
-    from freq.secretsettings import USR, PWD
-except ImportError:
-    try:
-        from django.conf import settings
-        USR, PWD = settings.USR, settings.PWD
-    except django.core.exceptions.ImproperlyConfigured:
-        print('WARNING: no secretsettings.py is found. USR and PWD should have'
-              'been set beforehand')
-        USR = None
-        PWD = None
+    from django.conf import settings
+    USR, PWD = settings.USR, settings.PWD
+except django.core.exceptions.ImproperlyConfigured:
+    print('WARNING: no secretsettings.py is found. USR and PWD should have'
+          'been set beforehand')
+    USR = None
+    PWD = None
 
 # When you use this script stand alone, please set your login information here:
 # USR = ******  # Replace the stars with your user name.
@@ -84,7 +81,7 @@ class Base(object):
                  data_type=None):
         """
         :param base: the site one wishes to connect to. Defaults to the
-                     Lizard staging site.
+                     Lizard ggmn production site.
         """
         if data_type:
             self.data_type = data_type
@@ -769,6 +766,30 @@ class Filters(Base):
             })
             return result
         return {}
+
+
+class Users(Base):
+    data_type = "users"
+
+    def get_organisations(self, username):
+        self.get(username=username)
+        if len(self.results) > 1 or len(self.results) == 0:
+            if len(self.results):
+                print(self.results)
+                raise LizardApiError("Username is not unique")
+            raise LizardApiError("Username not found")
+        organisations_url = self.results[0].get("organisations_url")
+        logger.debug('fetching organisations')
+        organisations = self.fetch(organisations_url)
+        logger.debug('parsing organisations')
+        import pprint
+        pprint.pprint(organisations )
+        print('Found %d organisations for url: %s' %( len(
+            organisations), organisations_url))
+        logger.debug('Found %d organisations for url: %s', len(organisations), organisations_url)
+        return sorted(list(set(
+            (org['name'], org['unique_id']) for org in organisations
+        )))
 
 
 if __name__ == '__main__':
