@@ -5,7 +5,7 @@ Changelog of freq
 0.4 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Updates organisations request to match newly updated sso.
 
 
 0.3.3 (2016-10-03)
