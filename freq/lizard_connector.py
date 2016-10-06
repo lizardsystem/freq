@@ -17,7 +17,7 @@ try:
     from django.conf import settings
     USR, PWD = settings.USR, settings.PWD
 except django.core.exceptions.ImproperlyConfigured:
-    print('WARNING: no secretsettings.py is found. USR and PWD should have'
+    print('WARNING: no USR and PWD found in settings. USR and PWD should have'
           'been set beforehand')
     USR = None
     PWD = None
