@@ -17,7 +17,6 @@ import numpy as np
 import pandas as pd
 from rest_framework.response import Response as RestResponse
 from rest_framework.views import APIView
-from lizard_auth_client.models import get_organisations_with_role
 from lizard_auth_client.models import Organisation
 
 import freq.jsdatetime as jsdt
@@ -29,6 +28,7 @@ from freq.lizard_connector import GroundwaterTimeSeries
 from freq.lizard_connector import LizardApiError
 from freq.lizard_connector import RasterFeatureInfo
 from freq.lizard_connector import RasterLimits
+from freq.lizard_connector import Users
 
 logger = logging.getLogger(__name__)
 
@@ -374,11 +374,8 @@ class BaseViewMixin(object):
     @cached_property
     def organisations_id_name(self):
         if self.logged_in:
-            orgs = get_organisations_with_role(self.user, 'access')
-            return sorted(list(set(
-                [(getattr(org, "name"), getattr(org, "unique_id")) for org in
-                 orgs]
-            )))
+            users = Users(use_header=True)
+            return users.get_organisations(username=self.user)
         else:
             return []
 
