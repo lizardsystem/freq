@@ -2,7 +2,7 @@ Changelog of freq
 ===================================================
 
 
-0.4 (unreleased)
+0.4 (2016-10-06)
 ----------------
 
 - Updates organisations request to match newly updated sso.
