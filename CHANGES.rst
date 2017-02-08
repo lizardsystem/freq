@@ -5,7 +5,7 @@ Changelog of freq
 0.4 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Added wait-spinner on timeseries analysis page.
 
 
 0.3.3 (2016-10-03)
