@@ -63,12 +63,12 @@ function waitSpinnerShow(){
     var baseContainer = $("#base-container");
     var width, height;
     if (baseContainer.length){
-      height = (baseContainer.height() - 200) * -0.55;
-      width = (baseContainer.width() - 150) * 0.49 + "px";
+      height = Math.round((baseContainer.height() - 200) * -0.55);
+      width = Math.round((baseContainer.width() - 150) * 0.49) + "px";
     } else {
       var map = $('#map');
-      height = map.height() * -0.55;
-      width = map.width() * 0.49 + "px";
+      height = Math.round(map.height() * -0.55);
+      width = Math.round(map.width() * 0.49) + "px";
     }
     $('#wait-spinner')
       .css('margin-top', height + "px")
