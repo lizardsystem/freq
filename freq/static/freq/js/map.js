@@ -248,13 +248,11 @@ function extraUpdate(data){
     }
     drawLocationsBoundingBox(window.map_.map, window.map_.locationsLayer)(data);
   }
-  spinnerClear();
 }
 
 function loadTimeseries(event) {
   //var zoomLevel = window.map_.map.getZoom();
   //if (zoomLevel > 5) {
-    spinnerShow();
     var queryUrl = '/' + window.active + '_data/';
     var bounds = window.map_.map.getBounds();
     loadData(queryUrl, updateGraphs, 'GET', {

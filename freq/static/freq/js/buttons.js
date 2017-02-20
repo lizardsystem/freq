@@ -34,7 +34,6 @@ function nextTabActive(){
 
 function changeGraphs(buttonType, altValue, changeTabs){
     return function(value){
-        spinnerShow();
         if (changeTabs) {
             nextTabActive()
         }
@@ -107,39 +106,6 @@ function updateGraphs(data){
             .datum(graph.data)
             .call(window.charts[i]);
     }
-    spinnerClear();
-  }
-}
-
-
-var spinnerCount = 0;
-
-function spinnerShow(){
-  spinnerCount += 1;
-  if (spinnerCount === 1){
-    var baseContainer = $("#base-container");
-    var width, height;
-    if (baseContainer.length){
-      height = (baseContainer.height() - 200) * -0.55;
-      width = (baseContainer.width() - 150) * 0.49 + "px";
-    } else {
-      var map = $('#map');
-      height = map.height() * -0.55;
-      width = map.width() * 0.49 + "px";
-    }
-    $('#wait-spinner')
-      .css('margin-top', height + "px")
-      .css('margin-bottom', -1 * height + 10 + "px")
-      .css('margin-left', width)
-      .removeClass('hidden');
-  }
-
-}
-
-function spinnerClear(){
-  spinnerCount -= 1;
-  if (spinnerCount === 0){
-    $('#wait-spinner').addClass('hidden');
   }
 }
 
