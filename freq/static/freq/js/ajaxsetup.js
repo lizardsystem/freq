@@ -30,11 +30,13 @@ $.ajaxSetup({
         }
         return cookieValue;
       }
+      waitSpinnerShow();
       if (!(/^http:.*/.test(api) || /^https:.*/.test(api))) {
         // Only send the token to relative URLs i.e. locally.
         xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
         }
      },
+    complete: waitSpinnerClear,
     timeout: 60 * 1000,
     // The docs say: default: false for same-domain requests, true for
     // cross-domain requests. So the default is good enough for us.
@@ -50,6 +52,40 @@ $.ajaxSetup({
         withCredentials: true
     }
 });
+
+
+var spinnerCount = 0;
+
+
+function waitSpinnerShow(){
+  spinnerCount += 1;
+  if (spinnerCount === 1){
+    var baseContainer = $("#base-container");
+    var width, height;
+    if (baseContainer.length){
+      height = Math.round((baseContainer.height() - 200) * -0.55);
+      width = Math.round((baseContainer.width() - 150) * 0.49) + "px";
+    } else {
+      var map = $('#map');
+      height = Math.round(map.height() * -0.55);
+      width = Math.round(map.width() * 0.49) + "px";
+    }
+    $('#wait-spinner')
+      .css('margin-top', height + "px")
+      .css('margin-bottom', -1 * height + 10 + "px")
+      .css('margin-left', width)
+      .removeClass('hidden');
+  }
+
+}
+
+
+function waitSpinnerClear(){
+  spinnerCount -= 1;
+  if (spinnerCount <= 0){
+    $('#wait-spinner').addClass('hidden');
+  }
+}
 
 
 function loadDataError(jqXHR, textStatus, errorThrown) {

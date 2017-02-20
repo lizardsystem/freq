@@ -248,35 +248,17 @@ function extraUpdate(data){
     }
     drawLocationsBoundingBox(window.map_.map, window.map_.locationsLayer)(data);
   }
-  spinnerClear();
 }
 
 function loadTimeseries(event) {
   //var zoomLevel = window.map_.map.getZoom();
   //if (zoomLevel > 5) {
-    spinnerShow();
     var queryUrl = '/' + window.active + '_data/';
     var bounds = window.map_.map.getBounds();
     loadData(queryUrl, updateGraphs, 'GET', {
       bounds: JSON.stringify(bounds)});
   //}
 }
-
-function spinnerShow(){
-  var map = $('#map');
-  var height = map.height() * -0.55;
-  var width = map.width() * 0.49 + "px";
-  $('#wait-spinner')
-    .css('margin-top', height + "px")
-    .css('margin-bottom', -1 * height + 10 + "px")
-    .css('margin-left', width)
-    .removeClass('hidden');
-}
-
-function spinnerClear(){
-  $('#wait-spinner').addClass('hidden');
-}
-
 
 function resetInterpolation(event){
   if (event === undefined){

@@ -179,7 +179,7 @@
     {% endblock header %}
     {% block body %}
       <br>
-      <div class="container">
+      <div class="container" id="base-container">
         <div class="row">
           <div class="col-md-8">
             <div class="row" >
@@ -263,6 +263,10 @@
               {% endblock chart %}
             {% endblock content %}
         </div><!-- /row -->
+          <div id="wait-spinner" class="hidden">
+            <i class="fa fa-cog fa-spin spin-dark"></i>
+            <i class="fa fa-cog fa-spin spin-light"></i>
+          </div>
       </div><!-- /container -->
     {% endblock body %}
 

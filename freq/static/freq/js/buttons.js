@@ -34,7 +34,6 @@ function nextTabActive(){
 
 function changeGraphs(buttonType, altValue, changeTabs){
     return function(value){
-        spinnerShow();
         if (changeTabs) {
             nextTabActive()
         }
@@ -107,13 +106,8 @@ function updateGraphs(data){
             .datum(graph.data)
             .call(window.charts[i]);
     }
-    spinnerClear();
   }
 }
-
-function spinnerShow(){};
-
-function spinnerClear(){};
 
 function setDate(startDate, endDate){
     $('#date_picker_start').datepicker('setDate', startDate);

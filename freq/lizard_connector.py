@@ -9,10 +9,7 @@ import urllib
 import numpy as np
 import django.core.exceptions
 
-try:
-    import jsdatetime as jsdt
-except ImportError:
-    import freq.jsdatetime as jsdt
+from freq import jsdatetime
 try:
     from django.conf import settings
     USR, PWD = settings.USR, settings.PWD
@@ -330,7 +327,7 @@ class TimeSeries(Base):
                  events.
         """
         if not end:
-            end = jsdt.now_iso()
+            end = jsdatetime.now_iso()
         old_base_url = self.base_url
         self.base_url += ts_uuid + "/"
         org_query = self.organisation_query(organisation)
@@ -340,7 +337,7 @@ class TimeSeries(Base):
     def all_to_csv(self, start='0001-01-01T00:00:00Z', end=None,
                organisation=None):
         if not end:
-            end = jsdt.now_iso()
+            end = jsdatetime.now_iso()
         if isinstance(start, int):
             start -= 10000
         if isinstance(end, int):
@@ -352,7 +349,7 @@ class TimeSeries(Base):
                 **org_query
             )
         csv = (
-            [r['name'], r['uuid'], jsdt.js_to_datestring(e['timestamp']), e['max']] for r
+            [r['name'], r['uuid'], jsdatetime.js_to_datestring(e['timestamp']), e['max']] for r
             in self.results for e in r['events']
         )
         loc = Locations(use_header=self.use_header)
@@ -389,7 +386,7 @@ class TimeSeries(Base):
         :return: a dictionary of the api-response.
         """
         if not end:
-            end = jsdt.now_iso()
+            end = jsdatetime.now_iso()
         if isinstance(start, int):
             start -= 10000
         if isinstance(end, int):
@@ -421,8 +418,8 @@ class TimeSeries(Base):
             statistic = 'count'
         elif statistic == 'difference (mean last - first year)':
             year = dt.timedelta(days=366)
-            first_end = jsdt.datetime_to_js(jsdt.js_to_datetime(start) + year)
-            last_start = jsdt.datetime_to_js(jsdt.js_to_datetime(end) - year)
+            first_end = jsdatetime.datetime_to_js(jsdatetime.js_to_datetime(start) + year)
+            last_start = jsdatetime.datetime_to_js(jsdatetime.js_to_datetime(end) - year)
             self.get(
                 start=start,
                 end=first_end,
@@ -571,17 +568,17 @@ class TimeSeries(Base):
         }
         dt_conversion = {
             'js': lambda x: x,
-            'dt': jsdt.js_to_datetime,
-            'str': jsdt.js_to_datestring
+            'dt': jsdatetime.js_to_datetime,
+            'str': jsdatetime.js_to_datestring
         }[date_time]
         if statistic != 'difference (mean last - first year)':
-            start = dt_conversion(max(jsdt.round_js_to_date(start_date),
-                                      jsdt.round_js_to_date(npts_min[-2])))
-            end = dt_conversion(min(jsdt.round_js_to_date(end_date),
-                                    jsdt.round_js_to_date(npts_max[-1])))
+            start = dt_conversion(max(jsdatetime.round_js_to_date(start_date),
+                                      jsdatetime.round_js_to_date(npts_min[-2])))
+            end = dt_conversion(min(jsdatetime.round_js_to_date(end_date),
+                                    jsdatetime.round_js_to_date(npts_max[-1])))
         else:
-            start = dt_conversion(jsdt.round_js_to_date(start_date))
-            end = dt_conversion(jsdt.round_js_to_date(end_date))
+            start = dt_conversion(jsdatetime.round_js_to_date(start_date))
+            end = dt_conversion(jsdatetime.round_js_to_date(end_date))
         self.response = {
             "extremes": extremes,
             "dates": {
@@ -629,7 +626,7 @@ class GroundwaterTimeSeriesAndLocations(object):
     def bbox(self, south_west, north_east, start='0001-01-01T00:00:00Z',
              end=None, groundwater_type="GWmMSL"):
         if not end:
-            self.end = jsdt.now_iso()
+            self.end = jsdatetime.now_iso()
         else:
             self.end = end
         self.start = start
