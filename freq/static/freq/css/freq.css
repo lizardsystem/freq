@@ -85,6 +85,10 @@ ul.nav-tabs > li.disabled > a:hover {
     background-color: #e7ffe9;
     border: 0;
 }
+#download-error-well {
+   background-color: #fff8af;
+   color: #d35400;
+}
 #error-well {
    background-color: #fff8af;
    color: #d35400;

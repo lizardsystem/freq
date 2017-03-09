@@ -98,10 +98,10 @@
                       </span>
                     </a>
                   </li>
-                  <li class="pull-right">
-                    <a href="{% url "download" %}" target="_blank">
-                      Download
-                      <span class="glyphicon glyphicon-download">
+                  <li class="pull-right {{ view.download_status }}">
+                    <a href="{% url "download" %}">
+                      {{ view.download_button_text }}
+                      <span class="glyphicon glyphicon-download {{ view.download_gliph }}">
                       </span>
                     </a>
                   </li>
@@ -128,6 +128,12 @@
           </div>
         </div>
       </header>
+      <div id="download-error-well"
+         class="well well-sm {{ view.download_show_error }} error-well">
+           <div class="container">
+             {{ view.download_error_message }}
+           </div>
+      </div><!-- /error-well -->
 
       {% block nav %}
         <div class="container">
