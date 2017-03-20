@@ -266,9 +266,7 @@ class Locations(Base):
         :return: a dictionary with coordinates, UUIDs and names
         """
         result = {}
-        print(self.results)
         for x in self.results:
-            print(x)
             if x['uuid'] not in self.uuids:
                 geom = x.get('geometry') or {}
                 result[x['uuid']] = {
@@ -284,7 +282,7 @@ class TaskAPI(Base):
     data_type = 'tasks'
 
     def poll(self, url=None):
-        print('TaskAPI', url)
+        logger.debug('TaskAPI', url)
         if url is None:
             return
         self.fetch(url)
@@ -293,7 +291,11 @@ class TaskAPI(Base):
     def status(self):
         try:
             logger.debug('Task status: %s', self.json.get("task_status"))
-            return self.json.get("task_status")
+            status = self.json.get("task_status")
+            if status is None:
+                logger.debug('Task status: NONE')
+                return "NONE"
+            return status
         except AttributeError:
             logger.debug('Task status: NONE')
             return "NONE"
@@ -307,11 +309,11 @@ class TaskAPI(Base):
         self.parse()
 
         csv = (
-            [r['name'], r['uuid'], jsdatetime.js_to_datestring(e['timestamp']),
-             e['max']] for r in self.results for e in r['events']
+            [result['name'], result['uuid'],
+             jsdatetime.js_to_datestring(event['timestamp']), event['max']]
+            for result in self.results for event in result['events']
         )
         loc = Locations(use_header=self.use_header)
-        print(extra_queries_ts)
         extra_queries = {
             key if not key.startswith("location__") else key[10:]: value
             for key, value in extra_queries_ts.items()
