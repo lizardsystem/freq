@@ -75,7 +75,7 @@ class Base(object):
         else:
             return {}
 
-    def __init__(self, base="https://ggmn.lizard.net", use_header=False,
+    def __init__(self, base="http://10.0.3.10:8000", use_header=False,
                  data_type=None):
         """
         :param base: the site one wishes to connect to. Defaults to the
@@ -89,7 +89,7 @@ class Base(object):
         if base.startswith('http'):
             self.base = base
         else:
-            self.base = join_urls('https:/', base)
+            self.base = join_urls('http:/', base)
             # without extra '/' ^^, this is added in join_urls
         self.base_url = join_urls(self.base, 'api/v2', self.data_type) + '/'
 
@@ -219,7 +219,7 @@ class Locations(Base):
     Makes a connection to the locations endpoint of the lizard api.
     """
 
-    def __init__(self, base="https://ggmn.lizard.net", use_header=False):
+    def __init__(self, base="http://10.0.3.10:8000", use_header=False):
         self.data_type = 'locations'
         self.uuids = []
         super().__init__(base, use_header)
@@ -338,7 +338,7 @@ class TimeSeries(Base):
     Makes a connection to the timeseries endpoint of the lizard api.
     """
 
-    def __init__(self, base="https://ggmn.lizard.net", use_header=False):
+    def __init__(self, base="http://10.0.3.10:8000", use_header=False):
         self.data_type = 'timeseries'
         self.uuids = []
         self.statistic = None
