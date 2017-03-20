@@ -4,6 +4,7 @@ import json
 import logging
 from pprint import pprint  # left here for debugging purposes
 from time import time
+from time import sleep
 import urllib
 
 import numpy as np
@@ -101,7 +102,7 @@ class Base(object):
         :return: a dictionary of the api-response.
         """
         if self.max_results:
-            queries.update({'page_size': self.max_results})
+            queries.update({'page_size': self.max_results, 'format': 'json'})
         queries.update(self.extra_queries)
         queries.update(getattr(self, "queries", {}))
         query = '?' + '&'.join(str(key) + '=' +
@@ -267,12 +268,69 @@ class Locations(Base):
         result = {}
         for x in self.results:
             if x['uuid'] not in self.uuids:
+                geom = x.get('geometry') or {}
                 result[x['uuid']] = {
-                        'coordinates': x['geometry']['coordinates'],
+                        'coordinates': geom.get(
+                            'coordinates', ['','']),
                         'name': x['name']
                 }
                 self.uuids.append(x['uuid'])
         return result
+
+
+class TaskAPI(Base):
+    data_type = 'tasks'
+
+    def poll(self, url=None):
+        logger.debug('TaskAPI', url)
+        if url is None:
+            return
+        self.fetch(url)
+
+    @property
+    def status(self):
+        try:
+            logger.debug('Task status: %s', self.json.get("task_status"))
+            status = self.json.get("task_status")
+            if status is None:
+                logger.debug('Task status: NONE')
+                return "NONE"
+            return status
+        except AttributeError:
+            logger.debug('Task status: NONE')
+            return "NONE"
+
+    def timeseries_csv(self, organisation, extra_queries_ts):
+        if self.status != "SUCCESS":
+            raise LizardApiError('Download not ready.')
+        url = self.json.get("result_url")
+        self.fetch(url)
+        self.results = []
+        self.parse()
+
+        csv = (
+            [result['name'], result['uuid'],
+             jsdatetime.js_to_datestring(event['timestamp']), event['max']]
+            for result in self.results for event in result['events']
+        )
+        loc = Locations(use_header=self.use_header)
+        extra_queries = {
+            key if not key.startswith("location__") else key[10:]: value
+            for key, value in extra_queries_ts.items()
+        }
+        org_query = self.organisation_query(organisation, '')
+        extra_queries.update(**org_query)
+        loc.get(**extra_queries)
+        coords = loc.coord_uuid_name()
+        headers = (
+            [
+                r['uuid'], r['name'], coords[r['location']['uuid']]['name'],
+                coords[r['location']['uuid']]['coordinates'][0],
+                coords[r['location']['uuid']]['coordinates'][1]
+            ]
+            for r in self.results
+        )
+        return headers, csv
 
 
 class TimeSeries(Base):
@@ -334,7 +392,7 @@ class TimeSeries(Base):
         self.get(start=start, end=end, **org_query)
         self.base_url = old_base_url
 
-    def all_to_csv(self, start='0001-01-01T00:00:00Z', end=None,
+    def start_csv_task(self, start='0001-01-01T00:00:00Z', end=None,
                organisation=None):
         if not end:
             end = jsdatetime.now_iso()
@@ -343,34 +401,15 @@ class TimeSeries(Base):
         if isinstance(end, int):
             end += 10000
         org_query = self.organisation_query(organisation)
-        self.get(
-                start=start,
-                end=end,
-                **org_query
-            )
-        csv = (
-            [r['name'], r['uuid'], jsdatetime.js_to_datestring(e['timestamp']), e['max']] for r
-            in self.results for e in r['events']
-        )
-        loc = Locations(use_header=self.use_header)
-        extra_queries_ts = copy.deepcopy(self.extra_queries).items()
-        extra_queries = {
-            key if not key.startswith("location__") else key[10:]: value
-            for key, value in extra_queries_ts
-        }
-        org_query = self.organisation_query(organisation, '')
-        extra_queries.update(**org_query)
-        loc.get(**extra_queries)
-        coords = loc.coord_uuid_name()
-        headers = (
-            [
-                r['uuid'], r['name'], coords[r['location']['uuid']]['name'],
-                coords[r['location']['uuid']]['coordinates'][0],
-                coords[r['location']['uuid']]['coordinates'][1]
-            ]
-            for r in self.results
-        )
-        return headers, csv
+        poll_url = self.get(
+            start=start,
+            end=end,
+            async="true",
+            format="json",
+            **org_query
+        )[0]['url']
+        logger.debug("Async task url %s", poll_url)
+        return poll_url, self.extra_queries
 
     def bbox(self, south_west, north_east, statistic=None,
              start='0001-01-01T00:00:00Z', end=None, organisation=None):
@@ -772,7 +811,6 @@ class Users(Base):
         self.get(username=username)
         if len(self.results) > 1 or len(self.results) == 0:
             if len(self.results):
-                print(self.results)
                 raise LizardApiError("Username is not unique")
             raise LizardApiError("Username not found")
         organisations_url = self.results[0].get("organisations_url")

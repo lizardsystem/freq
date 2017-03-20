@@ -12,6 +12,7 @@ from django.utils.text import slugify
 from django.views.generic.base import TemplateView
 from django.http import HttpResponse
 from django.conf import settings
+from django.shortcuts import redirect
 
 import numpy as np
 import pandas as pd
@@ -29,6 +30,7 @@ from freq.lizard_connector import LizardApiError
 from freq.lizard_connector import RasterFeatureInfo
 from freq.lizard_connector import RasterLimits
 from freq.lizard_connector import Users
+from freq.lizard_connector import TaskAPI
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +95,10 @@ DEFAULT_STATE = {
         'additive': 'disabled',
         'frequency': 'disabled'
     },
+    'download': {
+        'organisations': {},
+        'error_message': ""
+    }
 }
 
 
@@ -128,9 +134,15 @@ class BaseViewMixin(object):
     #     pprint(dict(self.request.session))
     #     return super().dispatch(*args, **kwargs)
 
-    def instantiate_session(self):
+    def instantiate_session(self, preserve_download=True):
+        download = self.request.session.get('download', {
+            'organisations': {},
+            'error_message': ""
+        })
         self.request.session['session_is_set'] = True
         default = copy.deepcopy(DEFAULT_STATE)
+        if preserve_download:
+            default['download'] = download
         self.request.session.update(default)
         self.request.session.modified = True
 
@@ -143,7 +155,7 @@ class BaseViewMixin(object):
                 if isinstance(value, dict):
                     if any(not v for k, v in value.items() if not k ==
                             'series'):
-                       skip = True
+                        skip = True
             if not skip:
                 self.request.session[state][key] = value
                 self.request.session.modified = True
@@ -208,12 +220,20 @@ class BaseViewMixin(object):
         ]
 
     @cached_property
-    def error_message(self):
-        return self.request.GET.get('error_message', '')
+    def download_error_message(self):
+        message = self.request.session.get('download', {'error_message': ""})[
+            'error_message']
+        if not message and self.download_status == "btn-success":
+            message = "Download ready for this organisation. Please click Download to get the requested csv."
+        try:
+            # We only show this message once.
+            self.set_session_value('download', 'error_message', '')
+        finally:
+            return message
 
     @cached_property
-    def show_error(self):
-        if not self.error_message:
+    def download_show_error(self):
+        if not self.download_error_message:
             return 'hidden'
         return ''
 
@@ -368,6 +388,54 @@ class BaseViewMixin(object):
             title="Choose ",
             id_=999
         )
+
+    @cached_property
+    def task(self):
+        url = self.request.session.get('download', {'organisations': {}}).get(
+            'organisations', {}).get(
+            self.selected_organisation_id, {}).get("url")
+        print(url)
+        task = TaskAPI(use_header=self.logged_in)
+        task.poll(url=url)
+        return task
+
+    @cached_property
+    def downloading(self):
+        return self.request.session.get(
+            'download', {'organisations': {}}
+        ).get('organisations', {}).get(
+            self.selected_organisation_id, {'downloading': False}
+        )['downloading']
+
+    @cached_property
+    def download_status(self):
+        if self.downloading:
+            return {
+                "SUCCESS": "btn-success",
+                "FAILURE": "btn-danger",
+                "PENDING": "btn-info",
+                "NONE": ""}[self.task.status]
+        return ""
+
+    @cached_property
+    def download_button_text(self):
+        if self.downloading:
+            return {
+                "SUCCESS": "Download success",
+                "FAILURE": "Download failed",
+                "PENDING": "Downloading...",
+                "NONE": "Download"}[self.task.status]
+        return "Download"
+
+    @cached_property
+    def download_gliph(self):
+        if self.downloading:
+            return {
+                "SUCCESS": "",
+                "FAILURE": "hidden",
+                "PENDING": "hidden",
+                "NONE": ""}[self.task.status]
+        return ""
 
     # ------------------------------------------------------------------------ #
     ### Login related:
@@ -1178,18 +1246,64 @@ class FrequencyDataView(BaseApiView):
         ]]
 
 
-class DownloadAllView(BaseApiView):
+class DownloadAllView(BaseView):
+    template_name = 'freq/no_download.html'
 
     def get(self, request, *args, **kwargs):
-        logger.debug('Downloading csv for %s', self.selected_organisation)
-        ts = GroundwaterTimeSeries(use_header=self.logged_in)
-        header, csv_ = ts.all_to_csv(
-            organisation=self.selected_organisation_id)
+        # we need the referer to reload the page with the task url set.
+        referer = request.META.get('HTTP_REFERER')
+        if not self.downloading:
+            # start the task
+            logger.debug('Downloading csv for %s', self.selected_organisation)
+            ts = GroundwaterTimeSeries(use_header=self.logged_in)
+            task_url, extra_queries = ts.start_csv_task(
+                organisation=self.selected_organisation_id)
+            download_organisations = self.request.session.get(
+                'download', {}).get('organisations', {})
+            self.set_session_value('download', 'error_message',
+                                   'Starting download.')
+            download_organisations.update({
+                self.selected_organisation_id: {
+                    'url': task_url,
+                    'extra_queries': extra_queries,
+                    'downloading': True
+                }
+            })
+            print(download_organisations)
+            self.request.session[
+                'download']['organisations'] = download_organisations
+            self.request.session.modified = True
+            # task is start and set, return with the current (referred) view.
+            return redirect(referer)
+        # download was started earlier
+        try:
+            # try to download the result
+            extra_queries = self.request.session['download']['organisations'][
+                self.selected_organisation_id]['extra_queries']
+            header, csv_ = self.task.timeseries_csv(
+                organisation=self.selected_organisation_id,
+                extra_queries_ts=extra_queries
+            )
+        except LizardApiError:
+            # the download failed, which means the download is not yet ready.
+            if referer:
+                logger.debug('download failed, referer:', referer)
+                self.set_session_value('download', 'error_message',
+                                       'Your download is not ready.')
+                # we either
+                return redirect(referer)
+            # when a download is called without a referer and the task is not
+            # yet finished return the placeholder view that states the download
+            # is not yet finished:
+            return super().get(request, *args, **kwargs)
+
+        # The task is finished create a csv response from the timseries_csv.
         response = HttpResponse(content_type='text/csv')
         filename = slugify(self.selected_organisation)[:80] + \
                    "_ggmn_timeseries.csv"
         response['Content-Disposition'] = 'attachment; filename="' + \
                                           filename + '"'
+
         writer = csv.writer(response)
         writer.writerow(['uuid', 'name', 'location_name', 'x', 'y'])
         for row in header:
@@ -1198,8 +1312,17 @@ class DownloadAllView(BaseApiView):
         writer.writerow(['name', 'uuid', 'timestamp', 'value'])
         for row in csv_:
             writer.writerow(row)
+
         logger.debug('Wrote all data to csv-response, '
                      'filename of output csv is: %s', filename)
+
+        # cleanup the session, so the download can start again later.
+        self.set_session_value('download', 'downloading', False)
+        download_organisations = self.request.session.get(
+            'download', {}).get('organisations', {})
+        del download_organisations[self.selected_organisation_id]
+        self.set_session_value(
+            'download', 'organisations', download_organisations)
         return response
 
 
@@ -1243,14 +1366,16 @@ class RestartMixin(object):
 
     def get(self, request, *args, **kwargs):
         bounds = request.session['map_']['bounds']
-        self.instantiate_session()
         org_name = request.GET.get('name', False)
         org_uuid = request.GET.get('uuid', False)
         if org_name and org_uuid:
+            self.instantiate_session(preserve_download=True)
             request.session['map_']['bounds'] = bounds
             self.request.session['login']['selected_organisation'] = org_name
             self.request.session['login']['selected_organisation_id'] = org_uuid
             self.request.session.modified = True
+        else:
+            self.instantiate_session(preserve_download=False)
         return super().get(request, *args, **kwargs)
 
 
