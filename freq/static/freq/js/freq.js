@@ -380,6 +380,7 @@ function nvGraph(i){
       var chart = nv.models.lineChart()
         .useInteractiveGuideline(true)
         .margin({top: 20, right: 35, bottom: window.active === "frequency" ? 50 : 30, left: 70});
+      chart.noData("Please select a location on the mini map.");
       chart.xAxis
         .axisLabel(window.active === "frequency" ? "Observation frequency" +
           " once every x-months" : "")

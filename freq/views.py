@@ -62,6 +62,7 @@ DEFAULT_STATE = {
         'start_js': -1262304000000,
         'timeseries_length': -9999,
         'uuid': 'EMPTY',
+        'timeseries_selection': ()
     },
     'trend_detection': {
         'active': False,
@@ -94,6 +95,8 @@ DEFAULT_STATE = {
         'frequency': 'disabled'
     },
 }
+
+ks = [k for k in DEFAULT_STATE.keys()]  # for debugging
 
 
 class BaseViewMixin(object):
@@ -147,15 +150,16 @@ class BaseViewMixin(object):
             if not skip:
                 self.request.session[state][key] = value
                 self.request.session.modified = True
-                logger.debug('updated {} with old value {} with new '
-                                 'value {'
-                      '}'.format(
-                    key, old_value, value))
+                # logger.debug('updated {} with old value {} with new '
+                #                  'value {'
+                #       '}'.format(
+                #     key, old_value, value))
         else:
-            logger.warn('NOT MY TYPE!: {}, {}, {}'.format(state, key, value))
-            logger.warn('default: {}'.format(
-                type(DEFAULT_STATE[state][key]).__name__))
-            logger.warn('new: {}'.format(type(value).__name__))
+            # logger.warn('NOT MY TYPE!: {}, {}, {}'.format(state, key, value))
+            # logger.warn('default: {}'.format(
+            #     type(DEFAULT_STATE[state][key]).__name__))
+            # logger.warn('new: {}'.format(type(value).__name__))
+            pass
 
     def is_default_type(self, state, key, value):
         try:
@@ -291,8 +295,7 @@ class BaseViewMixin(object):
     @cached_property
     def error_message(self):
         if not len(self.timeseries['values']):
-            return 'No time series found for this location, please select ' \
-                   'another.'
+            return 'Please select a location.'
         return ''
 
     # ------------------------------------------------------------------------ #
@@ -440,7 +443,10 @@ class FreqTemplateView(TemplateView):
 
 
 class BaseView(BaseViewMixin, FreqTemplateView):
-    pass
+
+    @property
+    def timeseries_selection(self):
+        return self.request.session['startpage']['timeseries_selection']
 
 
 class GlobalView(BaseView):
@@ -456,7 +462,7 @@ class GlobalView(BaseView):
 
     @property
     def iframe_url(self):
-        today=datetime.datetime.today().strftime("%b,%d,%Y")
+        today = datetime.datetime.today().strftime("%b,%d,%Y")
         return settings.IFRAME_BASE_URL + "en/map/topography,gwaterchain,dataavailability/point@27.7613,-38.1445,3/Jan,01,1940-{today}".format(today=today)
 
 
@@ -491,7 +497,7 @@ class RegionalMapView(BaseView):
         return {
             org.name: "extern:igrac:" + org.unique_id for
             org in Organisation.objects.all()
-            }
+        }
 
 
 class StartPageBaseView(BaseView):
@@ -523,31 +529,32 @@ class TimeSeriesByLocationUUIDView(StartPageBaseView):
 
     @cached_property
     def multiple_timeseries(self):
-        return len(self.timeseries) > 1
+        return len(self.timeseries) > 0
 
     @cached_property
     def error_message(self):
         if self.multiple_timeseries:
             return 'Multiple time series found for this location, please ' \
-                   'select one above.'
-        elif len(self.timeseries) == 1:
+                   'select one below.'
+        elif len(self.timeseries) == 0:
             return 'No time series found for this location, please select ' \
                    'another.'
         return ''
 
     @property
     def timeseries_selection(self):
-        if self.multiple_timeseries:
-            return [
-                (
-                    x['location']['name'] + ' - ' + x['name'],
-                    x['uuid'],
-                    x['first_value_timestamp'],
-                    x['last_value_timestamp']
-                )
-                for x in self.timeseries
-            ]
-        return []
+        _selection = tuple([
+            (
+                x['location']['name'] + ' - ' + x['name'],
+                x['uuid'],
+                x['first_value_timestamp'],
+                x['last_value_timestamp']
+            )
+            for x in self.timeseries
+        ])
+        self.set_session_value('startpage', 'timeseries_selection',
+                               _selection)
+        return _selection
 
     @cached_property
     def uuid(self):
@@ -565,6 +572,11 @@ class TimeSeriesByLocationUUIDView(StartPageBaseView):
         return bounds
 
     def get(self, request, *args, **kwargs):
+        self.set_session_value(
+            'startpage', 'measurement_point', 'No Time Series Selected')
+        self.set_session_value('startpage', 'uuid', 'EMPTY')
+        self.request.session.modified = True
+
         page = self.request.GET.get('active', 'startpage')
         self.request.session[page]['selected_coords'] = self.coordinates
         self.request.session['map_']['bounds'] = self.bounds
