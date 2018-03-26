@@ -314,6 +314,7 @@
             var endDate = {{ view.datepicker_end }};
             window.startpage.startDate = new Date(startDate[2], startDate[1]-1,
                 startDate[0]);
+            window.startpage.noDataText = "{{ view.no_data_text }}";
             window.startpage.endDate = new Date(endDate[2], endDate[1]-1,
                 endDate[0]);
           {% endautoescape %}

@@ -121,6 +121,7 @@ class BaseViewMixin(object):
     tab_order = ['startpage', 'trend_detection', 'periodic_fluctuations',
                  'autoregressive']
     spinners = []
+    no_data_text = "Please select a location on the mini map."
 
     # ------------------------------------------------------------------------ #
     ### Session handling
@@ -519,6 +520,7 @@ class StartPageView(StartPageBaseView):
 
 class TimeSeriesByLocationUUIDView(StartPageBaseView):
     error_message = ''
+    no_data_text = "Please select a timeseries."
 
     @cached_property
     def timeseries(self):
