@@ -112,6 +112,7 @@ STATICFILES_DIRS = [
     # ^^^ bower-managed files.
 ]
 
+from freq.secretsettings import *
 
 try:
     # Import local settings that aren't stored in svn/git.

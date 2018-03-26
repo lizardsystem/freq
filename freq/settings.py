@@ -193,6 +193,8 @@ MEDIA_ROOT = os.path.join(BUILDOUT_DIR, 'var', 'media')
 # ]
 SESSION_SAVE_EVERY_REQUEST = True
 
+DEFAULT_ORGANISATION_NAME = "test_organisation_debugging_igrac"
+
 from freq.secretsettings import USR, PWD
 
 try:
