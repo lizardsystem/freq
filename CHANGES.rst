@@ -1,11 +1,25 @@
 Changelog of freq
 ===================================================
 
+0.5 (unreleased)
 
-0.4 (unreleased)
+- Added default in Organization.
+
+- Added full organisation name as title attribute on organisation pulldown.
+
+- Changed "no data available" placeholder text.
+
+- Keeps timeseries selection menu visible even when a timeseries is selected.
+
+- Removes timeseries data when timeseries is selected.
+
+
+0.4 (2016-10-06)
 ----------------
 
 - Added wait-spinner on timeseries analysis page.
+
+- Updates organisations request to match newly updated sso.
 
 
 0.3.3 (2016-10-03)
