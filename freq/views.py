@@ -96,8 +96,6 @@ DEFAULT_STATE = {
     },
 }
 
-ks = [k for k in DEFAULT_STATE.keys()]  # for debugging
-
 
 class BaseViewMixin(object):
     """Base view."""
@@ -447,7 +445,8 @@ class BaseView(BaseViewMixin, FreqTemplateView):
 
     @property
     def timeseries_selection(self):
-        return self.request.session['startpage']['timeseries_selection']
+        return self.request.session['startpage'].get(
+            'timeseries_selection', ())
 
 
 class GlobalView(BaseView):

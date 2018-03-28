@@ -195,7 +195,14 @@ SESSION_SAVE_EVERY_REQUEST = True
 
 DEFAULT_ORGANISATION_NAME = "test_organisation_debugging_igrac"
 
-from freq.secretsettings import USR, PWD
+
+try:
+    # User and password are stored in a secretsettings.py script to keep these
+    # out of the open github repo.
+    from freq.secretsettings import USR, PWD
+except ImportError:
+    USR, PWD = "", ""
+
 
 try:
     # Import local settings that aren't stored in svn/git.
