@@ -5,8 +5,11 @@
   <br>
   <div class="container full-page-map">
       <div class="row full-page-map">
-        <iframe src="{{ view.iframe_url }}" class="full-page-map lizard
-        "></iframe>
+        <iframe
+            id="lizard-iframe"
+            src="{{ view.iframe_url }}"
+            class="full-page-map lizard">
+        </iframe>
       </div>
   </div>
 {% endblock body %}

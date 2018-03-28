@@ -92,6 +92,7 @@ ul.nav-tabs > li.disabled > a:hover {
 #error-well {
    background-color: #fff8af;
    color: #d35400;
+   margin-bottom: 0;
 }
 strong {
     color: #16a085;

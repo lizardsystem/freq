@@ -210,7 +210,11 @@
           </div><!-- /col -->
           <div class="col-md-4">
             <div class="row map-row">
-              {% if view.multiple_timeseries %}
+              <div id="map" class="pull-down"></div>
+              <div id="error-well"
+                   class="well well-sm {{ view.show_error }} error-well">
+                  {{ view.error_message }}
+              </div><!-- /error-well -->
                 <div class="dropdown" style="width:100%;">
                   <button class="btn btn-default dropdown-toggle"
                           type="button" id="dropdownMenu1"
@@ -230,12 +234,6 @@
                     {% endfor %}
                   </ul>
                 </div>
-              {% endif %}
-              <div id="map" class="pull-down"></div>
-              <div id="error-well"
-                   class="well well-sm {{ view.show_error }} error-well">
-                  {{ view.error_message }}
-              </div><!-- /error-well -->
             </div><!-- /row -->
           </div><!-- /col -->
         </div><!-- /row -->
@@ -322,6 +320,7 @@
             var endDate = {{ view.datepicker_end }};
             window.startpage.startDate = new Date(startDate[2], startDate[1]-1,
                 startDate[0]);
+            window.startpage.noDataText = "{{ view.no_data_text }}";
             window.startpage.endDate = new Date(endDate[2], endDate[1]-1,
                 endDate[0]);
           {% endautoescape %}

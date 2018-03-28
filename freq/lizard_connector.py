@@ -814,11 +814,20 @@ class Users(Base):
                 raise LizardApiError("Username is not unique")
             raise LizardApiError("Username not found")
         organisations_url = self.results[0].get("organisations_url")
-        organisations = self.fetch(organisations_url)
-        logger.debug('Found %d organisations for url: %s', len(organisations), organisations_url)
-        return sorted(list(set(
-            (org['name'], org['unique_id']) for org in organisations
-        )))
+        organisations = {
+            org['name']: org['unique_id'] for org in
+            self.fetch(organisations_url)
+        }
+        logger.debug('Found %d organisations for url: %s', len(organisations),
+                     organisations_url)
+        if settings.DEFAULT_ORGANISATION_NAME in organisations.keys():
+            default_org = [(
+                settings.DEFAULT_ORGANISATION_NAME,
+                organisations[settings.DEFAULT_ORGANISATION_NAME])
+            ]
+            del organisations[settings.DEFAULT_ORGANISATION_NAME]
+            return default_org + sorted(organisations.items())
+        return sorted(organisations.items())
 
 
 if __name__ == '__main__':

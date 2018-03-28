@@ -112,6 +112,12 @@ STATICFILES_DIRS = [
     # ^^^ bower-managed files.
 ]
 
+try:
+    # User and password are stored in a secretsettings.py script to keep these
+    # out of the open github repo.
+    from freq.secretsettings import USR, PWD
+except ImportError:
+    USR, PWD = "", ""
 
 try:
     # Import local settings that aren't stored in svn/git.
