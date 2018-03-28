@@ -1,7 +1,7 @@
 Changelog of freq
 ===================================================
 
-0.5 (unreleased)
+0.5 (2018-03-28)
 
 - Added default in Organization.
 
