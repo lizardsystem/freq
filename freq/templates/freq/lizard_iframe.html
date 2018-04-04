@@ -3,13 +3,9 @@
 
 {% block body %}
   <br>
-  <div class="container full-page-map">
-      <div class="row full-page-map">
-        <iframe
-            id="lizard-iframe"
-            src="{{ view.iframe_url }}"
-            class="full-page-map lizard">
-        </iframe>
-      </div>
-  </div>
+  <iframe
+      id="lizard-iframe"
+      src="{{ view.iframe_url }}"
+      class="full-page-map lizard">
+  </iframe>
 {% endblock body %}

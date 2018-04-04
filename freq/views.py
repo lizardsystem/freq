@@ -142,7 +142,11 @@ class BaseViewMixin(object):
             'error_message': ""
         })
         self.request.session['session_is_set'] = True
+        bounds = self.request.session["map_"]["bounds"]
         default = copy.deepcopy(DEFAULT_STATE)
+
+        # We stick to the same location.
+        default["map_"]["bounds"] = bounds
         if preserve_download:
             default['download'] = download
         self.request.session.update(default)
