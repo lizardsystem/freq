@@ -4,7 +4,9 @@ Changelog of freq
 0.6 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Iframe allmost fullscreen for better lizard-client menus on small screens.
+
+- Keep location on reset.
 
 
 0.5 (2018-03-28)
