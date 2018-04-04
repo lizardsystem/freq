@@ -1,7 +1,7 @@
 Changelog of freq
 ===================================================
 
-0.6 (unreleased)
+0.6 (2018-04-04)
 ----------------
 
 - Iframe allmost fullscreen for better lizard-client menus on small screens.
