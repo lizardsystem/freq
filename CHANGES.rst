@@ -1,10 +1,10 @@
 Changelog of freq
 ===================================================
 
-0.7 (unreleased)
+0.6.1 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Fix map session for empty session.
 
 
 0.6 (2018-04-04)
