@@ -142,7 +142,8 @@ class BaseViewMixin(object):
             'error_message': ""
         })
         self.request.session['session_is_set'] = True
-        bounds = self.request.session["map_"]["bounds"]
+        bounds = self.request.session.get(
+            "map_", DEFAULT_STATE['map_'])["bounds"]
         default = copy.deepcopy(DEFAULT_STATE)
 
         # We stick to the same location.
