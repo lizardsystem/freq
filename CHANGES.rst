@@ -1,10 +1,10 @@
 Changelog of freq
 ===================================================
 
-0.7 (unreleased)
+0.6.2 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Fixed iframe width to show logos.
 
 
 0.6.1 (2018-04-05)
