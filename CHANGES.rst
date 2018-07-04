@@ -4,7 +4,7 @@ Changelog of freq
 0.6.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fixed url logging with task polling.
 
 
 0.6.2 (2018-04-06)

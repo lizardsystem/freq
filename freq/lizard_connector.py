@@ -282,8 +282,7 @@ class TaskAPI(Base):
     data_type = 'tasks'
 
     def poll(self, url=None):
-        logger.debug('TaskAPI', url)
-        if url is None:
+        if url is None or not url.startswith('http'):
             return
         self.fetch(url)
 
