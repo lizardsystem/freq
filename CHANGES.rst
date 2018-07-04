@@ -1,7 +1,7 @@
 Changelog of freq
 ===================================================
 
-0.6.3 (unreleased)
+0.6.3 (2018-07-04)
 ------------------
 
 - Fixed url logging with task polling.
