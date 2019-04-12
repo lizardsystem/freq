@@ -1,7 +1,7 @@
 Changelog of freq
 ===================================================
 
-0.6.4 (unreleased)
+0.6.4 (2019-04-12)
 ------------------
 
 - Null values in timeseries response are converted to np.nan for the
