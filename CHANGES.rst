@@ -4,7 +4,8 @@ Changelog of freq
 0.6.4 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Null values in timeseries response are converted to np.nan for the
+  calculations.
 
 
 0.6.3 (2018-07-04)
