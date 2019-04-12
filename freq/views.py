@@ -823,7 +823,9 @@ class BaseApiView(BaseViewMixin, APIView):
             [jsdt.js_to_datestring(x['x'], iso=True) for x in json_data],
             dtype='datetime64'
         )
-        values = np.array([y['y'] for y in json_data])
+        values = np.array([
+            np.nan if y['y'] is None else y['y'] for y in json_data
+        ])
         index = pd.DatetimeIndex(dates, freq='infer')
         # build a timeseries object so we can compare it with other timeseries
         timeseries = pd.Series(values, index=index, name=name)
