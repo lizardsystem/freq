@@ -450,15 +450,15 @@ function drawLocations () {
 
 function loadMap() {
   if(window.active === "map_"){
-    var topography = L.tileLayer('https://{s}.tiles.mapbox.com/v3/nelenschuurmans.iaa98k8k/{z}/{x}/{y}.png ', {
+    var topography = L.tileLayer('https://api.mapbox.com/styles/v1/nelenschuurmans/ck8sgpk8h25ql1io2ccnueuj6/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoibmVsZW5zY2h1dXJtYW5zIiwiYSI6ImhkXzhTdXcifQ.3k2-KAxQdyl5bILh_FioCw', {
       maxZoom: 17,
       tooltip: true
     });
-    var satellite = L.tileLayer('https://{s}.tiles.mapbox.com/v3/nelenschuurmans.iaa79205/{z}/{x}/{y}.png ', {
+    var satellite = L.tileLayer('https://api.mapbox.com/styles/v1/nelenschuurmans/ck8oabi090nys1imfdxgb6nv3/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoibmVsZW5zY2h1dXJtYW5zIiwiYSI6ImhkXzhTdXcifQ.3k2-KAxQdyl5bILh_FioCw', {
       maxZoom: 17,
       tooltip: true
     });
-    var neutral = L.tileLayer('https://{s}.tiles.mapbox.com/v3/nelenschuurmans.l15e647c/{z}/{x}/{y}.png ', {
+    var neutral = L.tileLayer('https://api.mapbox.com/styles/v1/nelenschuurmans/ck8o9q49a3df21ipjpobadw4y/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoibmVsZW5zY2h1dXJtYW5zIiwiYSI6ImhkXzhTdXcifQ.3k2-KAxQdyl5bILh_FioCw', {
       maxZoom: 17,
       tooltip: true
     });
@@ -570,7 +570,7 @@ function loadMap() {
   } else {
     window.map_.map = L.map('map').fitBounds(window.map_.bounds);
     L.tileLayer(
-      'https://{s}.tiles.mapbox.com/v3/nelenschuurmans.iaa98k8k/{z}/{x}/{y}.png ',
+      'https://api.mapbox.com/styles/v1/nelenschuurmans/ck8sgpk8h25ql1io2ccnueuj6/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoibmVsZW5zY2h1dXJtYW5zIiwiYSI6ImhkXzhTdXcifQ.3k2-KAxQdyl5bILh_FioCw',
       {
         maxZoom: 17,
         tooltip: true
