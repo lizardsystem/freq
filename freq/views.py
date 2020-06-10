@@ -421,6 +421,7 @@ class BaseViewMixin(object):
                 "SUCCESS": "btn-success",
                 "FAILURE": "btn-danger",
                 "PENDING": "btn-info",
+                "STARTED": "btn-info",
                 "NONE": ""}[self.task.status]
         return ""
 
@@ -431,6 +432,7 @@ class BaseViewMixin(object):
                 "SUCCESS": "Download success",
                 "FAILURE": "Download failed",
                 "PENDING": "Downloading...",
+                "STARTED": "Download preparing...",
                 "NONE": "Download"}[self.task.status]
         return "Download"
 
@@ -441,6 +443,7 @@ class BaseViewMixin(object):
                 "SUCCESS": "",
                 "FAILURE": "hidden",
                 "PENDING": "hidden",
+                "STARTED": "hidden",
                 "NONE": ""}[self.task.status]
         return ""
 
