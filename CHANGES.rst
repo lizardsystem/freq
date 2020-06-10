@@ -4,7 +4,7 @@ Changelog of freq
 0.6.5 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Allowing task state "STARTED" in addition to PENDING/etc.
 
 
 0.6.4 (2019-04-12)
